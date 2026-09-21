@@ -27,6 +27,7 @@ export default function Storefront() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  const [query, setQuery] = useState("");
 
   function goShop() {
     setView("shop");
@@ -52,13 +53,19 @@ export default function Storefront() {
       <main className="flex-1 flex flex-col">
         {view === "shop" && (
           <>
-            <Hero onShop={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })} />
+            <Hero
+              onShop={() => document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" })}
+              query={query}
+              onQuery={setQuery}
+            />
             <ProductGrid
               products={products}
               regions={regions}
               region={region}
               onSelect={setSelected}
               loading={loading}
+              query={query}
+              onClearQuery={() => setQuery("")}
             />
             {/* trust strip */}
             <section className="border-t border-line bg-white px-4 md:px-8 py-10 grid sm:grid-cols-3 gap-6" aria-label="Trade assurances">
@@ -102,8 +109,9 @@ export default function Storefront() {
 
       <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />
 
-      {/* overlays */}
+      {/* overlays — keyed by product so variant/qty state resets each open */}
       <QuickView
+        key={selected?.productId || "none"}
         product={selected}
         regions={regions}
         onClose={() => setSelected(null)}

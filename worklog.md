@@ -90,3 +90,23 @@ Work Log:
 
 Stage Summary:
 - Hero asset now 550x275 / 64 KB; originals and all previous sizes recoverable by editing W,H in scripts/compose-hero.py and re-running
+
+---
+Task ID: 6
+Agent: Super Z (main agent)
+Task: Alibaba-inspired "commerce feel" pass — items 1,2,4,5,7 from advisory (skip 3 trust-strip and 6 social proof per user)
+
+Work Log:
+- Search: lifted query state to page.tsx; added search bar to hero (live filtering + submit scrolls to catalog); ProductGrid accepts query/onClearQuery, matches label/brand/category/description; added results line + CLEAR chip + empty state ("No products match...") with reset CTA
+- Tiles: restructured from all-overlay button to Alibaba-style card (image button on top, white info panel below); added pack line (brand · variant label), stock line (emerald In stock / amber Only N left ≤50 / red Sold out), prominent orange price (whitespace-nowrap), direct ADD button per tile (useCart.addLine + toast; no nested buttons); grid gap 1 -> 3/4; SOLD OUT disables ADD
+- Color: removed grayscale from hero image (opacity-50 -> 60; navy gradient kept) — tiles were already full color
+- Sentence case: seed productLabels re-cased ("Maize Flour (Posho)" etc., 14 products, upsert re-run — orders untouched); removed uppercase from tile names; quick-view title normal-case via .ms-display.normal-case override (unlayered CSS beat Tailwind utilities); placeholder no longer forced uppercase
+- Radius: --radius 0 -> 0.375rem (6px); added :where(button,input,textarea,select/.ms-field) 6px rules; .ms-tile 8px; badges rounded; quick-view + cart-drawer rounded-none -> rounded-lg
+- Quick-view fixes while testing: dialog was squeezed to sm:max-w-lg (base) — added sm:max-w-4xl so tw-merge strips it; opens on BASE pack (priceDelta closest to 0, matches tile price) via useState initializer + page.tsx key={selected.productId}
+- Bug found & fixed: checkout destination + payment selected buttons were white-on-white ("UGANDA" invisible) — Tailwind 4 emits bg-brand BEFORE bg-white (alphabetical), so bg-white base class won over conditional bg-brand; moved bg-white into unselected branch in both spots (also resolved border-line vs border-brand conflict); verified UGANDA renders orange
+- Verified end-to-end (agent-browser): search "maize" -> 1 result line + clear; tile ADD -> CART [1] + toast; quick view wide 2-col with 25KG base pack USh 117,660; cart drawer math (USh 110,260 total incl. 18% VAT + freight); checkout UGANDA orange; mobile 390px 2-col cards + price nowrap; localStorage reset after testing; eslint clean on changed files
+
+Stage Summary:
+- Storefront now reads as a marketplace, not a report: search-first hero, card grid with prices/stock/direct add, full-color imagery, softened 6px corners, sentence-case product naming
+- Skipped by user request: trust strip numbers (3) and social proof (6)
+- Screenshots: download/meridian-v2-*.png (hero, filtered search, catalog, added-toast, quickview fixed, cart, checkout fixed, mobile, final full)

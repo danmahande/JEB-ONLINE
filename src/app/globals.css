@@ -44,7 +44,7 @@
 }
 
 :root {
-  --radius: 0rem;
+  --radius: 0.375rem; /* 6px — softened corners for store feel */
   --background: #F8FAFC;
   --foreground: #1B2A4A;
   --card: #FFFFFF;
@@ -123,8 +123,9 @@
 
 /* ============================================================
    MERIDIAN SUPPLY — storefront design system
-   Deep navy, signal orange, light slate. Sharp corners,
-   condensed uppercase type, bold editorial grid.
+   Deep navy, signal orange, light slate. Softened 6px corners,
+   condensed display type (caps reserved for labels/headings),
+   bold editorial grid with marketplace-style product cards.
    ============================================================ */
 
 @theme {
@@ -156,6 +157,9 @@
   line-height: 0.92;
   text-transform: uppercase;
 }
+.ms-display.normal-case {
+  text-transform: none;
+}
 
 .ms-label {
   font-size: 10px;
@@ -179,12 +183,23 @@
   animation-play-state: paused;
 }
 
-/* Product tile image zoom */
+/* Product card */
+.ms-tile {
+  border-radius: 8px;
+}
 .ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 .ms-tile:hover img {
   transform: scale(1.045);
+}
+
+/* Softened corners — low specificity so explicit rounded-* classes can override */
+.ms-root :where(button, input, textarea, select) {
+  border-radius: 6px;
+}
+.ms-root :where(.ms-field) {
+  border-radius: 6px;
 }
 
 /* Square inputs */
@@ -197,7 +212,6 @@
   font-weight: 500;
   width: 100%;
   outline: none;
-  border-radius: 0;
 }
 .ms-field:focus {
   border-color: var(--color-brand);
@@ -205,9 +219,8 @@
 }
 .ms-field::placeholder {
   color: #94a3b8;
-  text-transform: uppercase;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0.01em;
 }
 
 /* Thin scrollbar */

@@ -33,7 +33,7 @@ export default function CartDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-md p-0 rounded-none border-l border-line bg-white flex flex-col"
+        className="w-full sm:max-w-md p-0 rounded-lg border-l border-line bg-white flex flex-col"
       >
         <SheetHeader className="p-4 border-b border-line">
           <SheetTitle className="ms-display text-2xl text-ink">

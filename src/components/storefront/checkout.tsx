@@ -111,10 +111,10 @@ export default function Checkout({
                 <button
                   key={r.region}
                   onClick={() => setRegion(r.region)}
-                  className={`ms-label border border-line bg-white px-4 py-3 transition-colors ${
+                  className={`ms-label border border-line px-4 py-3 transition-colors ${
                     r.region === region
                       ? "bg-brand text-white border-brand"
-                      : "hover:bg-ink hover:text-white"
+                      : "bg-white hover:bg-ink hover:text-white"
                   }`}
                 >
                   {r.countryName}
@@ -186,10 +186,10 @@ export default function Checkout({
                 <button
                   key={m.key}
                   onClick={() => setForm((f) => ({ ...f, paymentMethod: m.key }))}
-                  className={`border bg-white px-4 py-3 text-left transition-colors ${
+                  className={`border px-4 py-3 text-left transition-colors ${
                     form.paymentMethod === m.key
                       ? "bg-brand text-white border-brand"
-                      : "border-line hover:bg-ink hover:text-white"
+                      : "bg-white border-line hover:bg-ink hover:text-white"
                   }`}
                 >
                   <span className="ms-label block">{m.label}</span>

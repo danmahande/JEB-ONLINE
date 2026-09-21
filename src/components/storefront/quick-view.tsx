@@ -25,8 +25,20 @@ export default function QuickView({
   const addLine = useCart((s) => s.addLine);
   const region = useRegion((s) => s.region);
   const active = regions.find((r) => r.region === region);
-  // keyed by product so variant/qty state resets naturally when product changes
-  const [variantIdx, setVariantIdx] = useState(0);
+  // open on the BASE pack (closest to 0 delta) — the one the tile advertises
+  const [variantIdx, setVariantIdx] = useState(() => {
+    if (!product?.variants?.length) return 0;
+    let best = 0;
+    let bestAbs = Infinity;
+    product.variants.forEach((pv, i) => {
+      const a = Math.abs(pv.priceDelta);
+      if (a < bestAbs) {
+        bestAbs = a;
+        best = i;
+      }
+    });
+    return best;
+  });
   const [qty, setQty] = useState(1);
 
   const v = useMemo(() => product?.variants?.[variantIdx], [product, variantIdx]);
@@ -55,7 +67,7 @@ export default function QuickView({
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent key={product.productId} className="max-w-4xl p-0 gap-0 bg-white border border-line rounded-none max-h-[90vh] overflow-y-auto ms-scroll">
+      <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-white border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
         <DialogHeader className="sr-only">
           <DialogTitle>{product.productLabel}</DialogTitle>
         </DialogHeader>
@@ -79,7 +91,7 @@ export default function QuickView({
             <p className="ms-label text-hush mb-2">
               {product.brand} · {product.category}
             </p>
-            <h3 className="ms-display text-3xl md:text-4xl mb-4">{product.productLabel}</h3>
+            <h3 className="ms-display text-3xl md:text-4xl mb-4 normal-case">{product.productLabel}</h3>
 
             <p className="text-sm leading-relaxed mb-6 opacity-80">
               {product.description}

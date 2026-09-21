@@ -13,7 +13,7 @@ const products: any[] = [
   // ---------------- GRAINS (origin Uganda) ----------------
   {
     productId: "GRN-MAIZE-001",
-    productLabel: "MAIZE FLOUR (POSHO)",
+    productLabel: "Maize Flour (Posho)",
     slug: "maize-flour-posho",
     description:
       "Grade 1 sifted maize flour, milled in Kampala from Ugandan white maize. EAC standard KEBS/UNBS certified. Bulk export packing, moisture ≤ 13.5%.",
@@ -33,7 +33,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-RICE-002",
-    productLabel: "LONG-GRAIN RICE",
+    productLabel: "Long-Grain Rice",
     slug: "long-grain-rice",
     description:
       "Premium polished long-grain rice, sortex cleaned, broken grain ≤ 5%. Sourced from Mbale irrigated schemes. Ideal for wholesale and institutional supply.",
@@ -53,7 +53,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-BEANS-003",
-    productLabel: "SUGAR BEANS (ROSE COCO)",
+    productLabel: "Sugar Beans (Rose Coco)",
     slug: "sugar-beans-rose-coco",
     description:
       "Hand-sorted Rose Coco beans from northern Uganda. Uniform red-speckled grade, weevil-free, double poly-lined 25kg export bags.",
@@ -72,7 +72,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-SORGH-004",
-    productLabel: "SORGHUM",
+    productLabel: "Sorghum",
     slug: "sorghum",
     description:
       "Red sorghum, feed and brewery grade, tested aflatoxin-free. Bulk commodity for millers and breweries across the EAC.",
@@ -88,7 +88,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-WHEAT-005",
-    productLabel: "WHEAT FLOUR",
+    productLabel: "Wheat Flour",
     slug: "wheat-flour",
     description:
       "All-purpose baker's wheat flour, protein 11.5%. Fortified per EAC standards. Packed in woven poly bags with inner liner.",
@@ -107,7 +107,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-MILLET-006",
-    productLabel: "FINGER MILLET",
+    productLabel: "Finger Millet",
     slug: "finger-millet",
     description:
       "Whole-grain finger millet from Teso sub-region. Sun-dried on tarps, thrice winnowed. High demand for porridge flour processors.",
@@ -123,7 +123,7 @@ const products: any[] = [
   },
   {
     productId: "GRN-SOY-007",
-    productLabel: "SOYBEANS",
+    productLabel: "Soybeans",
     slug: "soybeans",
     description:
       "Yellow soybeans, oil-crush and feed grade, protein ≥ 36%. Suitable for oil millers and aquaculture feed producers.",
@@ -140,7 +140,7 @@ const products: any[] = [
   // ---------------- HARDWARE ----------------
   {
     productId: "HWD-CEM-001",
-    productLabel: "PORTLAND CEMENT",
+    productLabel: "Portland Cement",
     slug: "portland-cement",
     description:
       "CEM II 32.5N Portland cement. Consistent set, regional factory direct. Palletized and shrink-wrapped for cross-border transit.",
@@ -159,7 +159,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-ROOF-002",
-    productLabel: "GALVANIZED IRON SHEETS (G.30)",
+    productLabel: "Galvanized Iron Sheets (G.30)",
     slug: "g30-iron-sheets",
     description:
       "Gauge 30 pre-painted galvanized roofing sheets, 3m length, charcoal/black. Corrugated 3V profile. Bundled 10 sheets per strap.",
@@ -178,7 +178,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-NAIL-003",
-    productLabel: "COMMON NAILS",
+    productLabel: "Common Nails",
     slug: "common-nails",
     description:
       "Wire common nails, 2-4 inch mixed, bright finish. Sold in 25kg export cartons. Also stocked in 5kg retail packs.",
@@ -198,7 +198,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-HAMR-004",
-    productLabel: "CLAW HAMMER 16OZ",
+    productLabel: "Claw Hammer 16oz",
     slug: "claw-hammer-16oz",
     description:
       "Forged steel claw hammer, 16oz, shock-reducing rubber grip, polished head. Individually hang-tagged retail ready.",
@@ -214,7 +214,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-WHLB-005",
-    productLabel: "HEAVY-DUTY WHEELBARROW",
+    productLabel: "Heavy-Duty Wheelbarrow",
     slug: "heavy-duty-wheelbarrow",
     description:
       "90L seamless steel tray wheelbarrow, 18-gauge tray, 3.50-8 pneumatic wheel, reinforced handles. 150kg rated load.",
@@ -230,7 +230,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-LOCK-006",
-    productLabel: "STEEL PADLOCK 50MM",
+    productLabel: "Steel Padlock 50mm",
     slug: "steel-padlock-50mm",
     description:
       "Laminated steel padlock, 50mm body, brass cylinder, 3 keys included. Master-cartons of 60 pieces for resellers.",
@@ -246,7 +246,7 @@ const products: any[] = [
   },
   {
     productId: "HWD-SHVL-007",
-    productLabel: "ROUND MOUTH SHOVEL",
+    productLabel: "Round Mouth Shovel",
     slug: "round-mouth-shovel",
     description:
       "Round mouth shovel, pressed steel blade with 7-inch socket, hardwood shaft and YD grip. Farm and construction grade.",
