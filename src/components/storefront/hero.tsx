@@ -14,12 +14,6 @@ export default function Hero({
       className="relative bg-gradient-to-b from-[#16233F] via-[#1B2A4A] to-[#3A5686] text-white overflow-hidden"
       aria-label="Hero"
     >
-      {/* dawn glow — brand orange gathering at the horizon, above the strip */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-36 md:bottom-56 h-44 bg-[radial-gradient(60%_130%_at_50%_100%,rgba(255,107,53,0.30),rgba(255,107,53,0)_72%)]"
-      />
-
       <div className="relative z-10 px-4 md:px-8 pt-10 md:pt-12 pb-6 md:pb-8">
         <p className="ms-label mb-3 md:mb-4 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
@@ -73,9 +67,9 @@ export default function Hero({
           className="absolute inset-0 bg-gradient-to-b from-[#3A5686] via-[#3A5686]/15 to-transparent"
           aria-hidden="true"
         />
-        {/* ...and dissolves into the morning haze the catalog rises from */}
+        {/* ...and dissolves into warm morning haze the catalog rises from */}
         <div
-          className="absolute inset-0 bg-gradient-to-t from-mist via-mist/20 to-transparent"
+          className="absolute inset-0 bg-gradient-to-t from-[#FBF6EC] via-[#FBF6EC]/20 to-transparent"
           aria-hidden="true"
         />
       </div>

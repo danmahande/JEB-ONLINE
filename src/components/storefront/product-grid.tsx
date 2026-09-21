@@ -76,7 +76,11 @@ export default function ProductGrid({
   }
 
   return (
-    <section id="catalog" className="px-4 md:px-8 py-10 md:py-14" aria-label="Catalog">
+    <section
+      id="catalog"
+      className="bg-[linear-gradient(to_bottom,#FBF6EC_0px,#F8FAFC_360px)] px-4 md:px-8 py-10 md:py-14"
+      aria-label="Catalog"
+    >
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <h2 className="ms-display text-4xl md:text-6xl">
           CATALOG

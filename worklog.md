@@ -168,3 +168,18 @@ Work Log:
 
 Stage Summary:
 - Header is now a themed "sky": navy gradient + orange horizon glow + field/warehouse horizon strip; catalog flows out of the morning haze with zero visible seams; all colors are theme tokens or brand-orange rgba
+
+---
+Task ID: 11
+Agent: Super Z (main agent)
+Task: Remove the confusing orange glow above the strip + apply "option 3" — warm the haze the catalog rises from
+
+Work Log:
+- User feedback: the brand-orange radial dawn glow above the strip read as "visual confusion" (muddy warm band between blue sky and image) — removed the glow div entirely; orange now lives only in the CTAs (SEARCH / ENTER CATALOG)
+- Option 3: strip bottom dissolve tinted from pure mist #F8FAFC to warm ivory #FBF6EC (bg-gradient-to-t from-[#FBF6EC] via-[#FBF6EC]/20) — reads as morning haze instead of flat gray
+- product-grid.tsx catalog section: added matching settling gradient bg-[linear-gradient(to_bottom,#FBF6EC_0px,#F8FAFC_360px)] so the cream haze continues seamlessly into the catalog and eases back to the page mist over 360px — no seam, no mismatch with .ms-root
+- Sky gradient (zenith #16233F -> horizon #3A5686) and strip top blend unchanged; verified seamless sky->horizon->haze->catalog read at 1600x900 and 390x844
+- Screenshots: download/meridian-sky-v2-live.png + meridian-sky-v2-mobile.png
+
+Stage Summary:
+- Sky metaphor kept, glow removed, haze warmed: navy sky -> horizon strip -> warm ivory haze -> catalog settling back to mist; orange reserved for interactive elements only
