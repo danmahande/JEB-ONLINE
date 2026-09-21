@@ -13,7 +13,7 @@ CAND = "/home/z/my-project/scripts/candidates"
 OUT = "/home/z/my-project/public/products/__hero.png"
 PREVIEW = "/home/z/my-project/download/hero-composite-preview.png"
 
-W, H = 1100, 550  # 2:1 canvas — half-size per user request (was 2200x1100)
+W, H = 550, 275  # 2:1 canvas — halved again per user request (1100x550 -> 550x275)
 
 # ---------- 1. Load + crop ----------
 # Farm: portrait 3000x4000, maize fills lower 60%, hills at ~y1300-1600

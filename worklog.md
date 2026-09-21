@@ -77,3 +77,16 @@ Work Log:
 
 Stage Summary:
 - Hero background delivered at half dimensions (1100x550, 225 KB) with identical composition; no layout or code changes
+
+---
+Task ID: 5
+Agent: Super Z (main agent)
+Task: Cut hero background by half again (1100x550 -> 550x275)
+
+Work Log:
+- Edited scripts/compose-hero.py canvas to 550x275, regenerated from hi-res originals (same pipeline)
+- public/products/__hero.png now 550x275, 64 KB; preview/duotone artifacts refreshed
+- Verified live at 1600x900: composition intact and duotone masks most of it, but ~2.9x upscale softness is becoming visible (forklift/rack details blur) — flagged to user as the practical limit
+
+Stage Summary:
+- Hero asset now 550x275 / 64 KB; originals and all previous sizes recoverable by editing W,H in scripts/compose-hero.py and re-running
