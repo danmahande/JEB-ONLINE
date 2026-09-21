@@ -183,3 +183,17 @@ Work Log:
 
 Stage Summary:
 - Sky metaphor kept, glow removed, haze warmed: navy sky -> horizon strip -> warm ivory haze -> catalog settling back to mist; orange reserved for interactive elements only
+
+---
+Task ID: 12
+Agent: Super Z (main agent)
+Task: Reduce the overall zoom/scale of the page (user: "can you reduce the zoom size of the page also")
+
+Work Log:
+- Single-dial approach: added `html { font-size: 90% }` to globals.css — the whole design system is rem-based (Tailwind 4 spacing + text), so root 16px -> 14.4px shrinks every element ~10% proportionally (header, ticker, hero paddings, search bar, buttons, cards, CATALOG heading, strip height)
+- Known side effect accepted: Tailwind's em-based md: breakpoint now fires at ~691px instead of 768px — desktop layout starts slightly earlier on tablets; no impact on 390px mobile or 1600px desktop
+- hero.tsx: viewport-relative headline trimmed to match — text-[13.5vw] -> text-[12.5vw], md:text-[6.8vw] -> md:text-[6.2vw]
+- Verified with agent-browser at 1600x900 + 390x844: page reads ~one zoom-out notch tighter, CATALOG + filter tabs comfortably above the fold, mobile cards peek higher; screenshots download/meridian-scale90-live.png + meridian-scale90-mobile.png
+
+Stage Summary:
+- Page-wide scale is now a one-line dial in globals.css (html font-size); 90% shipped — can go to 85% (tighter) or 95% (looser) on request without touching any component

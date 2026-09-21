@@ -138,6 +138,12 @@
   --color-hush: #64748B;       /* muted slate text */
 }
 
+/* Page-wide scale: root font-size dial. Everything rem-based (Tailwind spacing,
+   text sizes, card layout) renders proportionally — 90% ≈ one browser zoom-out notch. */
+html {
+  font-size: 90%;
+}
+
 .ms-root {
   font-family: "Helvetica Neue", Helvetica, Arial, "Noto Sans SC", sans-serif;
   background: var(--color-mist);
