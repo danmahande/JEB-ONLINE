@@ -153,3 +153,18 @@ Work Log:
 
 Stage Summary:
 - Search-first hero shipped: blurb removed, catalog visible above the fold on desktop and mobile; hero vertical budget now ~500px block + 224px strip on desktop
+
+---
+Task ID: 10
+Agent: Super Z (main agent)
+Task: Sky metaphor — make the hero (navy + factory strip + search) read as "the sky" with the catalog flowing naturally out of it (theme colors: navy + orange)
+
+Work Log:
+- hero.tsx section: flat bg-ink replaced with a vertical sky gradient from-[#16233F] (zenith) via-[#1B2A4A] to-[#3A5686] (lighter horizon blue) — text sits on the darkest zone, contrast preserved
+- Added a brand-orange "dawn glow": pointer-events-none radial gradient (rgba(255,107,53,0.30) core -> transparent 72%) anchored at the horizon line (bottom-36 md:bottom-56, h-44), sitting above the strip behind the CTA
+- Strip now blends from BOTH sides: top overlay from-[#3A5686] via-[#3A5686]/15 melts it into the horizon sky; new bottom overlay bg-gradient-to-t from-mist via-mist/20 to-transparent dissolves it into the page background (#F8FAFC, verified on .ms-root)
+- Catalog section (product-grid.tsx) already has no bg/border of its own, so the dissolved strip edge connects seamlessly — CATALOG heading + tiles rise out of the haze with no hard line
+- Verified with agent-browser at 1600x900 + 390x844: seamless sky->horizon->haze->catalog read on both; screenshots download/meridian-sky-hero-live.png + meridian-sky-hero-mobile.png
+
+Stage Summary:
+- Header is now a themed "sky": navy gradient + orange horizon glow + field/warehouse horizon strip; catalog flows out of the morning haze with zero visible seams; all colors are theme tokens or brand-orange rgba

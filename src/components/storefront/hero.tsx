@@ -10,7 +10,16 @@ export default function Hero({
   onQuery: (q: string) => void;
 }) {
   return (
-    <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
+    <section
+      className="relative bg-gradient-to-b from-[#16233F] via-[#1B2A4A] to-[#3A5686] text-white overflow-hidden"
+      aria-label="Hero"
+    >
+      {/* dawn glow — brand orange gathering at the horizon, above the strip */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-36 md:bottom-56 h-44 bg-[radial-gradient(60%_130%_at_50%_100%,rgba(255,107,53,0.30),rgba(255,107,53,0)_72%)]"
+      />
+
       <div className="relative z-10 px-4 md:px-8 pt-10 md:pt-12 pb-6 md:pb-8">
         <p className="ms-label mb-3 md:mb-4 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
@@ -52,15 +61,21 @@ export default function Hero({
         </button>
       </div>
 
-      {/* thin HD strip: maize field dissolving into a warehouse — full color, edge to edge */}
+      {/* thin HD strip: maize field dissolving into a warehouse — the horizon line */}
       <div className="relative h-36 md:h-56">
         <img
           src="/products/__hero.png"
           alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
           className="absolute inset-0 h-full w-full object-cover"
         />
+        {/* melts out of the sky above... */}
         <div
-          className="absolute inset-0 bg-gradient-to-b from-ink via-ink/10 to-transparent"
+          className="absolute inset-0 bg-gradient-to-b from-[#3A5686] via-[#3A5686]/15 to-transparent"
+          aria-hidden="true"
+        />
+        {/* ...and dissolves into the morning haze the catalog rises from */}
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-mist via-mist/20 to-transparent"
           aria-hidden="true"
         />
       </div>
