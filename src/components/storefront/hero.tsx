@@ -3,12 +3,11 @@
 export default function Hero({ onShop }: { onShop: () => void }) {
   return (
     <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
-      {/* navy-duotone warehouse image */}
+      {/* navy-duotone composite: maize field dissolving into a warehouse */}
       <div className="absolute inset-0 opacity-50">
-        { }
         <img
           src="/products/__hero.png"
-          alt="Stacked grain sacks and bundled roofing sheets in a concrete warehouse"
+          alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
           className="w-full h-full object-cover grayscale"
         />
       </div>

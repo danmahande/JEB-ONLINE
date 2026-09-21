@@ -1,0 +1,65 @@
+{
+  "success": true,
+  "query": "vast green maize field farm in Africa with rows of tall corn plants under a bright sky, high resolution landscape photo",
+  "count": 8,
+  "ranked": true,
+  "captioned_count": 5,
+  "results": [
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/5c5d61c73ce4.jpg",
+      "caption": "Rows of young green corn plants in a vast farm field under misty hills. Contains Dreamstime watermarks and ID text \"385621808 © Iryna Kushnarova\".",
+      "source": "Dreamstime.com",
+      "original_width": "1600px",
+      "original_height": "1130px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/f0c5284c4c4d.jpg",
+      "caption": "A golden cornfield under a blue summer sky, with trees and a rural French farmhouse in the distance. Contains Alamy watermarks.",
+      "source": "Alamy",
+      "original_width": "866px",
+      "original_height": "1390px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/283676fc71ef.jpg",
+      "caption": "",
+      "source": "Unsplash",
+      "original_width": "3000px",
+      "original_height": "4000px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/5aedbae811d7.jpg",
+      "caption": "",
+      "source": "Unsplash",
+      "original_width": "3000px",
+      "original_height": "4000px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/c5f94b3808ff.jpg",
+      "caption": "Lush green cornfield beside harvested golden farmland under clear blue sky with distant trees. Contains Shutterstock watermark (Image ID: 2704720537), not suitable for background image.",
+      "source": "Shutterstock",
+      "original_width": "1500px",
+      "original_height": "1225px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/f9ceb6d333e6.jpg",
+      "caption": "A lush green cornfield with tall maize plants and corn cobs under a bright overcast sky. Contains visible Dreamstime watermarks, logos, and \"ID 470791063 © Emils Vanags\" text — it is a watermarked stock photo, not suitable for background image.",
+      "source": "Dreamstime.com",
+      "original_width": "1600px",
+      "original_height": "1158px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/9b5845d71d23.jpg",
+      "caption": "",
+      "source": "Barnimages",
+      "original_width": "2000px",
+      "original_height": "1333px"
+    },
+    {
+      "original_url": "https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/9fcfb89d20b8.jpg",
+      "caption": "A sunlit dirt path through green farmland with trees and blue sky. No text or watermarks; suitable for background image.",
+      "source": "BIKEPACKING.com",
+      "original_width": "2500px",
+      "original_height": "1668px"
+    }
+  ]
+}

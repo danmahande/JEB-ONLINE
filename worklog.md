@@ -45,3 +45,21 @@ Stage Summary:
 - Visual identity = kwanza ERP palette (navy #1B2A4A / orange #FF6B35 / light slate #F8FAFC) on the same bold square layout
 - All product naming is descriptive/original (no Yeezy-style codes); screenshots in /home/z/my-project/download/meridian-*.png
 - Demo orders now DS100001/DS100002/DS100003; test-browser localStorage reset to default region UG
+
+---
+Task ID: 3
+Agent: Super Z (main agent)
+Task: Replace AI-generated hero background with a composite of two real web photos (African maize farm + equipment warehouse)
+
+Work Log:
+- Ran two image-search queries (farm: 8 results, warehouse: 8 results); rejected watermarked hits (Dreamstime/Alamy/Shutterstock) and off-topic hits
+- Selected farm-3.jpg (Unsplash 3000x4000, lush maize field with hills + red soil, East-African look) and wh-2.png (1672x941 clean warehouse interior with forklifts, pallet racks, loading dock)
+- Built scripts/compose-hero.py: 2:1 2200x1100 canvas, luminance-only tone match (preserves warehouse hue), feathered cosine alpha seam (30%-58% of width) with random-walk vertical warp + 6px blur so the transition reads as an organic double-exposure instead of a hard split
+- First iteration had green cast on warehouse (per-channel match transferred farm hue) and ghosting over the forklift; fixed via luminance-only matching + seam shifted left of the forklift zone
+- Backed up original AI hero to scripts/candidates/__hero-ai-backup.png; overwrote public/products/__hero.png (JPEG q85 progressive, ~1MB) — CSS grayscale + navy overlay treatment unchanged
+- Updated hero.tsx comment + alt text ("Maize field in the hills blending into a warehouse stacked with goods and a forklift")
+- Verified live at 1600x900: maize sits under "GRAINS &", warehouse under "HARDWARE", seam invisible under duotone, text legible
+- Review artifacts: download/hero-composite-preview.png (color), download/hero-duotone-simulation.png (navy sim), download/meridian-hero-composite-live.png (live screenshot)
+
+Stage Summary:
+- Hero background is now a real-photo composite (farm->warehouse supply-chain story) replacing the AI image; no code layout changes; original AI asset backed up
