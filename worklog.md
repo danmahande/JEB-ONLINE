@@ -110,3 +110,19 @@ Stage Summary:
 - Storefront now reads as a marketplace, not a report: search-first hero, card grid with prices/stock/direct add, full-color imagery, softened 6px corners, sentence-case product naming
 - Skipped by user request: trust strip numbers (3) and social proof (6)
 - Screenshots: download/meridian-v2-*.png (hero, filtered search, catalog, added-toast, quickview fixed, cart, checkout fixed, mobile, final full)
+
+---
+Task ID: 7
+Agent: Super Z (main agent)
+Task: Make the main hero image a thin strip while keeping HD quality (user: "i wish the main image was just a thin strip but still hd quality")
+
+Work Log:
+- Rebuilt scripts/compose-hero.py for a ~7:1 panoramic band: canvas 550x275 -> 1920x270, cropping horizontal slices from the hi-res originals (farm 3000x422 horizon band at y=0.335fh; warehouse 1672x235 band raised 130px off the floor to keep forklift + rack bases) — near-native pixels, no upscaling at common desktop widths
+- Kept luminance-only tone match + feathered cosine seam (30-58% of width) with vertical wander; alpha GaussianBlur 6 -> 12 for the wider canvas; final grade keeps FULL color (Color 1.05) since the strip is displayed un-grayscaled
+- public/products/__hero.png now 1920x270, 140 KB; review artifacts: download/hero-composite-preview.png + new download/hero-strip-insitu-sim.png (top navy-blend simulation)
+- Rewrote hero.tsx: hero is now a solid navy block (eyebrow, display type, search bar, blurb + CTA) with the composite as a thin full-width band below it (h-36 mobile / md:h-56 desktop, object-cover), blended out of the navy via bg-gradient-to-b from-ink via-ink/10 to-transparent; removed min-h-[70vh/78vh] full-bleed background treatment
+- Verified at 1600x900: strip is crisp, seam invisible, melts out of the navy block, clean hard edge into the CATALOG section; mobile 390px: strip stays thin and legible, product cards unaffected
+- Screenshots: download/meridian-hero-strip-live.png, meridian-hero-strip-scrolled.png, meridian-hero-strip-mobile.png
+
+Stage Summary:
+- Main image is now a thin full-width HD strip (1920x270, 140 KB) under a solid navy hero; any future size is recoverable by editing W,H in scripts/compose-hero.py and re-running
