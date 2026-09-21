@@ -42,7 +42,7 @@ export default function Storefront() {
   }
 
   return (
-    <div className="kz-root min-h-screen flex flex-col">
+    <div className="ms-root min-h-screen flex flex-col">
       <Header
         regions={regions}
         onNavigate={(v) => (v === "shop" ? goShop() : goTrack())}
@@ -61,15 +61,15 @@ export default function Storefront() {
               loading={loading}
             />
             {/* trust strip */}
-            <section className="border-t border-black px-4 md:px-8 py-10 grid sm:grid-cols-3 gap-6" aria-label="Trade assurances">
+            <section className="border-t border-line bg-white px-4 md:px-8 py-10 grid sm:grid-cols-3 gap-6" aria-label="Trade assurances">
               {[
                 ["EAC PREFERENTIAL TARIFFS", "Goods originating in Uganda move duty-free across Kenya, Tanzania and Rwanda under the EAC Common External Tariff."],
-                ["ERP-BACKED FULFILLMENT", "Every order writes into kwanza-erp — inventory decrements, warehouse picking, driver runsheets and COD reconciliation follow automatically."],
+                ["END-TO-END FULFILLMENT", "Every order flows into our warehouse system — stock decrements, picking, driver runsheets and cash-on-delivery reconciliation follow automatically."],
                 ["TRANSPARENT CROSS-BORDER PRICING", "Duties, VAT and freight are estimated per destination before payment — no surprise fees at the border."],
               ].map(([title, body]) => (
                 <div key={title}>
-                  <p className="kz-label mb-2 border-l-2 border-black pl-3">{title}</p>
-                  <p className="text-sm leading-relaxed opacity-70">{body}</p>
+                  <p className="ms-label mb-2 border-l-2 border-brand pl-3">{title}</p>
+                  <p className="text-sm leading-relaxed text-hush">{body}</p>
                 </div>
               ))}
             </section>

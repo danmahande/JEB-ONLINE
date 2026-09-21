@@ -1,7 +1,7 @@
 /**
- * Seed: Kwanza Supply storefront catalog
- * Product fields mirror kwanza-erp's Product model so rows can be
- * synced 1:1 into the real ERP later.
+ * Seed: Meridian Supply storefront catalog
+ * Field names intentionally mirror the upstream ERP's Product model so rows
+ * can be synced 1:1 into a real ERP instance later.
  */
 import { PrismaClient } from "@prisma/client";
 
@@ -17,7 +17,7 @@ const products: any[] = [
     slug: "maize-flour-posho",
     description:
       "Grade 1 sifted maize flour, milled in Kampala from Ugandan white maize. EAC standard KEBS/UNBS certified. Bulk export packing, moisture ≤ 13.5%.",
-    brand: "KWANZA MILLS",
+    brand: "MERIDIAN MILLS",
     category: "GRAINS",
     unit: "BAG",
     weight: "25KG",
@@ -57,7 +57,7 @@ const products: any[] = [
     slug: "sugar-beans-rose-coco",
     description:
       "Hand-sorted Rose Coco beans from northern Uganda. Uniform red-speckled grade, weevil-free, double poly-lined 25kg export bags.",
-    brand: "KWANZA FARM CO",
+    brand: "MERIDIAN FARM CO",
     category: "GRAINS",
     unit: "BAG",
     weight: "25KG",
@@ -76,7 +76,7 @@ const products: any[] = [
     slug: "sorghum",
     description:
       "Red sorghum, feed and brewery grade, tested aflatoxin-free. Bulk commodity for millers and breweries across the EAC.",
-    brand: "KWANZA FARM CO",
+    brand: "MERIDIAN FARM CO",
     category: "GRAINS",
     unit: "BAG",
     weight: "50KG",
@@ -92,7 +92,7 @@ const products: any[] = [
     slug: "wheat-flour",
     description:
       "All-purpose baker's wheat flour, protein 11.5%. Fortified per EAC standards. Packed in woven poly bags with inner liner.",
-    brand: "KWANZA MILLS",
+    brand: "MERIDIAN MILLS",
     category: "GRAINS",
     unit: "BAG",
     weight: "25KG",
@@ -111,7 +111,7 @@ const products: any[] = [
     slug: "finger-millet",
     description:
       "Whole-grain finger millet from Teso sub-region. Sun-dried on tarps, thrice winnowed. High demand for porridge flour processors.",
-    brand: "KWANZA FARM CO",
+    brand: "MERIDIAN FARM CO",
     category: "GRAINS",
     unit: "BAG",
     weight: "25KG",
@@ -127,7 +127,7 @@ const products: any[] = [
     slug: "soybeans",
     description:
       "Yellow soybeans, oil-crush and feed grade, protein ≥ 36%. Suitable for oil millers and aquaculture feed producers.",
-    brand: "KWANZA FARM CO",
+    brand: "MERIDIAN FARM CO",
     category: "GRAINS",
     unit: "BAG",
     weight: "50KG",
@@ -350,6 +350,12 @@ async function main() {
     });
   }
   console.log(`  regions: ${regions.length}`);
+
+  // Refresh merchant identity on existing rows
+  await db.product.updateMany({
+    data: { merchantId: "MCH-MRD-001", merchantName: "Meridian Supply Co." },
+  });
+
   console.log("Done.");
 }
 

@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/orders
- * Creates an order in kwanza-erp-compatible shape:
+ * Creates an order in upstream-ERP-compatible shape:
  *  - OrderProcessing (orderNumber "DS100001" convention, trackingNumber)
  *  - OrderLineItem rows
  *  - Customer upsert (by phone contact, per ERP behavior)

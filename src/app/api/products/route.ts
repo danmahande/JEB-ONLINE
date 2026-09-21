@@ -3,8 +3,8 @@ import { db } from "@/lib/db";
 
 /**
  * GET /api/products
- * Kwanza-ERP compatible product catalog feed.
- * Mirrors the ERP's Product model fields; adds storefront fields (slug, image, variants).
+ * Product catalog feed.
+ * Field names mirror the upstream ERP's Product model; adds storefront fields (slug, image, variants).
  */
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
     const parsed = products.map((p) => ({
-      // ---- kwanza-erp fields ----
+      // ---- upstream ERP fields ----
       id: p.id,
       productId: p.productId,
       productLabel: p.productLabel,

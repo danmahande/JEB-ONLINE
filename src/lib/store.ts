@@ -46,7 +46,7 @@ export const useCart = create<CartState>()(
         })),
       clear: () => set({ lines: [] }),
     }),
-    { name: "kwanza-cart" }
+    { name: "meridian-cart" }
   )
 );
 
@@ -61,6 +61,6 @@ export const useRegion = create<RegionState>()(
       region: "UG",
       setRegion: (region) => set({ region }),
     }),
-    { name: "kwanza-region" }
+    { name: "meridian-region" }
   )
 );

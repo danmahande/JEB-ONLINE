@@ -9,7 +9,7 @@ const TICKER_ITEMS = [
   "GRAINS MILLED & SORTED IN UGANDA",
   "CROSS-BORDER FREIGHT QUOTED AT CHECKOUT",
   "BULK & WHOLESALE WELCOME",
-  "ORDERS FULFILLED VIA KWANZA-ERP",
+  "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · USD",
 ];
 
 export default function Header({
@@ -33,40 +33,40 @@ export default function Header({
   return (
     <header className="sticky top-0 z-40 bg-white">
       {/* ticker */}
-      <div className="overflow-hidden bg-black text-white py-1.5" aria-hidden="true">
-        <div className="kz-marquee-track">
+      <div className="overflow-hidden bg-ink text-white py-1.5" aria-hidden="true">
+        <div className="ms-marquee-track">
           {ticker.map((t, i) => (
-            <span key={i} className="kz-label mx-8 inline-block">
-              {t} <span className="ml-8 opacity-40">●</span>
+            <span key={i} className="ms-label mx-8 inline-block">
+              {t} <span className="ml-8 text-brand">●</span>
             </span>
           ))}
         </div>
       </div>
 
       {/* main bar */}
-      <div className="flex items-center justify-between border-b border-black px-4 py-3 md:px-8">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3 md:px-8">
         <button
           onClick={() => onNavigate("shop")}
-          className="kz-display text-xl md:text-2xl tracking-tight text-left"
-          aria-label="Kwanza Supply home"
+          className="ms-display text-xl md:text-2xl tracking-tight text-left"
+          aria-label="Meridian Supply home"
         >
-          KWANZA{" "}
+          MERIDIAN{" "}
           <span className="hidden md:inline">
             <br />
           </span>
-          SUPPLY<sup className="text-[10px] align-super">®</sup>
+          SUPPLY<span className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
         </button>
 
         <nav className="hidden md:flex items-center gap-8" aria-label="Main">
           <button
             onClick={() => onNavigate("shop")}
-            className="kz-label hover:opacity-50 transition-opacity"
+            className="ms-label hover:text-brand transition-colors"
           >
             SHOP ALL
           </button>
           <button
             onClick={() => onNavigate("track")}
-            className="kz-label hover:opacity-50 transition-opacity"
+            className="ms-label hover:text-brand transition-colors"
           >
             TRACK ORDER
           </button>
@@ -77,7 +77,7 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setRegionOpen((o) => !o)}
-              className="kz-label border border-black px-3 py-2 hover:bg-black hover:text-white transition-colors"
+              className="ms-label border border-line px-3 py-2 hover:bg-ink hover:text-white transition-colors"
               aria-haspopup="listbox"
               aria-expanded={regionOpen}
             >
@@ -86,7 +86,7 @@ export default function Header({
             </button>
             {regionOpen && (
               <ul
-                className="absolute right-0 mt-1 w-56 border border-black bg-white z-50"
+                className="absolute right-0 mt-1 w-56 border border-line bg-white z-50 shadow-lg"
                 role="listbox"
               >
                 {regions.map((r) => (
@@ -98,8 +98,8 @@ export default function Header({
                         setRegion(r.region);
                         setRegionOpen(false);
                       }}
-                      className={`kz-label w-full text-left px-3 py-3 hover:bg-black hover:text-white transition-colors ${
-                        r.region === region ? "bg-black text-white" : ""
+                      className={`ms-label w-full text-left px-3 py-3 hover:bg-ink hover:text-white transition-colors ${
+                        r.region === region ? "bg-ink text-white" : ""
                       }`}
                     >
                       {r.countryName}
@@ -114,7 +114,7 @@ export default function Header({
           {/* cart */}
           <button
             onClick={onOpenCart}
-            className="kz-label bg-black text-white px-4 py-2 hover:opacity-80 transition-opacity"
+            className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
             aria-label={`Open cart, ${count} items`}
           >
             CART [{count}]
@@ -123,16 +123,16 @@ export default function Header({
       </div>
 
       {/* mobile nav */}
-      <nav className="md:hidden flex border-b border-black" aria-label="Mobile">
+      <nav className="md:hidden flex border-b border-line" aria-label="Mobile">
         <button
           onClick={() => onNavigate("shop")}
-          className="kz-label flex-1 py-3 border-r border-black hover:bg-black hover:text-white transition-colors"
+          className="ms-label flex-1 py-3 border-r border-line hover:bg-ink hover:text-white transition-colors"
         >
           SHOP
         </button>
         <button
           onClick={() => onNavigate("track")}
-          className="kz-label flex-1 py-3 hover:bg-black hover:text-white transition-colors"
+          className="ms-label flex-1 py-3 hover:bg-ink hover:text-white transition-colors"
         >
           TRACK
         </button>

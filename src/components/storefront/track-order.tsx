@@ -41,12 +41,12 @@ export default function TrackOrder() {
 
   return (
     <section className="px-4 md:px-8 py-10 md:py-14 min-h-[60vh]" aria-label="Track order">
-      <h2 className="kz-display text-4xl md:text-6xl mb-8">TRACK ORDER</h2>
+      <h2 className="ms-display text-4xl md:text-6xl mb-8">TRACK ORDER</h2>
 
       <div className="max-w-2xl">
-        <div className="flex border border-black">
+        <div className="flex border border-line bg-white">
           <input
-            className="kz-field border-0"
+            className="ms-field border-0"
             placeholder="ORDER NO. (E.G. DS100001) OR TRACKING NO."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -55,46 +55,46 @@ export default function TrackOrder() {
           />
           <button
             onClick={lookup}
-            className="kz-label bg-black text-white px-6 md:px-10 hover:opacity-80 transition-opacity"
+            className="ms-label bg-brand text-white px-6 md:px-10 hover:bg-brand-dark transition-colors"
           >
             {state === "loading" ? "…" : "FIND"}
           </button>
         </div>
 
         {state === "notfound" && (
-          <p className="kz-label mt-4 border border-black px-4 py-3" role="status">
+          <p className="ms-label mt-4 border border-line bg-white px-4 py-3" role="status">
             NO ORDER FOUND FOR “{query.toUpperCase()}”. CHECK THE NUMBER OR CONTACT SALES.
           </p>
         )}
         {state === "error" && (
-          <p className="kz-label mt-4 border border-black px-4 py-3" role="alert">
+          <p className="ms-label mt-4 border border-red-500 text-red-500 bg-white px-4 py-3" role="alert">
             LOOKUP FAILED — TRY AGAIN.
           </p>
         )}
 
         {state === "found" && order && (
-          <div className="mt-8 border border-black">
+          <div className="mt-8 border border-line bg-white shadow-sm">
             {/* header */}
-            <div className="flex flex-wrap justify-between gap-4 p-5 border-b border-black bg-black text-white">
+            <div className="flex flex-wrap justify-between gap-4 p-5 border-b border-line bg-ink text-white">
               <div>
-                <p className="kz-label opacity-60 mb-1">ORDER</p>
+                <p className="ms-label opacity-60 mb-1">ORDER</p>
                 <p className="font-black text-2xl tracking-tight">{order.orderNumber}</p>
               </div>
               <div className="text-right">
-                <p className="kz-label opacity-60 mb-1">TRACKING</p>
+                <p className="ms-label opacity-60 mb-1">TRACKING</p>
                 <p className="font-black text-lg">{order.trackingNumber || "—"}</p>
               </div>
             </div>
 
             {/* timeline */}
-            <div className="p-5 border-b border-black">
+            <div className="p-5 border-b border-line">
               <div className="relative">
                 <span
-                  className="absolute top-[7px] left-0 right-0 h-0.5 bg-black opacity-10"
+                  className="absolute top-[7px] left-0 right-0 h-0.5 bg-ink opacity-10"
                   aria-hidden="true"
                 />
                 <span
-                  className="absolute top-[7px] left-0 h-0.5 bg-black"
+                  className="absolute top-[7px] left-0 h-0.5 bg-brand"
                   style={{
                     width: order.status === "returned" ? "0%" : `${(stageIdx / (ORDER_STAGES.length - 1)) * 100}%`,
                   }}
@@ -110,11 +110,11 @@ export default function TrackOrder() {
                       >
                         <span
                           className={`w-4 h-4 ${
-                            reached ? "bg-black" : "bg-white border border-black"
+                            reached ? "bg-brand" : "bg-white border border-line"
                           }`}
                           aria-hidden="true"
                         />
-                        <span className={`kz-label ${reached ? "" : "opacity-30"}`}>
+                        <span className={`ms-label ${reached ? "" : "opacity-30"}`}>
                           {s.label}
                         </span>
                       </div>
@@ -123,20 +123,20 @@ export default function TrackOrder() {
                 </div>
               </div>
               {order.status === "returned" && (
-                <p className="kz-label mt-6 text-center text-red-600">ORDER RETURNED</p>
+                <p className="ms-label mt-6 text-center text-red-500">ORDER RETURNED</p>
               )}
             </div>
 
             {/* meta */}
-            <div className="grid sm:grid-cols-2 divide-black sm:divide-x border-b border-black">
+            <div className="grid sm:grid-cols-2 sm:divide-x divide-line border-b border-line">
               <div className="p-5 space-y-1.5">
-                <p className="kz-label opacity-50 mb-2">SHIPMENT</p>
+                <p className="ms-label text-hush mb-2">SHIPMENT</p>
                 <p className="text-sm"><b>DESTINATION:</b> {order.destination || "—"}</p>
                 <p className="text-sm"><b>PLACED:</b> {new Date(order.orderDate).toLocaleDateString()}</p>
                 <p className="text-sm"><b>ETA:</b> {order.etaDays || "—"}</p>
               </div>
               <div className="p-5 space-y-1.5">
-                <p className="kz-label opacity-50 mb-2">PAYMENT</p>
+                <p className="ms-label text-hush mb-2">PAYMENT</p>
                 <p className="text-sm"><b>METHOD:</b> {order.paymentMethod}</p>
                 <p className="text-sm">
                   <b>TOTAL:</b> ${order.totalAmount.toFixed(2)}
@@ -152,9 +152,9 @@ export default function TrackOrder() {
             </div>
 
             {/* items */}
-            <div className="p-5 border-b border-black">
-              <p className="kz-label opacity-50 mb-3">ITEMS</p>
-              <div className="divide-y divide-black">
+            <div className="p-5 border-b border-line">
+              <p className="ms-label text-hush mb-3">ITEMS</p>
+              <div className="divide-y divide-line">
                 {lineItems.map((li, i) => (
                   <div key={i} className="flex justify-between gap-3 py-2.5 text-sm">
                     <span>
@@ -175,7 +175,7 @@ export default function TrackOrder() {
             {/* events */}
             {events.length > 0 && (
               <div className="p-5">
-                <p className="kz-label opacity-50 mb-3">HISTORY</p>
+                <p className="ms-label text-hush mb-3">HISTORY</p>
                 <ul className="space-y-2">
                   {events.map((ev) => (
                     <li key={ev.id} className="text-xs tracking-wide">

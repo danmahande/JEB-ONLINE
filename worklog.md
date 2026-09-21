@@ -24,3 +24,24 @@ Stage Summary:
 - DB: db/custom.db (SQLite) via prisma/schema.prisma; seed at scripts/seed.ts; image gen at scripts/gen-images.ts
 - Integration path to real ERP: point storefront API layer at kwanza-erp instance base URL; Product/OrderProcessing/OrderLineItem/Customer payloads match ERP field names 1:1
 - Orders DS100001 (API test, Nairobi) + DS100002 (UI test, Gulu) exist as demo data; stock decremented consistently
+
+---
+Task ID: 2
+Agent: Super Z (main agent)
+Task: User revision pass — (1) hide all kwanza-erp existence from the storefront, (2) adopt kwanza-erp's color palette for the design, (3) remove Yeezy-style naming (e.g. "NR-07" codes)
+
+Work Log:
+- Extracted kwanza-erp's live palette from its GitHub source (src/app/globals.css :root): primary #FF6B35, foreground/sidebar #1B2A4A, background #F8FAFC, muted #64748B, border #E2E8F0, chart green #22C55E / amber #F59E0B / blue #3B82F6, destructive #EF4444
+- Rebranded storefront from "KWANZA SUPPLY CO." to original identity "MERIDIAN SUPPLY CO." (metadata, logo, footer, copyright, support email)
+- Rewrote globals.css design system: kz-* classes renamed to ms-*, shadcn :root vars set to kwanza ERP hex values, added @theme tokens (ink/brand/brand-dark/line/mist/hush); CTA/selected states use orange #FF6B35, dark surfaces (ticker/hero/footer/tile labels/track header) use navy #1B2A4A, page bg #F8FAFC, borders #E2E8F0, 0% DUTY badge emerald, SOLD OUT/error red, timeline progress orange
+- Scrubbed every user-visible kwanza mention: header ticker item, hero, trust strip ("ERP-BACKED FULFILLMENT" -> "END-TO-END FULFILLMENT"), checkout fine print, confirmation sentence, footer (BACKEND line -> SUPPORT email, "POWERED BY" -> tagline), aria-labels
+- Scrubbed source-level leaks: localStorage keys (meridian-cart/meridian-region), prisma schema header comments + merchantName default "Kwanza Supply Co." -> "Meridian Supply Co." + merchantId MCH-KWZ-001 -> MCH-MRD-001, seed header comment, API route comments, types comment, gen-images comment
+- Removed SKU-code display from quick view (was brand · productId e.g. GRN-MAIZE-001; now brand · category); product names remain descriptive original naming; seed brands KWANZA MILLS/FARM CO -> MERIDIAN MILLS / MERIDIAN FARM CO; db:push + re-seed applied (incl. updateMany merchant refresh)
+- Fixed stale dev-server CSS cache (new @theme tokens missing -> transparent ticker/cart): appended recompile trigger to globals.css, verified computed styles (ticker rgb(27,42,74), cart btn rgb(255,107,53))
+- Browser-verified end-to-end (agent-browser): home/catalog/quick view/add to cart/cart math (UGX 68,080 + 18% VAT + freight = USh 103,452), checkout -> order DS100003 placed via MTN MoMo, confirmation, tracking timeline DS100003 with orange stage dot, INTL region switch ($ USD pricing, duty badge hidden), mobile 390px layout, full-page desktop screenshot; document.body.innerText contains zero "kwanza"; served HTML + /api/products + /api/fx payloads contain zero "kwanza"
+
+Stage Summary:
+- Storefront is now fully white-labeled: customers see only "MERIDIAN SUPPLY CO." with zero kwanza-erp traces in UI, metadata, HTML source, API payloads, or localStorage
+- Visual identity = kwanza ERP palette (navy #1B2A4A / orange #FF6B35 / light slate #F8FAFC) on the same bold square layout
+- All product naming is descriptive/original (no Yeezy-style codes); screenshots in /home/z/my-project/download/meridian-*.png
+- Demo orders now DS100001/DS100002/DS100003; test-browser localStorage reset to default region UG

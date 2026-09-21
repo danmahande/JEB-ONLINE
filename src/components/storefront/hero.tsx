@@ -2,9 +2,9 @@
 
 export default function Hero({ onShop }: { onShop: () => void }) {
   return (
-    <section className="relative bg-black text-white overflow-hidden" aria-label="Hero">
-      {/* B/W warehouse image */}
-      <div className="absolute inset-0 opacity-60">
+    <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
+      {/* navy-duotone warehouse image */}
+      <div className="absolute inset-0 opacity-50">
         { }
         <img
           src="/products/__hero.png"
@@ -12,13 +12,14 @@ export default function Hero({ onShop }: { onShop: () => void }) {
           className="w-full h-full object-cover grayscale"
         />
       </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-ink/20" aria-hidden="true" />
 
       <div className="relative z-10 px-4 md:px-8 pt-16 pb-10 md:pt-28 md:pb-16 min-h-[70vh] md:min-h-[78vh] flex flex-col justify-between">
         <div>
-          <p className="kz-label mb-6 opacity-80">
+          <p className="ms-label mb-6 opacity-80 text-white">
             UGANDA ORIGIN — EXPORTING ACROSS THE EAC & WORLDWIDE
           </p>
-          <h1 className="kz-display text-[15vw] md:text-[9.5vw]">
+          <h1 className="ms-display text-[15vw] md:text-[9.5vw]">
             GRAINS &<br />
             HARDWARE
           </h1>
@@ -32,7 +33,7 @@ export default function Hero({ onShop }: { onShop: () => void }) {
           </p>
           <button
             onClick={onShop}
-            className="kz-label self-start bg-white text-black px-8 py-4 hover:bg-black hover:text-white border border-white transition-colors"
+            className="ms-label self-start bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
           >
             ENTER CATALOG ↓
           </button>

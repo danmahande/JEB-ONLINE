@@ -44,38 +44,38 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0rem;
+  --background: #F8FAFC;
+  --foreground: #1B2A4A;
+  --card: #FFFFFF;
+  --card-foreground: #1B2A4A;
+  --popover: #FFFFFF;
+  --popover-foreground: #1B2A4A;
+  --primary: #FF6B35;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #1B2A4A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #F1F5F9;
+  --accent-foreground: #1B2A4A;
+  --destructive: #EF4444;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #FF6B35;
+  --chart-1: #FF6B35;
+  --chart-2: #1B2A4A;
+  --chart-3: #22C55E;
+  --chart-4: #F59E0B;
+  --chart-5: #3B82F6;
+  --sidebar: #1B2A4A;
+  --sidebar-foreground: #E2E8F0;
+  --sidebar-primary: #FF6B35;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #243656;
+  --sidebar-accent-foreground: #E2E8F0;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #FF6B35;
 }
 
 .dark {
@@ -122,37 +122,42 @@
 }
 
 /* ============================================================
-   KWANZA SUPPLY — Yeezy-style design system
-   Stark black/white, square corners, condensed uppercase type
+   MERIDIAN SUPPLY — storefront design system
+   Deep navy, signal orange, light slate. Sharp corners,
+   condensed uppercase type, bold editorial grid.
    ============================================================ */
 
-:root {
-  --radius: 0rem;
-  --kz-black: #0a0a0a;
-  --kz-white: #ffffff;
+@theme {
+  --color-ink: #1B2A4A;        /* deep navy — dark surfaces, headings */
+  --color-ink-soft: #243656;   /* raised navy (hover) */
+  --color-brand: #FF6B35;      /* signal orange — primary actions */
+  --color-brand-dark: #E4552A; /* orange hover */
+  --color-line: #E2E8F0;       /* hairline borders */
+  --color-mist: #F8FAFC;       /* page background */
+  --color-hush: #64748B;       /* muted slate text */
 }
 
-.kz-root {
+.ms-root {
   font-family: "Helvetica Neue", Helvetica, Arial, "Noto Sans SC", sans-serif;
-  background: var(--kz-white);
-  color: var(--kz-black);
+  background: var(--color-mist);
+  color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
 }
 
-.kz-root ::selection {
-  background: var(--kz-black);
-  color: var(--kz-white);
+.ms-root ::selection {
+  background: var(--color-brand);
+  color: #ffffff;
 }
 
 /* Massive condensed display type */
-.kz-display {
+.ms-display {
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 0.92;
   text-transform: uppercase;
 }
 
-.kz-label {
+.ms-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -160,32 +165,33 @@
 }
 
 /* Marquee ticker */
-@keyframes kz-marquee {
+@keyframes ms-marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-.kz-marquee-track {
+.ms-marquee-track {
   display: inline-flex;
   white-space: nowrap;
-  animation: kz-marquee 28s linear infinite;
+  animation: ms-marquee 28s linear infinite;
   will-change: transform;
 }
-.kz-marquee-track:hover {
+.ms-marquee-track:hover {
   animation-play-state: paused;
 }
 
 /* Product tile image zoom */
-.kz-tile img {
+.ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
-.kz-tile:hover img {
+.ms-tile:hover img {
   transform: scale(1.045);
 }
 
 /* Square inputs */
-.kz-field {
-  border: 1px solid var(--kz-black);
-  background: var(--kz-white);
+.ms-field {
+  border: 1px solid var(--color-line);
+  background: #ffffff;
+  color: var(--color-ink);
   padding: 12px 14px;
   font-size: 14px;
   font-weight: 500;
@@ -193,39 +199,42 @@
   outline: none;
   border-radius: 0;
 }
-.kz-field:focus {
-  box-shadow: inset 0 0 0 1px var(--kz-black);
+.ms-field:focus {
+  border-color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--color-brand);
 }
-.kz-field::placeholder {
-  color: #9ca3af;
+.ms-field::placeholder {
+  color: #94a3b8;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.08em;
 }
 
 /* Thin scrollbar */
-.kz-scroll::-webkit-scrollbar {
+.ms-scroll::-webkit-scrollbar {
   width: 4px;
   height: 4px;
 }
-.kz-scroll::-webkit-scrollbar-thumb {
-  background: #000;
+.ms-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
 }
-.kz-scroll::-webkit-scrollbar-track {
-  background: #eee;
+.ms-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
 }
 
 /* Out-of-stock diagonal */
-.kz-oos {
+.ms-oos {
   position: relative;
 }
-.kz-oos::after {
+.ms-oos::after {
   content: "";
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(
     -45deg,
-    rgba(0, 0, 0, 0.55) 0 10px,
-    rgba(0, 0, 0, 0.1) 10px 20px
+    rgba(27, 42, 74, 0.55) 0 10px,
+    rgba(27, 42, 74, 0.08) 10px 20px
   );
 }
+
+/* recompile trigger */

@@ -19,22 +19,22 @@ export default function Confirmation({
 
   return (
     <section className="px-4 md:px-8 py-16 md:py-24 min-h-[60vh] flex flex-col items-center justify-center text-center" aria-label="Order confirmation">
-      <p className="kz-label opacity-50 mb-4">ORDER CONFIRMED</p>
-      <h2 className="kz-display text-5xl md:text-7xl mb-8">SEE YOU<br />AT DELIVERY</h2>
+      <p className="ms-label text-hush mb-4">ORDER CONFIRMED</p>
+      <h2 className="ms-display text-5xl md:text-7xl mb-8">SEE YOU<br />AT DELIVERY</h2>
 
-      <div className="w-full max-w-xl border border-black text-left">
-        <div className="grid grid-cols-2 divide-x divide-black border-b border-black">
+      <div className="w-full max-w-xl border border-line bg-white shadow-sm text-left">
+        <div className="grid grid-cols-2 divide-x divide-line border-b border-line">
           <div className="p-4">
-            <p className="kz-label opacity-50 mb-1">ORDER NO.</p>
+            <p className="ms-label text-hush mb-1">ORDER NO.</p>
             <p className="font-black text-lg">{order.orderNumber}</p>
           </div>
           <div className="p-4">
-            <p className="kz-label opacity-50 mb-1">TRACKING NO.</p>
+            <p className="ms-label text-hush mb-1">TRACKING NO.</p>
             <p className="font-black text-lg break-all">{order.trackingNumber}</p>
           </div>
         </div>
 
-        <div className="p-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm border-b border-black">
+        <div className="p-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm border-b border-line">
           <p><span className="opacity-50">DESTINATION:</span> <b>{order.destination}</b></p>
           <p><span className="opacity-50">ETA:</span> <b>{order.etaDays}</b></p>
           <p><span className="opacity-50">PAYMENT:</span> <b>{order.paymentMethod}</b></p>
@@ -42,27 +42,27 @@ export default function Confirmation({
         </div>
 
         <div className="p-4 space-y-1.5 text-sm">
-          <p className="kz-label opacity-50 mb-2">COST BREAKDOWN (USD)</p>
+          <p className="ms-label text-hush mb-2">COST BREAKDOWN (USD)</p>
           <div className="flex justify-between"><span className="opacity-60">SUBTOTAL</span><span>${order.subtotal.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="opacity-60">IMPORT DUTY</span><span>${order.dutyAmount.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="opacity-60">VAT</span><span>${order.vatAmount.toFixed(2)}</span></div>
           <div className="flex justify-between"><span className="opacity-60">FREIGHT</span><span>${order.shippingAmount.toFixed(2)}</span></div>
-          <div className="flex justify-between border-t border-black pt-2 font-black"><span>TOTAL</span><span>${order.totalAmount.toFixed(2)}</span></div>
+          <div className="flex justify-between border-t border-line pt-2 font-black"><span>TOTAL</span><span>${order.totalAmount.toFixed(2)}</span></div>
         </div>
       </div>
 
       <div className="flex flex-wrap gap-2 justify-center mt-8">
-        <button onClick={onTrack} className="kz-label bg-black text-white px-8 py-4 hover:opacity-80 transition-opacity">
+        <button onClick={onTrack} className="ms-label bg-brand text-white px-8 py-4 hover:bg-brand-dark transition-colors">
           TRACK THIS ORDER →
         </button>
-        <button onClick={onContinue} className="kz-label border border-black px-8 py-4 hover:bg-black hover:text-white transition-colors">
+        <button onClick={onContinue} className="ms-label border border-line bg-white px-8 py-4 hover:bg-ink hover:text-white transition-colors">
           CONTINUE SHOPPING
         </button>
       </div>
 
-      <p className="kz-label opacity-40 mt-6 max-w-md leading-relaxed">
-        YOUR ORDER IS NOW IN KWANZA-ERP AS “{order.status.toUpperCase()}” — THE WAREHOUSE
-        TEAM PICKS, PACKS AND GENERATES THE RUNSHEET FROM HERE.
+      <p className="ms-label text-hush mt-6 max-w-md leading-relaxed">
+        YOUR ORDER IS CONFIRMED AS “{order.status.toUpperCase()}” — OUR WAREHOUSE
+        TEAM PICKS, PACKS AND DISPATCHES FROM HERE.
       </p>
     </section>
   );

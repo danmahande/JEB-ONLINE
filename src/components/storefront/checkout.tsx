@@ -89,8 +89,8 @@ export default function Checkout({
   if (lines.length === 0) {
     return (
       <section className="px-4 md:px-8 py-20 text-center">
-        <h2 className="kz-display text-4xl opacity-30 mb-6">CART EMPTY</h2>
-        <button onClick={onBack} className="kz-label bg-black text-white px-8 py-4">
+        <h2 className="ms-display text-4xl opacity-30 mb-6">CART EMPTY</h2>
+        <button onClick={onBack} className="ms-label bg-brand text-white px-8 py-4 hover:bg-brand-dark transition-colors">
           ← BACK TO CATALOG
         </button>
       </section>
@@ -99,22 +99,22 @@ export default function Checkout({
 
   return (
     <section className="px-4 md:px-8 py-10 md:py-14" aria-label="Checkout">
-      <h2 className="kz-display text-4xl md:text-6xl mb-8">CHECKOUT</h2>
+      <h2 className="ms-display text-4xl md:text-6xl mb-8">CHECKOUT</h2>
 
       <div className="grid lg:grid-cols-5 gap-8">
         {/* form */}
         <div className="lg:col-span-3 space-y-6">
           <div>
-            <p className="kz-label mb-3 opacity-60">01 — DESTINATION</p>
+            <p className="ms-label mb-3 text-hush">01 — DESTINATION</p>
             <div className="flex flex-wrap gap-2">
               {regions.map((r) => (
                 <button
                   key={r.region}
                   onClick={() => setRegion(r.region)}
-                  className={`kz-label border border-black px-4 py-3 transition-colors ${
+                  className={`ms-label border border-line bg-white px-4 py-3 transition-colors ${
                     r.region === region
-                      ? "bg-black text-white"
-                      : "hover:bg-black hover:text-white"
+                      ? "bg-brand text-white border-brand"
+                      : "hover:bg-ink hover:text-white"
                   }`}
                 >
                   {r.countryName}
@@ -122,7 +122,7 @@ export default function Checkout({
               ))}
             </div>
             {active && (
-              <p className="kz-label mt-3 opacity-50">
+              <p className="ms-label mt-3 text-hush">
                 ETA {active.etaDays} · DUTY {Math.round(active.dutyRate * 100)}% · VAT{" "}
                 {Math.round(active.vatRate * 100)}% · {active.currency}
               </p>
@@ -130,24 +130,24 @@ export default function Checkout({
           </div>
 
           <div>
-            <p className="kz-label mb-3 opacity-60">02 — DELIVERY DETAILS</p>
+            <p className="ms-label mb-3 text-hush">02 — DELIVERY DETAILS</p>
             <div className="grid sm:grid-cols-2 gap-3">
               <input
-                className="kz-field"
+                className="ms-field"
                 placeholder="FULL NAME *"
                 value={form.customerName}
                 onChange={set("customerName")}
                 aria-label="Full name"
               />
               <input
-                className="kz-field"
+                className="ms-field"
                 placeholder="PHONE (E.G. +2567…) *"
                 value={form.contact}
                 onChange={set("contact")}
                 aria-label="Phone contact"
               />
               <input
-                className="kz-field"
+                className="ms-field"
                 placeholder="EMAIL"
                 type="email"
                 value={form.email}
@@ -155,21 +155,21 @@ export default function Checkout({
                 aria-label="Email"
               />
               <input
-                className="kz-field"
+                className="ms-field"
                 placeholder="CITY / TOWN"
                 value={form.city}
                 onChange={set("city")}
                 aria-label="City"
               />
               <input
-                className="kz-field sm:col-span-2"
+                className="ms-field sm:col-span-2"
                 placeholder="DELIVERY ADDRESS / COLLECTION POINT"
                 value={form.address}
                 onChange={set("address")}
                 aria-label="Delivery address"
               />
               <textarea
-                className="kz-field sm:col-span-2"
+                className="ms-field sm:col-span-2"
                 placeholder="NOTES (CUSTOMS PREFERENCE, TIMING…)"
                 rows={2}
                 value={form.notes}
@@ -180,19 +180,19 @@ export default function Checkout({
           </div>
 
           <div>
-            <p className="kz-label mb-3 opacity-60">03 — PAYMENT</p>
+            <p className="ms-label mb-3 text-hush">03 — PAYMENT</p>
             <div className="grid sm:grid-cols-2 gap-2">
               {PAYMENT_METHODS.map((m) => (
                 <button
                   key={m.key}
                   onClick={() => setForm((f) => ({ ...f, paymentMethod: m.key }))}
-                  className={`border border-black px-4 py-3 text-left transition-colors ${
+                  className={`border bg-white px-4 py-3 text-left transition-colors ${
                     form.paymentMethod === m.key
-                      ? "bg-black text-white"
-                      : "hover:bg-black hover:text-white"
+                      ? "bg-brand text-white border-brand"
+                      : "border-line hover:bg-ink hover:text-white"
                   }`}
                 >
-                  <span className="kz-label block">{m.label}</span>
+                  <span className="ms-label block">{m.label}</span>
                   <span className="text-[10px] tracking-widest opacity-50">{m.hint}</span>
                 </button>
               ))}
@@ -202,9 +202,9 @@ export default function Checkout({
 
         {/* summary */}
         <div className="lg:col-span-2">
-          <div className="border border-black p-5 lg:sticky lg:top-24">
-            <p className="kz-label mb-4">ORDER SUMMARY</p>
-            <div className="max-h-56 overflow-y-auto kz-scroll divide-y divide-black mb-4">
+          <div className="border border-line bg-white p-5 lg:sticky lg:top-24">
+            <p className="ms-label mb-4">ORDER SUMMARY</p>
+            <div className="max-h-56 overflow-y-auto ms-scroll divide-y divide-line mb-4">
               {lines.map((l) => (
                 <div
                   key={`${l.productId}-${l.variantLabel}`}
@@ -239,15 +239,15 @@ export default function Checkout({
                   <span className="opacity-60">FREIGHT</span>
                   <span className="font-bold">{fmt(q.shipping, active)}</span>
                 </div>
-                <div className="flex justify-between border-t border-black pt-3 mt-3">
-                  <span className="kz-label">TOTAL DUE</span>
-                  <span className="font-black text-2xl">{fmt(q.total, active)}</span>
+                <div className="flex justify-between border-t border-line pt-3 mt-3">
+                  <span className="ms-label">TOTAL DUE</span>
+                  <span className="font-black text-2xl text-brand">{fmt(q.total, active)}</span>
                 </div>
               </div>
             )}
 
             {error && (
-              <p className="kz-label mt-4 bg-black text-white px-3 py-2" role="alert">
+              <p className="ms-label mt-4 bg-red-500 text-white px-3 py-2" role="alert">
                 ⚠ {error}
               </p>
             )}
@@ -255,19 +255,19 @@ export default function Checkout({
             <button
               onClick={placeOrder}
               disabled={submitting}
-              className="kz-label w-full bg-black text-white py-4 mt-5 hover:opacity-80 disabled:opacity-40 transition-opacity"
+              className="ms-label w-full bg-brand text-white py-4 mt-5 hover:bg-brand-dark disabled:opacity-40 transition-colors"
             >
               {submitting ? "PLACING ORDER…" : "PLACE ORDER →"}
             </button>
             <button
               onClick={onBack}
-              className="kz-label w-full border border-black py-3 mt-2 hover:bg-black hover:text-white transition-colors"
+              className="ms-label w-full border border-line py-3 mt-2 hover:bg-ink hover:text-white transition-colors"
             >
               ← CONTINUE SHOPPING
             </button>
-            <p className="text-[10px] tracking-widest opacity-40 mt-3 leading-relaxed">
-              FINAL DUTIES SUBJECT TO CUSTOMS ASSESSMENT. ORDER DATA IS WRITTEN TO
-              KWANZA-ERP (ORDERPROCESSING + ORDERLINEITEM) FOR WAREHOUSE PICKING.
+            <p className="text-[10px] tracking-widest text-hush mt-3 leading-relaxed">
+              FINAL DUTIES SUBJECT TO CUSTOMS ASSESSMENT. ORDERS ROUTE TO OUR
+              WAREHOUSE FOR PICKING AND DISPATCH AS SOON AS PAYMENT IS CONFIRMED.
             </p>
           </div>
         </div>

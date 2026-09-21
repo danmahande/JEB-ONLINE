@@ -1,5 +1,5 @@
 /**
- * Batch product image generation — Yeezy-style catalog shots.
+ * Batch product image generation — catalog shots.
  * Flat light-gray seamless backdrop, centered product, hard shadow.
  */
 import ZAI from "z-ai-web-dev-sdk";

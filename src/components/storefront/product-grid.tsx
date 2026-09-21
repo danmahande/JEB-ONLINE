@@ -30,21 +30,21 @@ export default function ProductGrid({
   return (
     <section id="catalog" className="px-4 md:px-8 py-10 md:py-14" aria-label="Catalog">
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <h2 className="kz-display text-4xl md:text-6xl">
+        <h2 className="ms-display text-4xl md:text-6xl">
           CATALOG
-          <sup className="text-sm md:text-base align-super ml-2">
+          <sup className="text-sm md:text-base align-super ml-2 text-brand">
             {String(filtered.length).padStart(2, "0")}
           </sup>
         </h2>
-        <div className="flex border border-black" role="tablist" aria-label="Category filter">
+        <div className="flex border border-line bg-white" role="tablist" aria-label="Category filter">
           {TABS.map((t) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
-              className={`kz-label px-4 md:px-6 py-3 border-r border-black last:border-r-0 transition-colors ${
-                tab === t.key ? "bg-black text-white" : "hover:bg-black hover:text-white"
+              className={`ms-label px-4 md:px-6 py-3 border-r border-line last:border-r-0 transition-colors ${
+                tab === t.key ? "bg-brand text-white" : "hover:bg-ink hover:text-white"
               }`}
             >
               {t.label}
@@ -72,8 +72,8 @@ export default function ProductGrid({
               <button
                 key={p.productId}
                 onClick={() => onSelect(p)}
-                className={`kz-tile group relative text-left border border-black overflow-hidden bg-white ${
-                  out ? "kz-oos" : ""
+                className={`ms-tile group relative text-left border border-line overflow-hidden bg-white shadow-sm ${
+                  out ? "ms-oos" : ""
                 }`}
                 aria-label={`View ${p.productLabel}`}
               >
@@ -89,31 +89,31 @@ export default function ProductGrid({
 
                 {/* badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  <span className="kz-label bg-white border border-black px-2 py-1">
+                  <span className="ms-label bg-white border border-line px-2 py-1 text-ink">
                     {p.category}
                   </span>
                   {active?.isEac && (
-                    <span className="kz-label bg-black text-white px-2 py-1">
+                    <span className="ms-label bg-emerald-500 text-white px-2 py-1">
                       0% DUTY
                     </span>
                   )}
                 </div>
                 {out && (
-                  <span className="kz-label absolute top-2 right-2 bg-black text-white px-2 py-1">
+                  <span className="ms-label absolute top-2 right-2 bg-red-500 text-white px-2 py-1">
                     SOLD OUT
                   </span>
                 )}
 
                 {/* label block */}
-                <div className="absolute inset-x-0 bottom-0 bg-black text-white px-3 py-2.5 md:px-4 md:py-3">
-                  <p className="kz-label opacity-70 mb-0.5 truncate">
+                <div className="absolute inset-x-0 bottom-0 bg-ink text-white px-3 py-2.5 md:px-4 md:py-3">
+                  <p className="ms-label opacity-70 mb-0.5 truncate">
                     {p.brand} · {p.weight || p.unit}
                   </p>
                   <div className="flex items-baseline justify-between gap-2">
                     <span className="font-black text-sm md:text-base uppercase leading-tight tracking-tight truncate">
                       {p.productLabel}
                     </span>
-                    <span className="font-black text-sm md:text-base whitespace-nowrap">
+                    <span className="font-black text-sm md:text-base whitespace-nowrap text-brand">
                       {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                     </span>
                   </div>

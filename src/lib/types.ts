@@ -1,4 +1,4 @@
-// Shared storefront types — kwanza-erp wire-compatible
+// Shared storefront types — upstream ERP wire-compatible
 
 export interface ProductVariant {
   label: string;
@@ -7,7 +7,7 @@ export interface ProductVariant {
 }
 
 export interface Product {
-  // kwanza-erp fields
+  // upstream ERP fields
   id: string;
   productId: string;
   productLabel: string;
