@@ -18,7 +18,7 @@ export default function Hero({
         <p className="ms-label mb-3 md:mb-4 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
         </p>
-        <h1 className="ms-display text-[12.5vw] md:text-[6.2vw]">
+        <h1 className="ms-display text-[10vw] md:text-[5vw]">
           GRAINS &amp;<br />
           HARDWARE
         </h1>

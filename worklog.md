@@ -197,3 +197,18 @@ Work Log:
 
 Stage Summary:
 - Page-wide scale is now a one-line dial in globals.css (html font-size); 90% shipped — can go to 85% (tighter) or 95% (looser) on request without touching any component
+
+---
+Task ID: 13
+Agent: Super Z (main agent)
+Task: Shrink GRAINS & HARDWARE headline further + reduce page font size even more (user: header still taking too much space)
+
+Work Log:
+- globals.css: root dial 90% -> 85% (html font-size) — every rem-based size drops another ~5.5%
+- hero.tsx headline: text-[12.5vw] md:text-[6.2vw] -> text-[10vw] md:text-[5vw] — desktop line height ~99px -> 80px, mobile ~49px -> 39px
+- Transient rendering artifact observed: first post-edit screenshot caught the page mid-recompile (new arbitrary classes present in DOM before regenerated CSS arrived) making the headline render at inherited 13.6px; verified via computed styles (rootFs 13.6px, h1Fs 80px at 1600w) that the settled state is correct; re-captured screenshots after full reload
+- Verified at 1600x900 + 390x844: hero block + strip end ~y610 desktop, catalog + filter tabs + first product row above the fold; mobile hero ends ~y560 with first cards visible
+- Screenshots: download/meridian-scale85-live.png + meridian-scale85-mobile.png
+
+Stage Summary:
+- Headline now 5vw/10vw (theme-consistent display presence at ~1/3 less area than the original 9.5vw); page dial at 85% — one-line adjustments remain in globals.css

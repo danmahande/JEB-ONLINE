@@ -139,9 +139,9 @@
 }
 
 /* Page-wide scale: root font-size dial. Everything rem-based (Tailwind spacing,
-   text sizes, card layout) renders proportionally — 90% ≈ one browser zoom-out notch. */
+   text sizes, card layout) renders proportionally — 85% ≈ ~two browser zoom-out notches. */
 html {
-  font-size: 90%;
+  font-size: 85%;
 }
 
 .ms-root {
