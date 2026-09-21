@@ -126,3 +126,17 @@ Work Log:
 
 Stage Summary:
 - Main image is now a thin full-width HD strip (1920x270, 140 KB) under a solid navy hero; any future size is recoverable by editing W,H in scripts/compose-hero.py and re-running
+
+---
+Task ID: 8
+Agent: Super Z (main agent)
+Task: Tighten the hero section — user: "why does it feel like that whole section where the search bar is is taking alot of space"
+
+Work Log:
+- Diagnosis: (1) 9.5vw two-line display headline = ~300px of the navy block at 1600px; (2) 80px top padding + ~100px of stacked margins (eyebrow mb-6, search mt-9, blurb row mt-10); (3) full blurb + CTA band; (4) left-aligned content leaves the right half empty, amplifying the hollow feel
+- hero.tsx tightening pass: headline 15vw/9.5vw -> 13.5vw/6.8vw; pt-14/20 -> pt-10/12; pb-8/10 -> pb-6/8; eyebrow mb-5/6 -> mb-3/4; search mt-7/9 -> mt-5/6; blurb row mt-8/10 gap-6 -> mt-6/7 gap-5; blurb md:text-base -> md:text-sm
+- Result: navy block ~770px -> ~580px; full hero (block + strip) now fits a 900px viewport with CATALOG peeking above the fold on desktop and mobile
+- Verified with agent-browser at 1600x900 + 390x844; screenshots download/meridian-hero-tight-live.png, meridian-hero-tight-mobile.png
+
+Stage Summary:
+- Hero reads as a compact commerce header instead of a landing splash; strip and catalog both visible in the first viewport; no changes to strip asset or other components

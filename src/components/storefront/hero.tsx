@@ -11,12 +11,12 @@ export default function Hero({
 }) {
   return (
     <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
-      <div className="relative z-10 px-4 md:px-8 pt-14 md:pt-20 pb-8 md:pb-10">
-        <p className="ms-label mb-5 md:mb-6 opacity-80 text-white">
+      <div className="relative z-10 px-4 md:px-8 pt-10 md:pt-12 pb-6 md:pb-8">
+        <p className="ms-label mb-3 md:mb-4 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
         </p>
-        <h1 className="ms-display text-[15vw] md:text-[9.5vw]">
-          GRAINS &<br />
+        <h1 className="ms-display text-[13.5vw] md:text-[6.8vw]">
+          GRAINS &amp;<br />
           HARDWARE
         </h1>
 
@@ -27,7 +27,7 @@ export default function Hero({
             e.preventDefault();
             onShop();
           }}
-          className="mt-7 md:mt-9 flex max-w-xl bg-white p-1.5 shadow-xl"
+          className="mt-5 md:mt-6 flex max-w-xl bg-white p-1.5 shadow-xl"
         >
           <input
             value={query}
@@ -44,8 +44,8 @@ export default function Hero({
           </button>
         </form>
 
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mt-8 md:mt-10">
-          <p className="max-w-md text-sm md:text-base font-medium leading-relaxed opacity-90">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mt-6 md:mt-7">
+          <p className="max-w-md text-sm md:text-sm font-medium leading-relaxed opacity-90">
             Staple grains milled and sorted in Uganda. Building materials straight
             from regional factories. One catalog, five currencies, duties and
             freight calculated before you pay. No noise — just trade.
