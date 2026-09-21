@@ -63,3 +63,17 @@ Work Log:
 
 Stage Summary:
 - Hero background is now a real-photo composite (farm->warehouse supply-chain story) replacing the AI image; no code layout changes; original AI asset backed up
+
+---
+Task ID: 4
+Agent: Super Z (main agent)
+Task: Cut hero background image size by half (user: "its too large use about half of that size")
+
+Work Log:
+- Clarified intent via question; user chose "Half dimensions" (1100x550) over halving page height / file size only
+- Edited scripts/compose-hero.py: canvas 2200x1100 -> 1100x550, JPEG quality 85 -> 90 (regenerated from hi-res originals instead of downscaling the old JPEG, keeps it crisp when browsers upscale)
+- Regenerated: public/products/__hero.png now 1100x550, 225 KB; preview + duotone-simulation artifacts refreshed at same size
+- Verified live at 1600x900 viewport: composite still sharp enough under grayscale+navy duotone, seam invisible, text legible; screenshot download/meridian-hero-halfsize-live.png
+
+Stage Summary:
+- Hero background delivered at half dimensions (1100x550, 225 KB) with identical composition; no layout or code changes

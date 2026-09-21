@@ -13,7 +13,7 @@ CAND = "/home/z/my-project/scripts/candidates"
 OUT = "/home/z/my-project/public/products/__hero.png"
 PREVIEW = "/home/z/my-project/download/hero-composite-preview.png"
 
-W, H = 2200, 1100  # 2:1 canvas
+W, H = 1100, 550  # 2:1 canvas — half-size per user request (was 2200x1100)
 
 # ---------- 1. Load + crop ----------
 # Farm: portrait 3000x4000, maize fills lower 60%, hills at ~y1300-1600
@@ -80,7 +80,7 @@ hero = ImageEnhance.Contrast(hero).enhance(1.06)
 hero = ImageEnhance.Color(hero).enhance(0.92)  # CSS grayscales it anyway
 
 # ---------- 6. Save ----------
-hero.save(OUT, "JPEG", quality=85, optimize=True, progressive=True)
+hero.save(OUT, "JPEG", quality=90, optimize=True, progressive=True)
 hero.save(PREVIEW, "PNG")
 print("saved", OUT, hero.size)
 
