@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-node_modules
+/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -32,23 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# But DO commit the .env.example template (no secrets — just placeholders)
+!.env.example
 
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-local-*
-.claude
-.z-ai-config
-*.log
-dev.log
-dev.out.log
-test
-prompt
 
-server.log
-# Skills directory
-/skills/
+# SQLite journal files (should not be committed)
+prisma/*.db-journal
+
+# Database files — never commit these (each dev has their own)
+prisma/*.db
+prisma/*.db-journal

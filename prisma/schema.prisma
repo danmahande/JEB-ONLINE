@@ -1,0 +1,173 @@
+// ============================================================
+// KWANZA SUPPLY — Storefront data layer
+// Wire-compatible with danmahande/kwanza-erp (Next.js 14 + Prisma)
+// Model + field names mirror kwanza-erp's prisma/schema.prisma so
+// payloads can be synced to the real ERP with minimal glue.
+// Storefront extensions are marked with "— storefront extension".
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Mirror of kwanza-erp Product model (subset) + storefront extensions
+model Product {
+  id                String   @id @default(cuid())
+  productId         String   @unique // e.g. "GRN-MAIZE-25"
+  productLabel      String
+  /// Editable product description for catalogs and invoices
+  description       String?  @default("")
+  /// Brand name (e.g. "KWANZA MILLS")
+  brand             String?
+  /// Default variant descriptor (e.g. "25KG BAG")
+  variant           String?
+  /// Category: GRAINS | HARDWARE
+  category          String
+  merchantId        String   @default("MCH-KWZ-001")
+  merchantName      String   @default("Kwanza Supply Co.")
+  /// Selling unit: BAG | PIECE | CARTON | SHEET
+  unit              String
+  /// Product weight (e.g. "25KG")
+  weight            String?
+  minStock          Int      @default(10)
+  /// Base cost in USD
+  unitCost          Float
+  /// Base selling price in USD
+  unitSellingPrice  Float
+  commissionPercent Float    @default(0)
+  currentStock      Int      @default(0)
+  /// IAS 2 costing method: fifo | avco | standard | specific_id
+  costingMethod     String   @default("fifo")
+  isActive          Boolean  @default(true)
+  // ---- storefront extensions ----
+  slug              String   @unique
+  image             String?
+  /// Harmonized System code for customs declarations
+  hsCode            String?
+  /// ISO country of origin (drives EAC preferential duty)
+  originCountry     String   @default("UG")
+  /// JSON array of sellable variants: [{ "label": "25KG BAG", "priceDelta": 0, "weightKg": 25 }]
+  variants          String   @default("[]")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+/// Mirror of kwanza-erp Customer model + country extension
+model Customer {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  name            String
+  contact         String   @unique // phone
+  email           String?
+  address         String?
+  // ---- storefront extension ----
+  country         String   @default("UG")
+  createdBy       String?
+  totalOrders     Int      @default(0)
+  totalOrderValue Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+/// Mirror of kwanza-erp OrderProcessing model + cross-border extensions
+model OrderProcessing {
+  id               String    @id @default(cuid())
+  orderId          String    @unique
+  orderNumber      String    @unique // DS100001-style, matches ERP convention
+  orderDate        DateTime  @default(now())
+  customerId       String
+  customerName     String
+  /// Full customer contact details
+  customerInfo     String
+  /// Order total in USD (base currency)
+  totalAmount      Float
+  /// Cash, MTN MoMo, M-Pesa, Airtel Money, Bank Transfer
+  paymentMethod    String
+  /// new_order | processing | shipped | delivered | returned
+  status           String    @default("new_order")
+  trackingNumber   String?
+  invoiceGenerated Boolean   @default(false)
+  invoiceNumber    String?
+  invoiceDate      DateTime?
+  createdBy        String    @default("STOREFRONT")
+  // ---- storefront extensions (cross-border) ----
+  currency         String    @default("USD")
+  fxRate           Float     @default(1)
+  region           String    @default("INTL")
+  destination      String?
+  dutyAmount       Float     @default(0)
+  vatAmount        Float     @default(0)
+  shippingAmount   Float     @default(0)
+  totalWeightKg    Float     @default(0)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  lineItems OrderLineItem[]
+  events    OrderEvent[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([orderDate])
+}
+
+/// Mirror of kwanza-erp OrderLineItem model
+model OrderLineItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  orderNumber      String
+  productId        String
+  productName      String
+  brand            String?
+  variant          String?
+  qty              Int
+  unitSellingPrice Float
+  lineTotal        Float
+  createdAt        DateTime @default(now())
+
+  order OrderProcessing @relation(fields: [orderId], references: [orderId])
+
+  @@index([orderId])
+  @@index([orderNumber])
+  @@index([productId])
+}
+
+/// Cross-border trade config (storefront extension)
+model RegionConfig {
+  id            String @id @default(cuid())
+  /// Region code: UG | KE | TZ | RW | INTL
+  region        String @unique
+  countryName   String
+  currency      String
+  symbol        String
+  rateToUsd     Float
+  /// Import duty rate for EAC-origin goods (0 within EAC per CET preference)
+  dutyRate      Float
+  vatRate       Float
+  shippingBase  Float
+  shippingPerKg Float
+  etaDays       String
+  isEac         Boolean @default(true)
+}
+
+/// Audit of order status transitions (mirrors ERP workflow-transition API)
+model OrderEvent {
+  id         String   @id @default(cuid())
+  orderNumber String
+  fromStatus String
+  toStatus   String
+  note       String?
+  createdAt  DateTime @default(now())
+
+  order OrderProcessing @relation(fields: [orderNumber], references: [orderNumber])
+
+  @@index([orderNumber])
+}
