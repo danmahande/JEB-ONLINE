@@ -140,3 +140,16 @@ Work Log:
 
 Stage Summary:
 - Hero reads as a compact commerce header instead of a landing splash; strip and catalog both visible in the first viewport; no changes to strip asset or other components
+
+---
+Task ID: 9
+Agent: Super Z (main agent)
+Task: Apply "option 2" from hero-tightening follow-ups — drop the blurb entirely (search-first hero)
+
+Work Log:
+- hero.tsx: removed the 4-line value-prop paragraph ("Staple grains milled... just trade.") and dissolved the flex bottom row; ENTER CATALOG button kept as a standalone compact CTA (mt-5/6) directly under the search bar
+- Hero is now strictly: eyebrow -> GRAINS & HARDWARE -> search -> ENTER CATALOG -> thin strip; value-prop messaging remains covered by header ticker and the trust strip below the catalog
+- Verified with agent-browser: desktop 1600x900 navy block ~500px, CATALOG + filter tabs above the fold; mobile 390x844 first product cards peek above the fold; screenshots download/meridian-hero-noblur-live.png + meridian-hero-noblur-mobile.png
+
+Stage Summary:
+- Search-first hero shipped: blurb removed, catalog visible above the fold on desktop and mobile; hero vertical budget now ~500px block + 224px strip on desktop

@@ -44,19 +44,12 @@ export default function Hero({
           </button>
         </form>
 
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mt-6 md:mt-7">
-          <p className="max-w-md text-sm md:text-sm font-medium leading-relaxed opacity-90">
-            Staple grains milled and sorted in Uganda. Building materials straight
-            from regional factories. One catalog, five currencies, duties and
-            freight calculated before you pay. No noise — just trade.
-          </p>
-          <button
-            onClick={onShop}
-            className="ms-label self-start bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
-          >
-            ENTER CATALOG ↓
-          </button>
-        </div>
+        <button
+          onClick={onShop}
+          className="ms-label mt-5 md:mt-6 bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
+        >
+          ENTER CATALOG ↓
+        </button>
       </div>
 
       {/* thin HD strip: maize field dissolving into a warehouse — full color, edge to edge */}
