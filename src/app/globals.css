@@ -197,15 +197,38 @@ html {
   animation-play-state: paused;
 }
 
-/* Product card */
+/* Product card — behaves like a loaded cargo container (Task 22) */
 .ms-tile {
   border-radius: 8px;
-  transition: transform 0.2s cubic-bezier(0.2, 0.6, 0.2, 1),
-    box-shadow 0.2s cubic-bezier(0.2, 0.6, 0.2, 1);
+  /* corrugated steel face — ridges show on the info panel below the photo */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 15px,
+    rgba(27, 42, 74, 0.03) 15px 16px,
+    transparent 16px 31px,
+    rgba(27, 42, 74, 0.015) 31px 32px
+  );
+  /* grounded: tight contact shadow, like a box sitting on the dock */
+  box-shadow: 0 1px 0 rgba(27, 42, 74, 0.05), 0 2px 6px -1px rgba(27, 42, 74, 0.08);
+  /* mass: tilt + stack-lean composed through vars; slow-out easing with a
+     slight overshoot so every release settles like a suspended load */
+  transform: perspective(900px) translateY(0px) rotateX(var(--ms-rx, 0deg))
+    rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
+  transition: transform 0.28s cubic-bezier(0.18, 0.8, 0.28, 1.05),
+    box-shadow 0.28s cubic-bezier(0.2, 0.6, 0.2, 1);
+  will-change: transform;
 }
 .ms-tile:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(27, 42, 74, 0.12);
+  transform: perspective(900px) translateY(-4px) rotateX(var(--ms-rx, 0deg))
+    rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
+  box-shadow: 0 22px 38px -14px rgba(27, 42, 74, 0.3), 0 6px 14px -6px rgba(27, 42, 74, 0.12);
+}
+/* pressing pushes the box into the dock — snappy compress, slow release */
+.ms-tile:active {
+  transition-duration: 0.07s;
+  transform: perspective(900px) translateY(-1px) rotateX(var(--ms-rx, 0deg))
+    rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg)) scale(0.99);
+  box-shadow: 0 3px 8px -2px rgba(27, 42, 74, 0.2);
 }
 .ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
@@ -226,15 +249,17 @@ html {
   animation: ms-badge-pop 0.45s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-/* Tile entrance — staggered fade-rise on filter/search changes.
-   fill-mode: backwards holds the hidden state during the stagger delay,
-   then releases the cascade so hover lift keeps working afterwards. */
+/* Tile entrance — crane-lowered into the stack: drop from above, compress on
+   landing, micro-rebound, settle. fill-mode: backwards holds the hidden state
+   during the stagger delay, then releases so hover physics keep working. */
 @keyframes ms-tile-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(-14px) scale(1.02); }
+  60% { opacity: 1; transform: translateY(1px) scale(0.997); }
+  82% { transform: translateY(-0.5px) scale(1.0008); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .ms-tile-in {
-  animation: ms-tile-in 0.28s cubic-bezier(0.2, 0.6, 0.2, 1) backwards;
+  animation: ms-tile-in 0.38s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
 
 /* Buttons depress on press, system-wide (Windows-7-style physical click) */
@@ -251,6 +276,14 @@ html {
   .ms-tile,
   .ms-tile img {
     transition: none;
+  }
+  .ms-tile,
+  .ms-tile:hover,
+  .ms-tile:active {
+    transform: none;
+  }
+  .ms-tile:hover {
+    transform: translateY(-4px);
   }
   .ms-root :where(button):active {
     transform: none;
@@ -560,3 +593,94 @@ html {
 }
 
 /* recompile trigger: 2026-09-22 living sky */
+
+/* ─── Container physics — cargo markings & surface light (Task 22) ────────── */
+
+/* Corner castings engage as you lift the box — four brand dots join the
+   spotlight layer, so touch devices (spot display:none) skip them for free */
+.ms-tile .ms-spot {
+  background-image:
+    radial-gradient(190px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(251, 246, 236, 0.18), transparent 65%),
+    radial-gradient(5px 5px at 10px 10px, rgba(232, 98, 44, 0.6) 42%, transparent 58%),
+    radial-gradient(5px 5px at calc(100% - 10px) 10px, rgba(232, 98, 44, 0.6) 42%, transparent 58%),
+    radial-gradient(5px 5px at 10px calc(100% - 10px), rgba(232, 98, 44, 0.6) 42%, transparent 58%),
+    radial-gradient(5px 5px at calc(100% - 10px) calc(100% - 10px), rgba(232, 98, 44, 0.6) 42%, transparent 58%);
+}
+
+/* Corrugation catches the light — steel ridges lit only within cursor reach,
+   via a mask pinned to the same --mx/--my vars the spotlight uses */
+.ms-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(27, 42, 74, 0.09) 0 1px,
+    transparent 1px 13px,
+    rgba(255, 255, 255, 0.55) 13px 14px,
+    transparent 14px 27px
+  );
+  -webkit-mask-image: radial-gradient(170px circle at var(--mx, 50%) var(--my, 50%), #000 0%, transparent 72%);
+  mask-image: radial-gradient(170px circle at var(--mx, 50%) var(--my, 50%), #000 0%, transparent 72%);
+}
+
+/* Specular sweep — sun catches the steel once as you arrive */
+.ms-spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.13) 50%,
+    transparent 58%
+  );
+  background-size: 260% 100%;
+  background-position: 120% 0;
+  pointer-events: none;
+}
+.ms-tile:hover .ms-spot::after {
+  animation: ms-sweep 0.75s ease-out both;
+}
+@keyframes ms-sweep {
+  from { opacity: 1; background-position: 120% 0; }
+  to { opacity: 1; background-position: -30% 0; }
+}
+
+/* Fleet stencil — owner code + weight plate appear while you inspect the box
+   (4-letter owner code + serial + check digit, per ISO 6346 convention) */
+.ms-tile::before {
+  content: "MRDN UG 241007 7 · 50KG MAX";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(27, 42, 74, 0.55);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.85), 0 0 2px rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+.ms-tile:hover::before {
+  opacity: 1;
+}
+/* sold-out tiles keep their diagonal + SOLD OUT corner clean — no stencil */
+.ms-oos::before {
+  display: none;
+}
+
+/* Reduced motion: freeze the sweep (tilt/lean/entrance handled above) */
+@media (prefers-reduced-motion: reduce) {
+  .ms-tile:hover .ms-spot::after {
+    animation: none;
+  }
+}
+
+/* recompile trigger: 2026-09-22 container physics */

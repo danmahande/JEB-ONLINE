@@ -351,3 +351,22 @@ Work Log:
 
 Stage Summary:
 - Storefront now responds to the world (time of day) as well as the user: sky re-tints by local hour with stars at night and drifting clouds, copy greets the band, Kampala HQ clock ticks in the ticker, adds fly to the cart, totals count up, tiles carry a cursor spotlight and harvest-freshness chips, and a footer switch demos every mood on demand; eslint clean, hydration clean
+
+---
+Task ID: 22
+Agent: Super Z (main agent)
+Task: "how can each catalog box be alive like a real world container without changing structure" — container-physics layer on catalog tiles (DOM unchanged)
+
+Work Log:
+- Designed the mapping: 6 physical truths of a real container -> tile behaviors — mass (resist+settle), surface light (corrugation catches light), grounding (contact vs detached shadow), the stack (neighbors lean into a gap), markings (castings + ISO 6346 stencil), crane placement (drop-compress-settle entrance)
+- globals.css .ms-tile rework: composed transform `perspective(900px) translateY rotateX(var(--ms-rx)) rotateY(var(--ms-ry)) rotate(var(--ms-lean))` with identical function lists across base/hover/active for clean per-function interpolation; 0.28s cubic-bezier(0.18,0.8,0.28,1.05) = slow-out + settle overshoot (mass); corrugated steel face via repeating-linear-gradient on the tile background (visible on info panel); two-layer contact shadow at rest vs detached 0 22px 38px -14px on hover; :active compress (translateY -1px scale 0.99, 0.07s snap, contact shadow) with slow release
+- globals.css overlay layer: corner castings = 4 brand radial dots merged into .ms-spot background stack (hover-only, touch-skips free since spot is display:none on hover:none); corrugation catch-light = ridge gradient on .ms-spot::before masked to the cursor's --mx/--my (light "catches" ridges only where you look); one-shot specular sweep on .ms-spot::after (ms-sweep 0.75s, replays per hover-in); fleet stencil "MRDN UG 241007 7 · 50KG MAX" (ISO 6346 style owner code+serial+check digit) on .ms-tile::before, top-right, opacity 0 -> 1 on hover, white halo for photo readability, display:none on .ms-oos so sold-out diagonal stays clean
+- ms-tile-in keyframes reworked to crane drop: 0% translateY(-14px) scale(1.02) -> 60% translateY(1px) scale(0.997) (landing compress) -> 82% micro-rebound -> 100% settle; stagger delays unchanged
+- product-grid.tsx: extended existing onMouseMove (adds --ms-rx/--ms-ry = -py*5/+px*5 deg, max ±2.5deg — push a loaded box, it leans away); added onMouseEnter (sets --ms-lean ±0.55deg on previous/next siblings, guarded by offsetTop row check + matchMedia "(hover: hover) and (prefers-reduced-motion: no-preference)") and onMouseLeave (tilt+lean vars -> 0, settle bezier lands it); zero React re-renders, DOM structure untouched
+- Reduced-motion: transform none on tile states (hover keeps plain -4px lift), sweep animation killed; entrance/lean/tilt all neutralized
+- Verified live (agent-browser): all 8 rule sets + both keyframes in CSSOM (no stale CSS); tilt vars 1.00deg/1.50deg at (0.3,-0.2) offset with matrix3d rotation + perspective 900px; hover shadow detached 22px/38px/0.3; stencil opacity 1 + content; sweep running; 5 spot layers; corrugation present; neighbor lean ±0.55deg confirmed in settled matrices (sin 0.55 = 0.0096, opposite signs = leaning INTO the gap) — lean verified by patching matchMedia since headless reports hover:none (guard is correct for real devices); press: scale 0.99 + translateY(-1px) + tilt preserved + 0.07s duration + compressed shadow; release/leave: vars reset, contact shadow restored; no console/page errors; cart+storage clean
+- Debug note: mid-verification the detail sheet opened from a stray click and hijacked elementFromPoint coords — detected via data-[state=open], closed with Escape, press test re-run cleanly
+- Screenshots: download/meridian-container-rest.png + meridian-container-hover.png (lifted tile with stencil + detached shadow visible)
+
+Stage Summary:
+- Catalog tiles now behave like loaded cargo: they resist then settle (mass), lean away from the cursor (±2.5deg cap), cast contact-then-detached shadows, compress when pressed, make row neighbors lean into the gap, engage corner castings + show their ISO-style fleet stencil on inspection, carry a subliminal corrugated-steel face, catch a specular sweep on arrival, and are crane-dropped into the stack on entry — all on the existing DOM (handlers extended in place + one CSS layer); eslint clean, hydration-safe (CSS/JS vars only, no render-path changes)

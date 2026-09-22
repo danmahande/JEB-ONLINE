@@ -186,11 +186,35 @@ export default function ProductGrid({
                 key={p.productId}
                 style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
                 onMouseMove={(e) => {
-                  // spotlight follows the cursor via CSS vars — no React re-render
+                  // spotlight + container tilt follow the cursor via CSS vars — no React re-render
                   const el = e.currentTarget;
                   const r = el.getBoundingClientRect();
+                  const px = (e.clientX - r.left) / r.width - 0.5;
+                  const py = (e.clientY - r.top) / r.height - 0.5;
                   el.style.setProperty("--mx", `${e.clientX - r.left}px`);
                   el.style.setProperty("--my", `${e.clientY - r.top}px`);
+                  // push a loaded container and it leans away — capped at ±2.5deg
+                  el.style.setProperty("--ms-rx", `${(-py * 5).toFixed(2)}deg`);
+                  el.style.setProperty("--ms-ry", `${(px * 5).toFixed(2)}deg`);
+                }}
+                onMouseEnter={(e) => {
+                  // pulling one box out of the stack — horizontal neighbors lean into the gap
+                  if (!window.matchMedia("(hover: hover) and (prefers-reduced-motion: no-preference)").matches) return;
+                  const t = e.currentTarget;
+                  for (const sib of [t.previousElementSibling, t.nextElementSibling]) {
+                    if (sib && sib.offsetTop === t.offsetTop) {
+                      sib.style.setProperty("--ms-lean", sib.offsetLeft < t.offsetLeft ? "0.55deg" : "-0.55deg");
+                    }
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  // release the load — vars return to 0 and the settle bezier lands it
+                  const t = e.currentTarget;
+                  t.style.setProperty("--ms-rx", "0deg");
+                  t.style.setProperty("--ms-ry", "0deg");
+                  for (const sib of [t.previousElementSibling, t.nextElementSibling]) {
+                    if (sib) sib.style.setProperty("--ms-lean", "0deg");
+                  }
                 }}
                 className={`ms-tile ms-tile-in group relative flex flex-col border border-line overflow-hidden bg-white shadow-sm ${
                   out ? "ms-oos" : ""
