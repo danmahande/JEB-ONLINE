@@ -4,6 +4,18 @@ A cross-border e-commerce storefront for a Ugandan exporter of grain and hardwar
 
 The catalog is designed as a wall of steel filing cabinets: hover a product tile and its drawer cracks open; click and the drawer slides fully out to reveal the product data stamped inside. Behind the storefront sits a region-aware pricing engine that estimates duties, VAT and freight for every East African Community (EAC) destination before checkout.
 
+## Screenshots
+
+| Shop | Drawer interaction |
+|---|---|
+| ![Catalog at rest](docs/screenshots/01-shop-hero.png) | ![Drawer pulled out](docs/screenshots/03-drawer-open.png) |
+| *Catalog at rest — a wall of steel cabinets* | *Hover cracks a drawer; click pulls it fully out* |
+
+| Spec sheet | Checkout |
+|---|---|
+| ![Spec sheet](docs/screenshots/04-spec-sheet.png) | ![Checkout](docs/screenshots/05-checkout.png) |
+| *Full spec sheet with pack selection* | *Duty, VAT and freight quoted per destination* |
+
 ---
 
 ## Features
@@ -143,12 +155,46 @@ scripts/                  # seeding + image tooling
 
 ## Deployment
 
+The production build outputs a standalone Node server (`.next/standalone/server.js`).
+
+### VPS (recommended)
+
+SQLite keeps ops simple — run it on any VPS with Node 20+ or Bun:
+
 ```bash
+bun install
+bun run db:push
 bun run build
-bun run start   # serves .next/standalone/server.js
+bun run start          # serves on :3000
 ```
 
-The build produces a standalone server; run it behind any reverse proxy. Because the database is SQLite, mount or persist `db/custom.db` across deploys.
+Keep the process alive with systemd:
+
+```ini
+[Service]
+WorkingDirectory=/srv/meridian
+ExecStart=/usr/local/bin/bun .next/standalone/server.js
+Restart=always
+User=www-data
+Environment=NODE_ENV=production
+Environment=DATABASE_URL=file:/srv/meridian/db/custom.db
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then reverse-proxy :3000 behind Nginx or Caddy for TLS. **Persist `db/custom.db`** (and `public/products/`) across deploys — it holds the catalog, orders and region config.
+
+### Vercel / serverless
+
+The app deploys, but serverless filesystems are ephemeral — a SQLite file won't survive. Before shipping there, swap the Prisma datasource to a hosted database (e.g. Postgres on Neon/Supabase, or Turso for a SQLite-compatible edge DB): change the `provider` in `prisma/schema.prisma`, update `DATABASE_URL`, and re-run `db:push`.
+
+## Contributing
+
+1. Fork and create a feature branch (`feat/your-change`).
+2. `bun install && bun run db:push && bun run dev`.
+3. Keep visual work consistent with the design system (see above): navy ink / brand orange, uppercase letterspaced labels, and the hardware interaction contract — all depth is drawn with inset shadows, nothing floats, and motion must respect `prefers-reduced-motion`.
+4. Run `bun run lint` before opening your PR and keep commits small and descriptive.
 
 ## Notes
 
