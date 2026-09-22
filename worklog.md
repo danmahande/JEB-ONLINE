@@ -571,3 +571,16 @@ Stage Summary:
 - Catalog tiles are clean steel cards again: no drawer, no hover crack; BUY (replacing ADD) opens the quick-view sheet where pack and quantity are chosen, then ADD TO CART
 - GitHub JEB-ONLINE main at 39374dc, local == remote
 - Note: git log shows README enhancement commit e81f53b (screenshots gallery + deployment guide + contributing) already on main from the earlier "yes" — superseded/pushed before this task
+
+---
+Task ID: 32
+Agent: Super Z (main agent)
+Task: User: "add quantity label around the quantity area for easy identification"
+
+Work Log:
+- quick-view.tsx: wrapped the qty stepper in a labelled group — "QUANTITY" ms-label (text-hush, matches SELECT PACK styling) above the −/n/+ stepper; outer row switched to items-end so ADD TO CART bottom-aligns with the stepper; group carries role="group" aria-label="Quantity"
+- Lint clean; verified live (agent-browser): label + group present in dialog, ADD TO CART intact, screenshot confirmed layout (label above stepper, button aligned)
+- Commit c2c5839 "Add QUANTITY label above the quantity stepper in quick view" pushed to origin main; remote SHA verified c2c5839c47fb4b68c8233decedd4106837598952
+
+Stage Summary:
+- Quick view quantity area now carries a visible QUANTITY label for easy identification; GitHub JEB-ONLINE main at c2c5839, local == remote
