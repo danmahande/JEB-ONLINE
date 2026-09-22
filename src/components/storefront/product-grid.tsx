@@ -12,6 +12,15 @@ const TABS = [
   { key: "HARDWARE", label: "HARDWARE" },
 ];
 
+// origin codes -> display names (drawer interior)
+const ORIGIN_LABELS: Record<string, string> = {
+  UG: "UGANDA",
+  KE: "KENYA",
+  TZ: "TANZANIA",
+  RW: "RWANDA",
+  BI: "BURUNDI",
+};
+
 export default function ProductGrid({
   products,
   regions,
@@ -36,6 +45,7 @@ export default function ProductGrid({
   const [notifyOpen, setNotifyOpen] = useState<string | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
+  const [openId, setOpenId] = useState<string | null>(null); // which drawer is pulled out
   const addLine = useCart((s) => s.addLine);
   const flyTo = useFly((s) => s.flyTo);
   const { toast } = useToast();
@@ -181,49 +191,28 @@ export default function ProductGrid({
             const priceUsd = p.unitSellingPrice + (v?.priceDelta || 0);
             const out = p.currentStock <= 0;
             const low = !out && p.currentStock <= 50;
+            const open = openId === p.productId;
             return (
               <div
                 key={p.productId}
                 style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
                 onMouseMove={(e) => {
-                  // spotlight + container tilt follow the cursor via CSS vars — no React re-render
+                  // cabinet sheen — the spotlight follows the cursor via CSS vars, no re-render
                   const el = e.currentTarget;
                   const r = el.getBoundingClientRect();
-                  const px = (e.clientX - r.left) / r.width - 0.5;
-                  const py = (e.clientY - r.top) / r.height - 0.5;
                   el.style.setProperty("--mx", `${e.clientX - r.left}px`);
                   el.style.setProperty("--my", `${e.clientY - r.top}px`);
-                  // push a loaded container and it barely leans — capped at ±1.4deg
-                  el.style.setProperty("--ms-rx", `${(-py * 2.8).toFixed(2)}deg`);
-                  el.style.setProperty("--ms-ry", `${(px * 2.8).toFixed(2)}deg`);
                 }}
-                onMouseEnter={(e) => {
-                  // pulling one box out of the stack — horizontal neighbors lean into the gap
-                  if (!window.matchMedia("(hover: hover) and (prefers-reduced-motion: no-preference)").matches) return;
-                  const t = e.currentTarget;
-                  for (const sib of [t.previousElementSibling, t.nextElementSibling]) {
-                    if (sib && sib.offsetTop === t.offsetTop) {
-                      sib.style.setProperty("--ms-lean", sib.offsetLeft < t.offsetLeft ? "0.55deg" : "-0.55deg");
-                    }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  // release the load — vars return to 0 and the settle bezier lands it
-                  const t = e.currentTarget;
-                  t.style.setProperty("--ms-rx", "0deg");
-                  t.style.setProperty("--ms-ry", "0deg");
-                  for (const sib of [t.previousElementSibling, t.nextElementSibling]) {
-                    if (sib) sib.style.setProperty("--ms-lean", "0deg");
-                  }
-                }}
-                className={`ms-tile ms-tile-in group relative flex flex-col border border-line overflow-hidden bg-white shadow-sm ${
-                  out ? "ms-oos" : ""
-                }`}
+                className={`ms-tile ms-tile-in group relative flex flex-col border border-line ${
+                  open ? "ms-open" : ""
+                } ${out ? "ms-oos" : ""}`}
               >
                 <button
-                  onClick={() => onSelect(p)}
+                  onClick={() => setOpenId(open ? null : p.productId)}
                   className="relative block w-full text-left"
-                  aria-label={`View ${p.productLabel}`}
+                  aria-expanded={open}
+                  aria-controls={`ms-drawer-${p.productId}`}
+                  aria-label={open ? `Close ${p.productLabel} drawer` : `Open ${p.productLabel} drawer`}
                 >
                   <div className="aspect-square overflow-hidden bg-neutral-100">
                     <img
@@ -262,7 +251,9 @@ export default function ProductGrid({
                 <div className="flex flex-col gap-1.5 flex-1 p-3 md:p-4">
                   <p className="ms-label text-hush truncate">{p.brand}</p>
                   <button
-                    onClick={() => onSelect(p)}
+                    onClick={() => setOpenId(open ? null : p.productId)}
+                    aria-expanded={open}
+                    aria-controls={`ms-drawer-${p.productId}`}
                     className="text-left font-bold text-sm md:text-[15px] leading-snug line-clamp-2 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
@@ -378,7 +369,48 @@ export default function ProductGrid({
                   )}
                 </div>
 
-                {/* cursor spotlight — light follows the mouse across the tile */}
+                {/* the drawer — slides out from under the steel face.
+                    hover cracks it open, click pulls it fully out */}
+                <div className="ms-drawer" id={`ms-drawer-${p.productId}`} inert={!open}>
+                  <div className="ms-drawer-inner">
+                    <div className="ms-drawer-lip" aria-hidden="true">
+                      <span className="ms-label">{p.category}</span>
+                      <span className="ms-label">PRODUCT DATA</span>
+                    </div>
+                    <div className="ms-drawer-body">
+                      {p.description && <p className="ms-drawer-desc">{p.description}</p>}
+                      <dl>
+                        <div className="ms-drawer-row">
+                          <dt>SKU</dt>
+                          <dd>{p.productId}</dd>
+                        </div>
+                        <div className="ms-drawer-row">
+                          <dt>HS CODE</dt>
+                          <dd>{p.hsCode || "—"}</dd>
+                        </div>
+                        <div className="ms-drawer-row">
+                          <dt>ORIGIN</dt>
+                          <dd>{ORIGIN_LABELS[p.originCountry] ?? p.originCountry}</dd>
+                        </div>
+                        <div className="ms-drawer-row">
+                          <dt>NET WEIGHT</dt>
+                          <dd>{v ? `${v.weightKg} KG` : (p.weight || p.unit).toUpperCase()}</dd>
+                        </div>
+                        <div className="ms-drawer-row">
+                          <dt>IN STOCK</dt>
+                          <dd>
+                            {p.currentStock} {p.unit.toUpperCase()}
+                          </dd>
+                        </div>
+                      </dl>
+                      <button onClick={() => onSelect(p)} className="ms-label ms-drawer-cta">
+                        OPEN FULL SPEC SHEET →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* cursor spotlight — light follows the mouse across the steel */}
                 <div className="ms-spot" aria-hidden="true" />
               </div>
             );

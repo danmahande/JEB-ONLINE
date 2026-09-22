@@ -405,3 +405,23 @@ Work Log:
 
 Stage Summary:
 - Tiles now carry visible dark mass: solid navy side-walls on every box (bottom + right, per top-left light), wall thickens 4px -> 10px when lifted, crushes to 2px when pressed, deep detached shadow while airborne; face gradient + corrugation + bevels + 4px crate corners; slower 0.5s settle, ±1.4deg tilt; DOM untouched, eslint clean
+
+---
+Task ID: 25
+Agent: Super Z (main agent)
+Task: "no this is worse — I want them like those metallic cabinets: hover = drawer slides out slowly, click = drawer opens revealing extra details, remove the shadows (tacky)"
+
+Work Log:
+- Full redirect from container mass (Task 24 rejected): tiles rebuilt as drawers in a wall-mounted steel cabinet. Zero external drop shadows anywhere (user called them tacky) — metal now reads through material: machined edge bevels (inset-only 4-layer shadow), brushed-steel face (fine 1px horizontal grain over a light machined gradient), darker steel border #98a3b4, 6px radius
+- Pull affordance: .ms-tile::after = recessed grip channel across the bottom lip of the face (inset dark slot + light lower lip), lives in the panel padding zone so it never collides with price/ADD
+- Drawer mechanics (one new element per tile — required by the requested reveal): .ms-drawer absolute top:100% left/right 7px, display:grid grid-template-rows 0fr -> hover 0.12fr (crack: only the 28px steel lip slides out) -> .ms-open 1fr (full pull-out). grid-rows interpolation = true sliding with no dead travel; 0.65s cubic-bezier(0.3,0.72,0.22,1) = the slow heavy slide; visibility gated with 0.65s delay on close, 0s on open; pointer-events auto only when open; inner fades/slides in with 0.1-0.14s delays
+- Drawer interior: steel lip strip (category + "PRODUCT DATA" labels, visible through the hover crack) over dark navy cavity (#212d49 -> #151e34), spec rows as dl (SKU / HS CODE / ORIGIN / NET WEIGHT / IN STOCK) with hairline separators + tabular numerals, description line, brand-orange "OPEN FULL SPEC SHEET" CTA -> onSelect(p) so the detail sheet stays reachable (image/name buttons no longer call onSelect — they toggle the drawer)
+- Stack order: .ms-tile:hover z-20 (peek rides over the grid gap), .ms-tile.ms-open z-30 (open drawer hangs over the next row like a pulled drawer over the bank); single-open interlock via openId state (opening one closes the previous); inert={!open} keeps closed drawer content out of tab order/a11y
+- Rigidity: tile transform/tilt/lean/img-inertia all REMOVED (cabinets don't flex) — tile transform none, will-change dropped; handlers reduced to spotlight --mx/--my only (onMouseEnter/Leave deleted); corrugation ribbing (.ms-spot::before) deleted, spotlight recolored to cool white sheen 210px, sweep kept (light glints across steel on arrival), spot + ::after get border-radius 6px to respect rounded corners now that overflow-hidden is off
+- TSX class changes: removed bg-white/shadow-sm/overflow-hidden from tile (overflow had to go for the drawer to escape; img zoom clipping already handled by the aspect-square wrapper); entry animation ms-tile-in kept; reduced-motion parity (drawer transitions none, entry/sweep off)
+- Verified live (agent-browser): CSSOM audit — drawer/lip/cta/open rules present, old navy #16233f gone from .ms-tile (remaining hit is an unrelated Tailwind utilities blob), ribbing gone; computed tile shadow = inset-only, transform none; hover peek: 35px drawer under face with 28px lip, z-20; click: 294px full pull-out flush under face (top 650 vs bottom 651), z-30, pointer-events auto, inert cleared, rows correct (SKU GRN-MILLET-006, HS 1008.21, ORIGIN UGANDA mapping, 25 KG, 180 BAG); CTA -> detail sheet opens with product content, Escape closes, drawer persists; single-open: opening tile 2 closed tile 1 (z auto); toggle close works; transition computed 0.65s bezier(0.3,0.72,0.22,1); no console errors, cart/storage clean
+- eslint clean; tsc errors pre-existing in kwanza-erp-src/examples only
+- Screenshots: download/meridian-cabinet-rest.png, meridian-cabinet-peek.png (lip cracked under Finger Millet), meridian-cabinet-open.png + meridian-cabinet-open-tile2.png (full drawer over the bank with spec data + orange CTA)
+
+Stage Summary:
+- Catalog is now a bank of metal cabinet drawers: hover cracks the drawer open slowly (steel lip slides out from under the face), click pulls it fully out revealing product data (SKU/HS/origin/weight/stock + description) with an orange path into the full spec sheet; every drop shadow is gone — machined bevels, brushed grain and the bottom pull channel carry the metal; single-open interlock, reduced-motion parity, eslint clean
