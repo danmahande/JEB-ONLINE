@@ -12,6 +12,7 @@ import CartDrawer from "@/components/storefront/cart-drawer";
 import Checkout from "@/components/storefront/checkout";
 import Confirmation from "@/components/storefront/confirmation";
 import TrackOrder from "@/components/storefront/track-order";
+import Reveal from "@/components/storefront/reveal";
 import Footer from "@/components/storefront/footer";
 import type { PlacedOrder, Product } from "@/lib/types";
 
@@ -51,6 +52,8 @@ export default function Storefront() {
       />
 
       <main className="flex-1 flex flex-col">
+        {/* keyed by view — remounts replay the soft fade-rise on every switch */}
+        <div key={view} className="ms-view-in flex-1 flex flex-col">
         {view === "shop" && (
           <>
             <Hero
@@ -68,17 +71,19 @@ export default function Storefront() {
               onClearQuery={() => setQuery("")}
             />
             {/* trust strip */}
-            <section className="border-t border-line bg-white px-4 md:px-8 py-10 grid sm:grid-cols-3 gap-6" aria-label="Trade assurances">
-              {[
-                ["EAC PREFERENTIAL TARIFFS", "Goods originating in Uganda move duty-free across Kenya, Tanzania and Rwanda under the EAC Common External Tariff."],
-                ["END-TO-END FULFILLMENT", "Every order flows into our warehouse system — stock decrements, picking, driver runsheets and cash-on-delivery reconciliation follow automatically."],
-                ["TRANSPARENT CROSS-BORDER PRICING", "Duties, VAT and freight are estimated per destination before payment — no surprise fees at the border."],
-              ].map(([title, body]) => (
-                <div key={title}>
-                  <p className="ms-label mb-2 border-l-2 border-brand pl-3">{title}</p>
-                  <p className="text-sm leading-relaxed text-hush">{body}</p>
-                </div>
-              ))}
+            <section className="border-t border-line bg-white px-4 md:px-8 py-10" aria-label="Trade assurances">
+              <Reveal className="grid sm:grid-cols-3 gap-6">
+                {[
+                  ["EAC PREFERENTIAL TARIFFS", "Goods originating in Uganda move duty-free across Kenya, Tanzania and Rwanda under the EAC Common External Tariff."],
+                  ["END-TO-END FULFILLMENT", "Every order flows into our warehouse system — stock decrements, picking, driver runsheets and cash-on-delivery reconciliation follow automatically."],
+                  ["TRANSPARENT CROSS-BORDER PRICING", "Duties, VAT and freight are estimated per destination before payment — no surprise fees at the border."],
+                ].map(([title, body]) => (
+                  <div key={title}>
+                    <p className="ms-label mb-2 border-l-2 border-brand pl-3">{title}</p>
+                    <p className="text-sm leading-relaxed text-hush">{body}</p>
+                  </div>
+                ))}
+              </Reveal>
             </section>
           </>
         )}
@@ -105,6 +110,7 @@ export default function Storefront() {
         )}
 
         {view === "track" && <TrackOrder />}
+        </div>
       </main>
 
       <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />

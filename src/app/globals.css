@@ -257,6 +257,80 @@ html {
   }
 }
 
+/* --- P1 motion + P2 system loops ----------------------------------------- */
+
+/* Smooth programmatic + anchor scrolling (ENTER CATALOG, view switches) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scroll-in reveal — sections fade-rise once when entering the viewport */
+.ms-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.ms-reveal.ms-reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Ken-Burns drift — the hero photo breathes */
+@keyframes ms-kenburns {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.07) translateY(-1.5%); }
+}
+.ms-kenburns {
+  animation: ms-kenburns 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Price flash when currency/region changes */
+@keyframes ms-price-flash {
+  0% { background-color: rgba(255, 107, 53, 0.3); }
+  100% { background-color: transparent; }
+}
+.ms-price-flash {
+  animation: ms-price-flash 0.8s ease-out;
+}
+
+/* Soft transition between shop / checkout / track views */
+@keyframes ms-view-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.ms-view-in {
+  animation: ms-view-in 0.3s ease-out backwards;
+}
+
+/* Keyboard focus — orange ring, only for keyboard navigation */
+.ms-root :where(button, a):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Sticky header when scrolled — subtle drop shadow */
+.ms-header-scrolled {
+  box-shadow: 0 6px 18px rgba(27, 42, 74, 0.1);
+}
+
+/* Compact email field for the tile-level NOTIFY ME form */
+.ms-notify-field {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+/* Reduced motion: disable the P1/P2 layers too */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .ms-reveal { opacity: 1; transform: none; transition: none; }
+  .ms-kenburns,
+  .ms-price-flash,
+  .ms-view-in {
+    animation: none;
+  }
+}
+
 /* Softened corners — low specificity so explicit rounded-* classes can override */
 .ms-root :where(button, input, textarea, select) {
   border-radius: 6px;
@@ -298,7 +372,7 @@ html {
   background: #f1f5f9;
 }
 
-/* Out-of-stock diagonal */
+/* Out-of-stock diagonal — visual only, never blocks tile interactions */
 .ms-oos {
   position: relative;
 }
@@ -306,6 +380,7 @@ html {
   content: "";
   position: absolute;
   inset: 0;
+  pointer-events: none;
   background: repeating-linear-gradient(
     -45deg,
     rgba(27, 42, 74, 0.55) 0 10px,
@@ -316,3 +391,5 @@ html {
 /* recompile trigger */
 
 /* recompile trigger: 2026-09-22 feedback loops */
+
+/* recompile trigger: 2026-09-22 p1p2 motion */

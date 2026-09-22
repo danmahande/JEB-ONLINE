@@ -1,10 +1,12 @@
 "use client";
 
+import Reveal from "@/components/storefront/reveal";
+
 export default function Footer({ onNavigate }: { onNavigate: (v: "shop" | "track") => void }) {
   return (
     <footer className="mt-auto bg-ink text-white" aria-label="Footer">
       <div className="px-4 md:px-8 py-12 md:py-16">
-        <div className="grid md:grid-cols-4 gap-10">
+        <Reveal className="grid md:grid-cols-4 gap-10">
           <div className="md:col-span-2">
             <p className="ms-display text-4xl md:text-5xl mb-4">
               MERIDIAN
@@ -54,7 +56,7 @@ export default function Footer({ onNavigate }: { onNavigate: (v: "shop" | "track
               <li>SUPPORT: SALES@MERIDIANSUPPLY.CO</li>
             </ul>
           </div>
-        </div>
+        </Reveal>
       </div>
 
       <div className="border-t border-white/10 px-4 md:px-8 py-4 flex flex-wrap justify-between gap-2">

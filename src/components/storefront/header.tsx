@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import type { RegionConfig } from "@/lib/types";
 
@@ -25,6 +25,15 @@ export default function Header({
   const region = useRegion((s) => s.region);
   const setRegion = useRegion((s) => s.setRegion);
   const [regionOpen, setRegionOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // header compresses on scroll: ticker collapses, main bar gains a shadow
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const active = regions.find((r) => r.region === region);
@@ -32,8 +41,13 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-40 bg-white">
-      {/* ticker */}
-      <div className="overflow-hidden bg-ink text-white py-1.5" aria-hidden="true">
+      {/* ticker — collapses when the page scrolls */}
+      <div
+        className={`overflow-hidden bg-ink text-white transition-all duration-300 ${
+          scrolled ? "max-h-0 py-0 opacity-0" : "max-h-12 py-1.5 opacity-100"
+        }`}
+        aria-hidden="true"
+      >
         <div className="ms-marquee-track">
           {ticker.map((t, i) => (
             <span key={i} className="ms-label mx-8 inline-block">
@@ -44,7 +58,11 @@ export default function Header({
       </div>
 
       {/* main bar */}
-      <div className="flex items-center justify-between border-b border-line px-4 py-3 md:px-8">
+      <div
+        className={`flex items-center justify-between border-b border-line px-4 md:px-8 transition-all duration-300 ${
+          scrolled ? "py-2 ms-header-scrolled" : "py-3"
+        }`}
+      >
         <button
           onClick={() => onNavigate("shop")}
           className="ms-display text-xl md:text-2xl tracking-tight text-left"

@@ -16,7 +16,7 @@ export default function Hero({
         <img
           src="/products/__hero.png"
           alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="ms-kenburns absolute inset-0 h-full w-full object-cover"
         />
         {/* navy veil — dark behind the text zone, clearing toward the horizon */}
         <div

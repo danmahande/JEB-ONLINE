@@ -289,3 +289,25 @@ Work Log:
 
 Stage Summary:
 - All five approved feedback loops shipped without structural changes; remaining advisory items (scroll reveals, header compress, Ken-Burns hero, currency flash, focus rings, view transitions, NOTIFY ME, tile pack chips, image/weight alignment) pending user permission
+
+---
+Task ID: 19
+Agent: Super Z (main agent)
+Task: "go ahead" — implement remaining advisory items (P1 motion + P2 system + extras)
+
+Work Log:
+- globals.css P1/P2 layer: ms-reveal (fade-rise on viewport entry), ms-kenburns (24s scale 1->1.07 hero drift), ms-price-flash (orange 0.8s pulse), ms-view-in (300ms fade-rise between views), focus-visible orange rings (buttons/links), html scroll-behavior smooth, .ms-notify-field compact input, .ms-header-scrolled shadow; all gated by prefers-reduced-motion; .ms-oos::after got pointer-events:none (the diagonal was swallowing clicks on sold-out tiles)
+- reveal.tsx (new): IntersectionObserver-based one-shot reveal wrapper; unsupported environments start revealed (avoids setState-in-effect)
+- header.tsx: scrolled state (passive scroll listener) — ticker collapses (max-h + opacity) and main bar compresses py-3->py-2 with shadow class
+- hero.tsx: ms-kenburns on the composite photo
+- page.tsx: <main> content wrapped in key={view} ms-view-in div (soft view transitions); trust strip grid wrapped in Reveal
+- footer.tsx: footer grid wrapped in Reveal
+- product-grid.tsx: pack-size chips on multi-variant tiles (picked state per product; ADD adds the SELECTED pack — verified cart line "Maize Flour (Posho) / 50KG BAG" after picking 50KG chip, price 68,080 -> 131,720); NOTIFY ME flow on sold-out tiles (inline email form -> "✓ ON THE LIST" + WE'LL NOTIFY YOU toast); price flash via key={region} remount (lint-clean, replays on currency switch)
+- Images: wheat-flour.png (printed 50KG, base 25KG) + soybeans.png (printed 25KG, base 50KG) edited via z-ai SDK (scripts/edit-product-images.mjs, base64 data URL route after CLI failed) — printed text removed, plain packaging, originals backed up in scripts/candidates/
+- Fixed: two react-hooks/set-state-in-effect errors (price flash state -> key remount; Reveal fallback -> useState(!supported)); stale dev CSS twice -> bumped recompile trigger
+- Verified live: kenburns/focus-ring/reveal/smooth-scroll rules in CSSOM; ticker height 0 scrolled; chips update price + aria-pressed; NOTIFY ME end-to-end; 14/14 prices flash on KE switch (KSh); ms-view-in on TRACK ORDER; trust strip + footer reveal; ms-header-scrolled applied
+- Cleanup: sorghum stock restored to 520, test cart reset, region back to UGX, eslint clean on changed files
+
+Stage Summary:
+- Full interactive-system pass shipped: every action has visible feedback (morph, pop, flash, stagger, reveal, compress, transitions), sold-out tiles are conversations not dead ends, pack selection is explicit; images no longer contradict the packs being added
+- Screenshots: download/meridian-interactive-catalog.png + meridian-interactive-mobile.png
