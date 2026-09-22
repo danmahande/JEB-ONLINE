@@ -632,3 +632,27 @@ Work Log:
 Stage Summary:
 - Whole catalog tile is clickable (opens quick view) with inner-control propagation guards; pushed at ca6997c, local == remote
 - Design-mismatch audit delivered to user as a numbered report with file/line evidence and proposed fixes; awaiting user's pick before any changes
+
+---
+Task ID: 36
+Agent: Super Z (main agent)
+Task: User: "go ahead" — approved all 11 design-mismatch audit fixes from Task 35, in the proposed priority order
+
+Work Log:
+- Fix 1 (magazine headings): Checkout / Confirmation / Track Order giant display headings replaced with the catalog's white toolbar module (ms-display text-2xl/3xl + right stencil label). Right labels: checkout "DUTY · VAT · FREIGHT QUOTED UPFRONT", confirmation live "NO. DS100004", track "LIVE FROM THE WAREHOUSE". Confirmation restructured from centered editorial to the standard left rail layout
+- Fix 2 (toast): ui/toast.tsx rebuilt — no shadow-lg, rounded-lg hairline panel with 2px brand left edge, ToastTitle = ms-label ink, description text-xs text-hush, close = stencil ✕ (lucide X import removed). Note: first MultiEdit call partially applied despite the atomic-failure message; caught by re-read and completed
+- Fix 3+4 (inset-only shadow contract): hero search shadow-xl -> border-line; region dropdown shadow-lg removed (+ rounded-lg); confirmation + track-order cards shadow-sm removed; DialogContent and SheetContent primitives shadow-lg removed (quick view + cart now borderless-elevation too). Header-scrolled shadow kept (documented exception)
+- Fix 5+6 (grey families): quick view + cart drawer bg-white -> cabinet paper #fbfaf5 (file-card-on-steel read); quick-view image pane bg-slate-100 -> bg-neutral-100
+- Fix 7 (selection language): catalog tabs active bg-brand -> bg-ink (hover:bg-secondary wash); checkout destination + payment selected = ink detent, inactive hover = border-ink + text-ink (no bg collision); region dropdown/option + weight toggles already ink. Rule: ink = selection detents, brand = actions
+- Fix 8: ENTER CATALOG hover -> brand-dark (border removed) like every other primary
+- Fix 9 (muting): opacity-50/60/40 on light surfaces -> text-hush (cart rows, checkout summary, confirmation, track items/history/FX); opacities kept on dark surfaces (footer, track ink band) and for state dimming (timeline, remove ✕)
+- Fix 10 (typography/corners): ms-price (Space Grotesk) on quick-view UNIT PRICE, cart line price + TOTAL, checkout TOTAL DUE, confirmation order/tracking/total, track order/tracking numbers; cart line labels font-bold (matches tile titles, drops the uppercase third voice); rounded-lg + overflow-hidden on confirmation/track/checkout-summary cards
+- Fix 11 (copy): quick-view "BAG(S) IN STOCK" -> smart plural "460 BAGS IN STOCK"; header aria "Open cart, 1 items" -> "1 item"
+- Extra: fixed real tsc error in src/ — product-grid title={p.brand} with nullable brand -> p.brand ?? undefined; destination pill border-line/border-ink class conflict restructured (border-line moved to inactive branch)
+- Verified live (agent-browser): CSSOM has fbfaf5 + border-l-brand (no stale chunk); hero search boxShadow none; ALL tab ink; toast shadow none + 2px brand edge + 10px uppercase title + stencil close; quick view + cart bg rgb(251,250,245) + "460 BAGS IN STOCK"; destination + payment ink detents; checkout/confirmation/track toolbars 25.5px modules with right labels; dropdown + cards shadow none; order DS100004 placed end-to-end via UI; zero page errors; localStorage cleared
+- Screenshots taken for verification then removed (meridian-audit-hero/checkout/confirmation.png)
+- eslint clean on all 11 touched files; tsc src/ clean; commit 0566de3 pushed to origin main, remote SHA verified 0566de342d9de453ce21be3e949c30a988e19bd4
+
+Stage Summary:
+- All 11 audit findings fixed in one pass: the three remaining magazine headings are toolbar modules, the toast is on-system, the inset-only shadow contract holds site-wide, overlays share the cabinet paper, selection = ink / action = orange everywhere, prices speak Space Grotesk, corners and muted text follow tokens, copy plurals fixed
+- JEB-ONLINE main at 0566de3, local == remote
