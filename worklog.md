@@ -212,3 +212,18 @@ Work Log:
 
 Stage Summary:
 - Headline now 5vw/10vw (theme-consistent display presence at ~1/3 less area than the original 9.5vw); page dial at 85% — one-line adjustments remain in globals.css
+
+---
+Task ID: 14
+Agent: Super Z (main agent)
+Task: Remove the GRAINS & HARDWARE statement from the hero to reduce header size even more
+
+Work Log:
+- hero.tsx: removed the visible display headline entirely; replaced with <h1 className="sr-only">Meridian Supply Co. — Grains & Hardware</h1> so the page keeps exactly one h1 for SEO/accessibility at zero visual cost (verified present in DOM via eval)
+- Re-spaced the now-slim hero: container pt-10/12 -> pt-8/10; eyebrow mb-3/4 -> mb-4/5 directly above the search; form lost its mt (eyebrow margin covers it); ENTER CATALOG mt-5/6 -> mt-4/5
+- Hero is now: eyebrow -> search bar -> ENTER CATALOG -> sky-gradient -> horizon strip -> warm haze -> catalog
+- Verified at 1600x900: hero ends ~y470, CATALOG heading + tabs + first product row (images, badges) fully above the fold; mobile 390x844: hero ends ~y450 with first two cards' names/stock/prices visible
+- Screenshots: download/meridian-nostatement-live.png + meridian-nostatement-mobile.png
+
+Stage Summary:
+- Header is now a compact marketplace band (~200px content + 190px strip desktop); headline removal is the biggest single space saving yet — hero dropped from ~610px to ~470px desktop total

@@ -14,14 +14,12 @@ export default function Hero({
       className="relative bg-gradient-to-b from-[#16233F] via-[#1B2A4A] to-[#3A5686] text-white overflow-hidden"
       aria-label="Hero"
     >
-      <div className="relative z-10 px-4 md:px-8 pt-10 md:pt-12 pb-6 md:pb-8">
-        <p className="ms-label mb-3 md:mb-4 opacity-80 text-white">
+      <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-10 pb-6 md:pb-8">
+        <p className="ms-label mb-4 md:mb-5 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
         </p>
-        <h1 className="ms-display text-[10vw] md:text-[5vw]">
-          GRAINS &amp;<br />
-          HARDWARE
-        </h1>
+        {/* kept for SEO/a11y only — not rendered visually */}
+        <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
 
         {/* search — the storefront's primary entry point */}
         <form
@@ -30,7 +28,7 @@ export default function Hero({
             e.preventDefault();
             onShop();
           }}
-          className="mt-5 md:mt-6 flex max-w-xl bg-white p-1.5 shadow-xl"
+          className="flex max-w-xl bg-white p-1.5 shadow-xl"
         >
           <input
             value={query}
@@ -49,7 +47,7 @@ export default function Hero({
 
         <button
           onClick={onShop}
-          className="ms-label mt-5 md:mt-6 bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
+          className="ms-label mt-4 md:mt-5 bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
         >
           ENTER CATALOG ↓
         </button>
