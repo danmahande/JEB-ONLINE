@@ -369,11 +369,12 @@ export default function ProductGrid({
                     hover cracks it open, click pulls it fully out */}
                 <div className="ms-drawer" id={`ms-drawer-${p.productId}`} inert={!open}>
                   <div className="ms-drawer-inner">
-                    <div className="ms-drawer-lip" aria-hidden="true">
-                      <span className="ms-label">{p.category}</span>
-                      <span className="ms-label">PRODUCT DATA</span>
-                    </div>
-                    <div className="ms-drawer-body">
+                    <div className="ms-drawer-well">
+                      <div className="ms-drawer-lip" aria-hidden="true">
+                        <span className="ms-label">{p.category}</span>
+                        <span className="ms-label">PRODUCT DATA</span>
+                      </div>
+                      <div className="ms-drawer-body">
                       {p.description && <p className="ms-drawer-desc">{p.description}</p>}
                       <dl>
                         <div className="ms-drawer-row">
@@ -402,6 +403,7 @@ export default function ProductGrid({
                       <button onClick={() => onSelect(p)} className="ms-label ms-drawer-cta">
                         OPEN FULL SPEC SHEET →
                       </button>
+                      </div>
                     </div>
                   </div>
                 </div>

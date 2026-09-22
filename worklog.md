@@ -464,3 +464,23 @@ Stage Summary:
 - Drawer motion now reads mechanical: instant catch, constant-velocity travel, hard stop, slam-shut retract, visible slide rails, zero content fade
 - Weight pack selector is a chunky steel switch with solid navy detent — unmissable on both catalog card and spec sheet
 - Catalog is 5-up at 1440px (6-up 2xl), cards ~20% narrower / ~35% smaller area, structure and all prior behaviors (single-open interlock, hover crack, spec sheet chain, reduced-motion) intact
+
+---
+Task ID: 28
+Agent: Super Z (main agent)
+Task: User: "it still doesnt look like a drawer more like a paper attached to the catalog box" — the Task 26/27 drawer read as paper taped under the card.
+
+Work Log:
+- Root causes identified: (1) slide-out panel was the same light grey as the face with WHITE paper rows — no hole, no walls, no depth, no figure-ground; (2) a Chromium grid bug made the hover crack render as a black slab: fractional fr tracks double-dip the flex factor (0.12fr resolved to a 5.2px used track inside a 43.2px container → 38px of empty cavity painted below the collapsed box). Verified by elementFromPoint probes + rect forensics (scripts/verify-task28b/c.sh)
+- Rebuilt geometry (globals.css): .ms-drawer is now the cabinet's DARK CAVITY (near-black gradient, inset mouth shading, 8px radius); .ms-drawer-inner is the STEEL BOX (light metallic walls, 3px rim highlight, 1px border); new .ms-drawer-well is the recessed dark interior (navy-black gradient, top shadow), inset 10px by the side walls with a 9px steel back-wall band across the top (the rim you see when a drawer is cracked); old 6px rail pseudos removed
+- Travel rewritten: max-height on the inner (rest 0 / hover-crack 42px / open 460px) — plain length transition, container auto-height tracks min(content, max-height) exactly → cavity and box in lockstep, voidPx 0 at crack and open. grid-template-rows fixed at 1fr; fr fractions forbidden (documented in CSS). Cavity vertical padding still interpolates 0↔7px so the mouth seals dead on close (seal check: 2px residue = border only, then hidden)
+- Interior de-papered: rows lost white cards/borders/shadows → groove-separated stencil rows on dark (dt #7d8698, dd #eef1f6, dividers rgba(255,255,255,.07)); desc #a6adbc; lip = stencil strip with light scratch divider; CTA got inset bevels. Well margin-top 9px = the back-wall band
+- JSX: drawer content wrapped in .ms-drawer-well (product-grid.tsx); eslint clean
+- Dev-server note: sandbox reaps background servers between commands — verification scripts now start the server per-run (scripts/verify-task28*.sh); also hit stale Turbopack CSS serving once (served chunk lacked new rules); confirmed fresh serve by grepping the CSS chunk for max-height:460px before re-verifying
+- Verified live: content census 342-359px across 14 products (460 cap safe); crack lockstep cavity 57/inner 42/void 0; open cavity 375/inner 360/void 0/rimBand 9/z-30; seal 2px+hidden; zoomed crops confirm the read: dark mouth + machined steel rim + dark stenciled interior, zero paper
+- Screenshots: download/meridian-task28d-crack.png + -crack-zoom.png, -open.png + -open-zoom.png, -rest.png
+
+Stage Summary:
+- The drawer is now a real box: dark cavity mouth, machined steel rim and walls, dark stenciled interior — no paper anywhere
+- Travel is exact (max-height): mechanical pull/crack/slam timings from Task 27 preserved, single-open interlock, spec-sheet chain, reduced-motion all intact
+- Chromium fr double-dip documented in CSS as a landmine for future iterations
