@@ -10,11 +10,27 @@ export default function Hero({
   onQuery: (q: string) => void;
 }) {
   return (
-    <section
-      className="relative bg-gradient-to-b from-[#16233F] via-[#1B2A4A] to-[#3A5686] text-white overflow-hidden"
-      aria-label="Hero"
-    >
-      <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-10 pb-6 md:pb-8">
+    <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
+      {/* full-bleed HD composite: maize field dissolving into a warehouse */}
+      <div className="absolute inset-0">
+        <img
+          src="/products/__hero.png"
+          alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* navy veil — dark behind the text zone, clearing toward the horizon */}
+        <div
+          className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/45 to-ink/10"
+          aria-hidden="true"
+        />
+        {/* warm haze — dissolves the photo into the catalog below */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-24 md:h-28 bg-gradient-to-t from-[#FBF6EC] via-[#FBF6EC]/25 to-transparent"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-10 pb-8 md:pb-12">
         <p className="ms-label mb-4 md:mb-5 opacity-80 text-white">
           UGANDA ORIGIN — EXPORTING ACROSS THE EAC &amp; WORLDWIDE
         </p>
@@ -51,25 +67,6 @@ export default function Hero({
         >
           ENTER CATALOG ↓
         </button>
-      </div>
-
-      {/* thin HD strip: maize field dissolving into a warehouse — the horizon line */}
-      <div className="relative h-36 md:h-56">
-        <img
-          src="/products/__hero.png"
-          alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        {/* melts out of the sky above... */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-[#3A5686] via-[#3A5686]/15 to-transparent"
-          aria-hidden="true"
-        />
-        {/* ...and dissolves into warm morning haze the catalog rises from */}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-[#FBF6EC] via-[#FBF6EC]/20 to-transparent"
-          aria-hidden="true"
-        />
       </div>
     </section>
   );

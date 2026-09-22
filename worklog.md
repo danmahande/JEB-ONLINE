@@ -227,3 +227,18 @@ Work Log:
 
 Stage Summary:
 - Header is now a compact marketplace band (~200px content + 190px strip desktop); headline removal is the biggest single space saving yet — hero dropped from ~610px to ~470px desktop total
+
+---
+Task ID: 15
+Agent: Super Z (main agent)
+Task: Make the image cover the WHOLE hero (not just the bottom strip) while staying HD clear
+
+Work Log:
+- compose-hero.py: canvas 1920x270 -> 1920x500 (~3.8:1) — band formulas auto-adapted (farm 3000x781 slice, warehouse 1672x435 slice); same luminance match + feathered seam; asset now 304 KB, no upscaling at 1600px wide displays
+- Removed the obsolete in-situ simulation block from the script (browser screenshots are the verification now)
+- hero.tsx: strip container deleted; img is now absolute inset-0 full-bleed behind the content; overlays: navy veil bg-gradient-to-b from-ink/90 via-ink/45 to-ink/10 (dark behind eyebrow/search zone, clearing toward the horizon) + warm haze from-[#FBF6EC] at the bottom edge keeping the seamless dissolve into the catalog's cream; section fallback bg-ink; content pb -> pb-8 md:pb-12 for breathing room
+- Verified at 1600x900: forklift/container truck/racks/maize all HD-legible behind content, text zone readable over the veil, hero ~300px tall, catalog + first card row (names visible) above the fold; mobile 390x844: center crop shows seam + forklift, cards with prices above the fold
+- Screenshots: download/meridian-fullbleed-live.png + meridian-fullbleed-mobile.png
+
+Stage Summary:
+- Hero is now a compact full-bleed photo band (image covers 100% of the section at 1920x500 native) with legibility veil + catalog dissolve preserved; slim search-first layout unchanged
