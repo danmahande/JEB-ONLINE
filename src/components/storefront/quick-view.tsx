@@ -140,28 +140,31 @@ export default function QuickView({
             </div>
 
             {/* qty + add */}
-            <div className="flex gap-2 mt-5">
-              <div className="flex border border-line">
-                <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="ms-label px-4 hover:bg-ink hover:text-white transition-colors"
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
-                <span
-                  className="ms-label px-4 py-3 border-x border-line min-w-[3.5rem] text-center"
-                  aria-live="polite"
-                >
-                  {qty}
-                </span>
-                <button
-                  onClick={() => setQty((q) => Math.min(product.currentStock, q + 1))}
-                  className="ms-label px-4 hover:bg-ink hover:text-white transition-colors"
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
+            <div className="flex gap-2 mt-5 items-end">
+              <div role="group" aria-label="Quantity">
+                <p className="ms-label mb-2 text-hush">QUANTITY</p>
+                <div className="flex border border-line">
+                  <button
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    className="ms-label px-4 hover:bg-ink hover:text-white transition-colors"
+                    aria-label="Decrease quantity"
+                  >
+                    −
+                  </button>
+                  <span
+                    className="ms-label px-4 py-3 border-x border-line min-w-[3.5rem] text-center"
+                    aria-live="polite"
+                  >
+                    {qty}
+                  </span>
+                  <button
+                    onClick={() => setQty((q) => Math.min(product.currentStock, q + 1))}
+                    className="ms-label px-4 hover:bg-ink hover:text-white transition-colors"
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               <button
                 onClick={handleAdd}
