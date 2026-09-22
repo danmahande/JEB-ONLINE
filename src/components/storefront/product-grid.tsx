@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
+import { useSky } from "@/lib/store";
 
 const TABS = [
   { key: "ALL", label: "ALL" },
@@ -35,6 +36,8 @@ export default function ProductGrid({
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
+  // the day-part light the whole page shares — the shopfront answers it
+  const sky = useSky((s) => s.override ?? s.natural);
 
   const q = query.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -60,10 +63,12 @@ export default function ProductGrid({
   return (
     <section
       id="catalog"
+      data-sky={sky}
       className="bg-[linear-gradient(to_bottom,#FBF6EC_0px,#F8FAFC_360px)] px-4 md:px-8 py-10 md:py-14"
       aria-label="Catalog"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 md:mb-5 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+      {/* fascia board — the toolbar mounts flush on the shopfront frame below */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-lg border border-b-0 border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
         <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CATALOG</h2>
         <div className="flex border border-line" role="tablist" aria-label="Category filter">
           {TABS.map((t) => (
@@ -82,8 +87,9 @@ export default function ProductGrid({
         </div>
       </div>
 
+      {/* search status strip — continues the fascia down to the frame */}
       {q && (
-        <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-3 border-x border-line bg-white px-4 py-2.5">
           <p className="text-sm text-hush">
             Showing <span className="font-bold text-ink">{filtered.length}</span> result
             {filtered.length === 1 ? "" : "s"} for &ldquo;{query.trim()}&rdquo;
@@ -97,6 +103,9 @@ export default function ProductGrid({
         </div>
       )}
 
+      {/* the shopfront frame — panes are the tiles, the grid gaps show the
+          frame steel through as mullions (Task 38) */}
+      <div className="ms-shopfront">
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 md:gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -154,12 +163,20 @@ export default function ProductGrid({
                   className="relative block w-full text-left"
                   aria-label={`View ${p.productLabel} details`}
                 >
-                  <div className="aspect-square overflow-hidden bg-neutral-100">
+                  <div className="relative aspect-square overflow-hidden bg-neutral-100">
                     <img
                       src={p.image || "/products/placeholder.png"}
                       alt={p.productLabel}
                       loading="lazy"
                       className="w-full h-full object-cover"
+                    />
+                    {/* the pane — goods displayed behind glass; the rake delay
+                        follows the crane-drop stagger so light lands after the
+                        tiles do */}
+                    <span
+                      className="ms-glass"
+                      style={{ animationDelay: `${Math.min(i * 40, 240) + 350}ms` }}
+                      aria-hidden="true"
                     />
                   </div>
                 </button>
@@ -317,6 +334,7 @@ export default function ProductGrid({
           })}
         </div>
       )}
+      </div>
     </section>
   );
 }
