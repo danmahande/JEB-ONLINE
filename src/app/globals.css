@@ -200,12 +200,61 @@ html {
 /* Product card */
 .ms-tile {
   border-radius: 8px;
+  transition: transform 0.2s cubic-bezier(0.2, 0.6, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.ms-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(27, 42, 74, 0.12);
 }
 .ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 .ms-tile:hover img {
   transform: scale(1.045);
+}
+
+/* --- Interactive-system feedback loops ------------------------------------ */
+
+/* Cart badge pop — remount via key={count} replays it on every change */
+@keyframes ms-badge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.ms-badge-pop {
+  animation: ms-badge-pop 0.45s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Tile entrance — staggered fade-rise on filter/search changes.
+   fill-mode: backwards holds the hidden state during the stagger delay,
+   then releases the cascade so hover lift keeps working afterwards. */
+@keyframes ms-tile-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ms-tile-in {
+  animation: ms-tile-in 0.28s cubic-bezier(0.2, 0.6, 0.2, 1) backwards;
+}
+
+/* Buttons depress on press, system-wide (Windows-7-style physical click) */
+.ms-root :where(button:not(:disabled)):active {
+  transform: scale(0.97);
+}
+
+/* Respect users who opt out of motion */
+@media (prefers-reduced-motion: reduce) {
+  .ms-tile-in,
+  .ms-badge-pop {
+    animation: none;
+  }
+  .ms-tile,
+  .ms-tile img {
+    transition: none;
+  }
+  .ms-root :where(button):active {
+    transform: none;
+  }
 }
 
 /* Softened corners — low specificity so explicit rounded-* classes can override */
@@ -265,3 +314,5 @@ html {
 }
 
 /* recompile trigger */
+
+/* recompile trigger: 2026-09-22 feedback loops */

@@ -273,3 +273,19 @@ Work Log:
 
 Stage Summary:
 - No structural or code changes; advisory delivered in conversation; ADD flow verified deterministic (display == add); perception fixes queued as suggestions pending user approval
+
+---
+Task ID: 18
+Agent: Super Z (main agent)
+Task: Implement top-5 interactivity fixes (user approved "make those first") — ADD morph, badge pulse, press/lift, tile stagger, pack-next-to-price
+
+Work Log:
+- globals.css: added ms-badge-pop keyframes (scale 1->1.4->1, 450ms), ms-tile-in keyframes (fade-rise 10px, 280ms, fill backwards so hover lift still works after entrance), .ms-tile hover lift (translateY -4px + navy shadow, 200ms), system-wide button press (:where(button:not(:disabled)):active scale 0.97), prefers-reduced-motion kill switch for all of the above
+- header.tsx: cart count wrapped in <span key={count} className="ms-badge-pop inline-block"> — remount replays the pop on every count change
+- product-grid.tsx: (1) justAdded Set + per-product timeout ref (cleared on unmount) — ADD button morphs to navy "✓ ADDED" for 1.3s then back to orange ADD; (2) grid container keyed by `${tab}|${q}` so filter/search changes remount tiles and replay the 40ms-per-tile stagger (capped 240ms); (3) tile top line now brand-only, pack moved to sit directly under the price (ms-label, truncate, title attr) so the weight is at the point of decision
+- Hit stale dev-server CSS (ms-badge-pop class in DOM but rule absent from served CSS) — fixed by bumping the recompile-trigger comment in globals.css and reloading (same fix as Task 2)
+- Verified live: morph text "✓ ADDED" + bg rgb(27,42,74) -> resets to ADD after 1.3s; badge animationName ms-badge-pop replaying at CART [3]; stagger delays 0/40/80/120/160ms on GRAINS tab switch; hover-lift + press rules present in CSSOM; pack "25KG BAG"/"50KG BAG" renders under each price
+- Screenshots: download/meridian-feedback-catalog.png + meridian-feedback-mobile.png; test cart reset in localStorage
+
+Stage Summary:
+- All five approved feedback loops shipped without structural changes; remaining advisory items (scroll reveals, header compress, Ken-Burns hero, currency flash, focus rings, view transitions, NOTIFY ME, tile pack chips, image/weight alignment) pending user permission

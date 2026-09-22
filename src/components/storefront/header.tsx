@@ -117,7 +117,7 @@ export default function Header({
             className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
             aria-label={`Open cart, ${count} items`}
           >
-            CART [{count}]
+            CART [<span key={count} className="ms-badge-pop inline-block">{count}</span>]
           </button>
         </div>
       </div>

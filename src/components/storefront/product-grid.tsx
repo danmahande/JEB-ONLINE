@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useCart } from "@/lib/store";
@@ -30,9 +30,19 @@ export default function ProductGrid({
   onClearQuery: () => void;
 }) {
   const [tab, setTab] = useState("ALL");
+  const [justAdded, setJustAdded] = useState<Set<string>>(new Set());
+  const addTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const addLine = useCart((s) => s.addLine);
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
+
+  // clear any pending "✓ ADDED" reset timers on unmount
+  useEffect(
+    () => () => {
+      Object.values(addTimers.current).forEach(clearTimeout);
+    },
+    []
+  );
 
   const q = query.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -73,6 +83,16 @@ export default function ProductGrid({
       title: "ADDED TO CART",
       description: `${p.productLabel} (${v.label.toLowerCase()}) — open the cart to check out.`,
     });
+    // button morphs to "✓ ADDED" for a moment — feedback lands on the control
+    setJustAdded((s) => new Set(s).add(p.productId));
+    clearTimeout(addTimers.current[p.productId]);
+    addTimers.current[p.productId] = setTimeout(() => {
+      setJustAdded((s) => {
+        const next = new Set(s);
+        next.delete(p.productId);
+        return next;
+      });
+    }, 1300);
   }
 
   return (
@@ -140,8 +160,11 @@ export default function ProductGrid({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-          {filtered.map((p) => {
+        <div
+          key={`${tab}|${q}`}
+          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4"
+        >
+          {filtered.map((p, i) => {
             const v = defaultVariant(p);
             const priceUsd = p.unitSellingPrice + (v?.priceDelta || 0);
             const out = p.currentStock <= 0;
@@ -149,7 +172,8 @@ export default function ProductGrid({
             return (
               <div
                 key={p.productId}
-                className={`ms-tile group relative flex flex-col border border-line overflow-hidden bg-white shadow-sm ${
+                style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
+                className={`ms-tile ms-tile-in group relative flex flex-col border border-line overflow-hidden bg-white shadow-sm ${
                   out ? "ms-oos" : ""
                 }`}
               >
@@ -187,9 +211,7 @@ export default function ProductGrid({
 
                 {/* info panel */}
                 <div className="flex flex-col gap-1.5 flex-1 p-3 md:p-4">
-                  <p className="ms-label text-hush truncate">
-                    {p.brand} · {v?.label || p.weight || p.unit}
-                  </p>
+                  <p className="ms-label text-hush truncate">{p.brand}</p>
                   <button
                     onClick={() => onSelect(p)}
                     className="text-left font-bold text-sm md:text-[15px] leading-snug line-clamp-2 hover:text-brand transition-colors"
@@ -209,16 +231,25 @@ export default function ProductGrid({
                         : `In stock — ${p.currentStock} ${p.unit.toLowerCase()}${p.currentStock === 1 ? "" : "s"}`}
                   </p>
                   <div className="flex items-end justify-between gap-2 mt-auto pt-1.5">
-                    <span className="ms-price text-lg md:text-xl tracking-tight text-brand leading-none whitespace-nowrap">
-                      {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="ms-price text-lg md:text-xl tracking-tight text-brand leading-none whitespace-nowrap">
+                        {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
+                      </span>
+                      <p className="ms-label text-hush mt-1 truncate" title={v?.label}>
+                        {v?.label || p.weight || p.unit}
+                      </p>
+                    </div>
                     <button
                       onClick={() => quickAdd(p)}
                       disabled={out}
-                      className="ms-label bg-brand text-white px-3 py-2.5 hover:bg-brand-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                      className={`ms-label px-3 py-2.5 shrink-0 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+                        justAdded.has(p.productId)
+                          ? "bg-ink text-white"
+                          : "bg-brand text-white hover:bg-brand-dark"
+                      }`}
                       aria-label={`Add ${p.productLabel} to cart`}
                     >
-                      {out ? "—" : "ADD"}
+                      {out ? "—" : justAdded.has(p.productId) ? "✓ ADDED" : "ADD"}
                     </button>
                   </div>
                 </div>
