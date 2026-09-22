@@ -600,3 +600,19 @@ Work Log:
 
 Stage Summary:
 - GitHub README now shows the current storefront (BUY tiles, quick-view quantity sheet, cart, checkout) with copy matching the post-drawer UI; JEB-ONLINE main at 48dac9c, local == remote
+
+---
+Task ID: 34
+Agent: Super Z (main agent)
+Task: User: "first remove the 14 from catalog and also let it feel like it's part of the catalog otherwise it's one of the parts of the system that are like magazine pieces also can the sun flow throughout not just at the top"
+
+Work Log:
+- product-grid.tsx: removed the <sup>14</sup> count from the CATALOG heading; rebuilt the heading+tabs row as one white toolbar module (rounded-lg border-line bg-white, heading text-2xl/3xl leading-none, segmented tabs inline right, mb-8 -> mb-4/5) so it reads as the catalog's control rail instead of a magazine headline floating on the cream bg
+- Page-wide sunlight: page.tsx now renders a fixed .ms-sun wash (z-45, pointer-events none) carrying the hero's day-part light over the whole viewport — above the sticky header (z-40) so chrome warms too, below dialogs/sheets (z-50) so commerce overlays stay crisp; reads the same useSky state (natural + footer override)
+- globals.css: .ms-sun + .ms-sun-dawn/golden/night gradients (light enters from the top and dissolves by ~62% viewport; night keeps a full-body ink 0.34->0.14); added .ms-sky transition:none to the reduced-motion block; new recompile trigger
+- README: living-sky bullet updated (light follows real time of day across the whole page)
+- Verified live: sup gone + toolbar renders; sun fixed/45/none; golden active during golden hour (screenshot: header+ticker+hero+catalog bathed, text readable); footer NIGHT override turns page-wide night on (nightOn + heroNight true, golden off) with tiles/trust-strip/footer under ink wash, prices still legible; reset override to AUTO, localStorage cleared
+- Commit b833558 "Catalog toolbar module (count removed) + page-wide day-part sunlight" pushed to origin main; remote SHA verified b83355845f392f7159616c326ba637bdaf9d561d
+
+Stage Summary:
+- CATALOG header is now an integrated toolbar module without the count; day-part sunlight (dawn/golden/night) flows over the entire storefront as you scroll, driven by the same sky state as the hero and the footer override; JEB-ONLINE main at b833558, local == remote
