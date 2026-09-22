@@ -99,7 +99,11 @@ export default function Checkout({
 
   return (
     <section className="px-4 md:px-8 py-10 md:py-14" aria-label="Checkout">
-      <h2 className="ms-display text-4xl md:text-6xl mb-8">CHECKOUT</h2>
+      {/* toolbar module — same control rail as the catalog, not a magazine headline */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+        <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CHECKOUT</h2>
+        <p className="ms-label text-hush">DUTY · VAT · FREIGHT QUOTED UPFRONT</p>
+      </div>
 
       <div className="grid lg:grid-cols-5 gap-8">
         {/* form */}
@@ -111,10 +115,10 @@ export default function Checkout({
                 <button
                   key={r.region}
                   onClick={() => setRegion(r.region)}
-                  className={`ms-label border border-line px-4 py-3 transition-colors ${
+                  className={`ms-label border px-4 py-3 transition-colors ${
                     r.region === region
-                      ? "bg-brand text-white border-brand"
-                      : "bg-white hover:bg-ink hover:text-white"
+                      ? "bg-ink text-white border-ink"
+                      : "border-line bg-white hover:border-ink hover:text-ink"
                   }`}
                 >
                   {r.countryName}
@@ -188,12 +192,14 @@ export default function Checkout({
                   onClick={() => setForm((f) => ({ ...f, paymentMethod: m.key }))}
                   className={`border px-4 py-3 text-left transition-colors ${
                     form.paymentMethod === m.key
-                      ? "bg-brand text-white border-brand"
-                      : "bg-white border-line hover:bg-ink hover:text-white"
+                      ? "bg-ink text-white border-ink"
+                      : "bg-white border-line hover:border-ink hover:text-ink"
                   }`}
                 >
                   <span className="ms-label block">{m.label}</span>
-                  <span className="text-[10px] tracking-widest opacity-50">{m.hint}</span>
+                  <span className={`text-[10px] tracking-widest ${
+                    form.paymentMethod === m.key ? "opacity-70" : "text-hush"
+                  }`}>{m.hint}</span>
                 </button>
               ))}
             </div>
@@ -202,7 +208,7 @@ export default function Checkout({
 
         {/* summary */}
         <div className="lg:col-span-2">
-          <div className="border border-line bg-white p-5 lg:sticky lg:top-24">
+          <div className="rounded-lg border border-line bg-white p-5 lg:sticky lg:top-24">
             <p className="ms-label mb-4">ORDER SUMMARY</p>
             <div className="max-h-56 overflow-y-auto ms-scroll divide-y divide-line mb-4">
               {lines.map((l) => (
@@ -212,7 +218,7 @@ export default function Checkout({
                 >
                   <span className="truncate">
                     <b className="uppercase">{l.productLabel}</b>
-                    <span className="opacity-50"> · {l.variantLabel} × {l.qty}</span>
+                    <span className="text-hush"> · {l.variantLabel} × {l.qty}</span>
                   </span>
                   <span className="font-bold whitespace-nowrap">
                     {active ? fmt(l.unitPriceUsd * l.qty, active) : `$${(l.unitPriceUsd * l.qty).toFixed(2)}`}
@@ -224,24 +230,24 @@ export default function Checkout({
             {active && q && (
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="opacity-60">SUBTOTAL</span>
+                  <span className="text-hush">SUBTOTAL</span>
                   <span className="font-bold">{fmt(q.subtotal, active)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="opacity-60">DUTY ({Math.round(active.dutyRate * 100)}%)</span>
+                  <span className="text-hush">DUTY ({Math.round(active.dutyRate * 100)}%)</span>
                   <span className="font-bold">{fmt(q.duty, active)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="opacity-60">VAT ({Math.round(active.vatRate * 100)}%)</span>
+                  <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
                   <span className="font-bold">{fmt(q.vat, active)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="opacity-60">FREIGHT</span>
+                  <span className="text-hush">FREIGHT</span>
                   <span className="font-bold">{fmt(q.shipping, active)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 mt-3">
                   <span className="ms-label">TOTAL DUE</span>
-                  <span className="font-black text-2xl text-brand">{fmt(q.total, active)}</span>
+                  <span className="ms-price text-2xl text-brand">{fmt(q.total, active)}</span>
                 </div>
               </div>
             )}

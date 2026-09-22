@@ -121,7 +121,7 @@ export default function Header({
             </button>
             {regionOpen && (
               <ul
-                className="absolute right-0 mt-1 w-56 border border-line bg-white z-50 shadow-lg"
+                className="absolute right-0 mt-1 w-56 rounded-lg border border-line bg-white z-50"
                 role="listbox"
               >
                 {regions.map((r) => (
@@ -151,7 +151,7 @@ export default function Header({
             onClick={onOpenCart}
             data-cart-badge
             className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
-            aria-label={`Open cart, ${count} items`}
+            aria-label={`Open cart, ${count} ${count === 1 ? "item" : "items"}`}
           >
             CART [<span key={count} className="ms-badge-pop inline-block">{count}</span>]
           </button>

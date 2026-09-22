@@ -72,14 +72,14 @@ export default function QuickView({
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-white border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
+      <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-[#fbfaf5] border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
         <DialogHeader className="sr-only">
           <DialogTitle>{product.productLabel}</DialogTitle>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2">
           {/* image */}
-          <div className="relative aspect-square bg-slate-100 border-b md:border-b-0 md:border-r border-line">
+          <div className="relative aspect-square bg-neutral-100 border-b md:border-b-0 md:border-r border-line">
             { }
             <img
               src={product.image || "/products/placeholder.png"}
@@ -124,7 +124,7 @@ export default function QuickView({
             <div className="flex items-baseline justify-between border-t border-line pt-4 mt-auto">
               <div>
                 <p className="ms-label text-hush mb-1">UNIT PRICE</p>
-                <p className="font-black text-2xl md:text-3xl tracking-tight text-brand">
+                <p className="ms-price text-2xl md:text-3xl tracking-tight text-brand">
                   {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                 </p>
               </div>
@@ -133,7 +133,8 @@ export default function QuickView({
                   <span className="text-red-500">SOLD OUT</span>
                 ) : (
                   <>
-                    {product.currentStock} {product.unit}(S) IN STOCK
+                    {product.currentStock} {product.unit}
+                    {product.currentStock === 1 ? "" : "S"} IN STOCK
                   </>
                 )}
               </p>

@@ -66,7 +66,7 @@ export default function Hero({
             e.preventDefault();
             onShop();
           }}
-          className="flex max-w-xl bg-white p-1.5 shadow-xl"
+          className="flex max-w-xl bg-white border border-line p-1.5"
         >
           <input
             value={query}
@@ -85,7 +85,7 @@ export default function Hero({
 
         <button
           onClick={onShop}
-          className="ms-label mt-4 md:mt-5 bg-brand text-white px-8 py-4 hover:bg-white hover:text-ink border border-brand transition-colors"
+          className="ms-label mt-4 md:mt-5 bg-brand text-white px-8 py-4 hover:bg-brand-dark transition-colors"
         >
           ENTER CATALOG ↓
         </button>

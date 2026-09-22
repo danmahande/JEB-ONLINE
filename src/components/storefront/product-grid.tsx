@@ -73,7 +73,7 @@ export default function ProductGrid({
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
               className={`ms-label px-4 md:px-6 py-2.5 md:py-3 border-r border-line last:border-r-0 transition-colors ${
-                tab === t.key ? "bg-brand text-white" : "hover:bg-ink hover:text-white"
+                tab === t.key ? "bg-ink text-white" : "hover:bg-secondary"
               }`}
             >
               {t.label}
@@ -189,7 +189,7 @@ export default function ProductGrid({
 
                 {/* info panel */}
                 <div className="flex flex-col gap-1.5 flex-1 p-3">
-                  <p className="ms-label ms-file-label truncate" title={p.brand}>{p.brand}</p>
+                  <p className="ms-label ms-file-label truncate" title={p.brand ?? undefined}>{p.brand}</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

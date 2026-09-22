@@ -41,7 +41,11 @@ export default function TrackOrder() {
 
   return (
     <section className="px-4 md:px-8 py-10 md:py-14 min-h-[60vh]" aria-label="Track order">
-      <h2 className="ms-display text-4xl md:text-6xl mb-8">TRACK ORDER</h2>
+      {/* toolbar module — same control rail as the catalog/checkout */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+        <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">TRACK ORDER</h2>
+        <p className="ms-label text-hush">LIVE FROM THE WAREHOUSE</p>
+      </div>
 
       <div className="max-w-2xl">
         <div className="flex border border-line bg-white">
@@ -73,16 +77,16 @@ export default function TrackOrder() {
         )}
 
         {state === "found" && order && (
-          <div className="mt-8 border border-line bg-white shadow-sm">
+          <div className="mt-8 rounded-lg border border-line bg-white overflow-hidden">
             {/* header */}
             <div className="flex flex-wrap justify-between gap-4 p-5 border-b border-line bg-ink text-white">
               <div>
                 <p className="ms-label opacity-60 mb-1">ORDER</p>
-                <p className="font-black text-2xl tracking-tight">{order.orderNumber}</p>
+                <p className="ms-price text-2xl tracking-tight">{order.orderNumber}</p>
               </div>
               <div className="text-right">
                 <p className="ms-label opacity-60 mb-1">TRACKING</p>
-                <p className="font-black text-lg">{order.trackingNumber || "—"}</p>
+                <p className="ms-price text-lg">{order.trackingNumber || "—"}</p>
               </div>
             </div>
 
@@ -141,7 +145,7 @@ export default function TrackOrder() {
                 <p className="text-sm">
                   <b>TOTAL:</b> ${order.totalAmount.toFixed(2)}
                   {order.currency !== "USD" && (
-                    <span className="opacity-50">
+                    <span className="text-hush">
                       {" "}
                       (≈ {order.currency}{" "}
                       {Math.round(order.totalAmount * (order as any).fxRate).toLocaleString()})
@@ -159,7 +163,7 @@ export default function TrackOrder() {
                   <div key={i} className="flex justify-between gap-3 py-2.5 text-sm">
                     <span>
                       <b className="uppercase">{li.productName}</b>
-                      <span className="opacity-50">
+                      <span className="text-hush">
                         {" "}
                         · {li.variant} × {li.qty}
                       </span>
@@ -179,7 +183,7 @@ export default function TrackOrder() {
                 <ul className="space-y-2">
                   {events.map((ev) => (
                     <li key={ev.id} className="text-xs tracking-wide">
-                      <span className="opacity-40">
+                      <span className="text-hush">
                         {new Date(ev.createdAt).toLocaleString()} —{" "}
                       </span>
                       {ev.note || `${ev.fromStatus} → ${ev.toStatus}`}
