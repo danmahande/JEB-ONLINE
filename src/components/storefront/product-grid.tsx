@@ -139,12 +139,18 @@ export default function ProductGrid({
                   el.style.setProperty("--mx", `${e.clientX - r.left}px`);
                   el.style.setProperty("--my", `${e.clientY - r.top}px`);
                 }}
-                className={`ms-tile ms-tile-in group relative flex flex-col border border-line ${
+                onClick={() => onSelect(p)}
+                className={`ms-tile ms-tile-in group relative flex flex-col border border-line cursor-pointer ${
                   out ? "ms-oos" : ""
                 }`}
               >
+                {/* the whole tile is the hit target — inner controls below stop
+                    propagation so they don't also open the quick-view sheet */}
                 <button
-                  onClick={() => onSelect(p)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(p);
+                  }}
                   className="relative block w-full text-left"
                   aria-label={`View ${p.productLabel} details`}
                 >
@@ -185,7 +191,10 @@ export default function ProductGrid({
                 <div className="flex flex-col gap-1.5 flex-1 p-3">
                   <p className="ms-label ms-file-label truncate" title={p.brand}>{p.brand}</p>
                   <button
-                    onClick={() => onSelect(p)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(p);
+                    }}
                     className="text-left font-bold text-sm leading-snug line-clamp-2 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
@@ -216,7 +225,10 @@ export default function ProductGrid({
                           {variants.map((vv, vi) => (
                             <button
                               key={vv.label}
-                              onClick={() => setPicked((s) => ({ ...s, [p.productId]: vi }))}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPicked((s) => ({ ...s, [p.productId]: vi }));
+                              }}
                               aria-pressed={vi === idx}
                               className={`ms-weight-toggle ${vi === idx ? "is-on" : ""}`}
                             >
@@ -235,9 +247,10 @@ export default function ProductGrid({
                         <span className="ms-label text-emerald-600 shrink-0">✓ ON THE LIST</span>
                       ) : (
                         <button
-                          onClick={() =>
-                            setNotifyOpen((o) => (o === p.productId ? null : p.productId))
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNotifyOpen((o) => (o === p.productId ? null : p.productId));
+                          }}
                           aria-expanded={notifyOpen === p.productId}
                           className={`ms-label shrink-0 px-3 py-2.5 border transition-colors ${
                             notifyOpen === p.productId
@@ -250,7 +263,10 @@ export default function ProductGrid({
                       )
                     ) : (
                       <button
-                        onClick={() => onSelect(p)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelect(p);
+                        }}
                         className="ms-label px-3 py-2.5 shrink-0 bg-brand text-white hover:bg-brand-dark transition-colors"
                         aria-label={`Buy ${p.productLabel} — choose pack and quantity`}
                       >
@@ -263,6 +279,7 @@ export default function ProductGrid({
                   {out && notifyOpen === p.productId && !notifyDone.has(p.productId) && (
                     <form
                       className="flex gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
                       onSubmit={(e) => {
                         e.preventDefault();
                         setNotifyDone((s) => new Set(s).add(p.productId));
