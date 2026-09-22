@@ -425,3 +425,22 @@ Work Log:
 
 Stage Summary:
 - Catalog is now a bank of metal cabinet drawers: hover cracks the drawer open slowly (steel lip slides out from under the face), click pulls it fully out revealing product data (SKU/HS/origin/weight/stock + description) with an orange path into the full spec sheet; every drop shadow is gone — machined bevels, brushed grain and the bottom pull channel carry the metal; single-open interlock, reduced-motion parity, eslint clean
+
+---
+Task ID: 26
+Agent: Super Z (main agent)
+Task: "i meant that cabinet" + photo of a vertical grey office filing cabinet (label card holders, recessed pulls, one drawer pulled open)
+
+Work Log:
+- Reference decoded: user's photo = classic vertical file cabinet — matte warm-grey painted steel, dark-framed white label card holder centered near the top of each drawer face, dark recessed pull directly below it, drawers stacked with thin recessed gaps
+- Face restyled from blue-white brushed steel to photo-matched office grey: gradient #dcdcd6 -> #c3c2bc, faint 1px grain at 0.2 alpha (painted, not brushed), border #a19f97, edge bevels retinted warm-grey; brushed-blue remnants verified gone from CSSOM
+- Filing hardware built from the EXISTING brand line (no extra DOM): brand <p> gained ms-file-label class -> dark 3px frame + white label card (inset shadow = recessed depth, align-self center, 82% max-width); ::after on the same element = the recessed pull (58% width, 7px, dark gradient + inset shadow + light catch below); old bottom grip channel (.ms-tile::after) deleted
+- Drawer interior restyled as the pulled-out filing drawer: grey steel box (#c9c8c2 -> #b0afa9, border #8e8d85), lip = shadowed box edge (#b3b2ac -> #a5a49e), spec rows became white paper file cards (#fcfcf8, 1px grey border, 0 1px 0 contact shadow, radius 2px, 6px stack gaps) — desc text recolored dark for the light interior; CTA stays brand orange (single accent, like a colored sticker on office steel)
+- Mechanic untouched from Task 25 (hover = slow 0.65s crack, click = full pull-out, single-open interlock, z-20/z-30 stack) — user's correction was about cabinet type, not behavior
+- Fixed own typo mid-edit (invalid '#b0af a9' hex line removed before runtime)
+- Verified live: CSSOM has .ms-file-label + ::after pull (72.75px x 7px dark gradient), label card computed 3px rgb(60,59,54) frame on rgb(251,250,245) card, centered; face gradient rgb(220,220,214) present; old #98a3b4/#a7b0c0 gone; peek + full open (306px) with grey box interior + white file cards (rgb(252,252,248) on grey) + orange CTA; drawer closes clean, 0 open tiles, cart untouched, no page errors
+- eslint clean
+- Screenshots: download/meridian-filing-peek.png, meridian-filing-open.png (label holders + open drawer with file cards)
+
+Stage Summary:
+- Catalog tiles now read as drawers of the user's vertical filing cabinet: matte grey painted faces, dark-framed white label card (brand) centered under the photo window with the recessed pull below, hover cracks the shadowed box edge out slowly, click pulls the grey drawer fully out revealing white paper file cards (SKU/HS/origin/weight/stock) and the orange full-spec path; no drop shadows anywhere; eslint clean, verified live

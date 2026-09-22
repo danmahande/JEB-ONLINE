@@ -197,44 +197,29 @@ html {
   animation-play-state: paused;
 }
 
-/* Product card — a drawer in a wall-mounted steel cabinet (Task 25).
+/* Product card — a drawer in a VERTICAL FILING CABINET (Task 26).
+   Reference: grey painted-steel office file cabinet — matte grey faces,
+   dark-framed label card holder + recessed pull on every drawer.
    The tile is the drawer FACE. A real drawer box hangs under it and slides
-   out slowly: a crack on hover (just the steel lip), fully out on click
-   with the product data inside. Zero drop shadows — the metal reads
-   through machined edges, brushed grain and the pull channel alone. */
+   out slowly: a crack on hover (the shadowed box edge), fully out on click
+   revealing the files inside. Zero drop shadows — nothing floats. */
 .ms-tile {
   border-radius: 6px;
-  border-color: #98a3b4;
-  /* brushed steel face: fine horizontal grain over a machined gradient */
+  border-color: #a19f97;
+  /* matte painted steel: warm office grey, whisper of grain */
   background-image:
     repeating-linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.4) 0 1px,
+      rgba(255, 255, 255, 0.2) 0 1px,
       rgba(255, 255, 255, 0) 1px 3px
     ),
-    linear-gradient(180deg, #f7f9fb 0%, #e7ebf1 32%, #d6dce5 66%, #c7ceda 100%);
+    linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
   /* machined edges only — light catches the bevels, nothing floats */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -1px 0 rgba(27, 42, 74, 0.16),
-    inset 1px 0 0 rgba(255, 255, 255, 0.55),
-    inset -1px 0 0 rgba(27, 42, 74, 0.1);
-}
-
-/* the pull — a recessed grip channel across the bottom lip of the face */
-.ms-tile::after {
-  content: "";
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 6px;
-  height: 5px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #a7b0c0 0%, #8d97aa 100%);
-  box-shadow:
-    inset 0 1.5px 2px rgba(27, 42, 74, 0.42),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.7);
-  pointer-events: none;
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(40, 40, 30, 0.18),
+    inset 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset -1px 0 0 rgba(40, 40, 30, 0.1);
 }
 
 /* stack order: a peeking drawer rides over the grid gap, an open one
@@ -282,8 +267,9 @@ html {
   opacity: 0;
   transform: translateY(-8px);
   transition: opacity 0.28s ease, transform 0.32s ease;
-  background: linear-gradient(180deg, #212d49 0%, #151e34 100%);
-  border: 1px solid #43506c;
+  /* the drawer box — grey steel, slightly darker inside (it was in the dark) */
+  background: linear-gradient(180deg, #c9c8c2 0%, #b0afa9 100%);
+  border: 1px solid #8e8d85;
   border-radius: 0 0 7px 7px;
 }
 .ms-tile:hover .ms-drawer-inner,
@@ -293,7 +279,7 @@ html {
   transition: opacity 0.35s ease 0.14s, transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s;
 }
 
-/* steel lip — the only thing you see through the crack */
+/* steel lip — the shadowed box edge you see through the crack */
 .ms-drawer-lip {
   display: flex;
   align-items: center;
@@ -301,35 +287,40 @@ html {
   gap: 12px;
   height: 28px;
   padding: 0 14px;
-  background: linear-gradient(180deg, #eef1f6 0%, #ccd3de 74%, #b6bfcd 100%);
-  border-bottom: 1px solid #43506c;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  color: #5d6b85;
+  background: linear-gradient(180deg, #b3b2ac 0%, #a5a49e 100%);
+  border-bottom: 1px solid #8e8d85;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  color: #55534b;
 }
 .ms-drawer-lip .ms-label {
   font-size: 9px;
   letter-spacing: 0.18em;
 }
 
-/* the interior — product data stenciled on the drawer floor */
+/* the interior — product files laid on the drawer floor */
 .ms-drawer-body {
   padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 6px;
 }
 .ms-drawer-desc {
   font-size: 11px;
   line-height: 1.55;
-  color: #9dabc4;
+  color: #55534b;
+  padding-bottom: 3px;
 }
 .ms-drawer-row {
+  /* a paper file card in the drawer */
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 5px 9px;
+  background: #fcfcf8;
+  border: 1px solid #98978d;
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(40, 40, 30, 0.12);
 }
 .ms-drawer-row dt {
   margin: 0;
@@ -338,13 +329,13 @@ html {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #71809f;
+  color: #6e6c61;
 }
 .ms-drawer-row dd {
   margin: 0;
   font-size: 11.5px;
   font-weight: 600;
-  color: #e9eef6;
+  color: #33322c;
   text-align: right;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -762,3 +753,40 @@ html {
 /* recompile trigger: 2026-09-22 two-sided wall (top-left light) */
 
 /* recompile trigger: 2026-09-22 cabinet drawers — slide-out product data (Task 25) */
+
+/* ─── Filing-cabinet hardware (Task 26) ─────────────────────────────────────
+   The brand line becomes the dark-framed label card holder every filing
+   drawer has, with the recessed pull hanging right below it. */
+.ms-file-label {
+  position: relative;
+  align-self: center;
+  max-width: 82%;
+  margin-bottom: 14px;
+  padding: 4px 12px;
+  border: 3px solid #3c3b36;
+  border-radius: 2px;
+  background: #fbfaf5;
+  color: #57554c;
+  font-size: 9px;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.28),
+    0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.ms-file-label::after {
+  /* the recessed pull under the label holder */
+  content: "";
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58%;
+  height: 7px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #45443f 0%, #2f2e2a 100%);
+  box-shadow:
+    inset 0 1.5px 2px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+/* recompile trigger: 2026-09-22 vertical filing cabinet (Task 26) */

@@ -249,7 +249,7 @@ export default function ProductGrid({
 
                 {/* info panel */}
                 <div className="flex flex-col gap-1.5 flex-1 p-3 md:p-4">
-                  <p className="ms-label text-hush truncate">{p.brand}</p>
+                  <p className="ms-label ms-file-label truncate" title={p.brand}>{p.brand}</p>
                   <button
                     onClick={() => setOpenId(open ? null : p.productId)}
                     aria-expanded={open}
