@@ -259,3 +259,17 @@ Work Log:
 
 Stage Summary:
 - Storefront typography upgraded from generic Helvetica stack to trending Space Grotesk + Inter pairing, loaded self-hosted via next/font; all ms-* type classes and prices now render in Space Grotesk with true weights
+
+---
+Task ID: 17
+Agent: Super Z (main agent)
+Task: Advisory only (no changes) — ADD button "random weight" complaint + site feels like "paper, not an interactive system"
+
+Work Log:
+- Live-tested ADD flow with agent-browser: clicked ADD on 3 tiles, read localStorage cart — each line matched the tile exactly (pack shown = pack added, e.g. "MERIDIAN FARM CO · 25KG BAG" -> Finger Millet / 25KG BAG / 29.4); no code bug
+- Diagnosis of "random weight" perception: (1) default pack differs per product (25KG vs 50KG vs 3M SHEET vs 16OZ — whichever variant has priceDelta 0), (2) pack info buried in tiny muted truncated line at tile top, far from the price, (3) some AI bag images have weights printed on them that can contradict the pack actually added
+- Delivered advisory (no code changes): action-feedback on controls (ADD morphs to "ADDED ✓" + cart badge pulse + tile stepper), motion system (tile stagger on filter, scroll reveals, header compress, Ken-Burns hero, number flash on currency switch), affordances (card lift, button press states, focus rings), pack clarity (pack next to price, mini pack chips on tile, align images to default packs, richer toast with cart total)
+- Reset test cart in localStorage after verification
+
+Stage Summary:
+- No structural or code changes; advisory delivered in conversation; ADD flow verified deterministic (display == add); perception fixes queued as suggestions pending user approval
