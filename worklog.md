@@ -616,3 +616,19 @@ Work Log:
 
 Stage Summary:
 - CATALOG header is now an integrated toolbar module without the count; day-part sunlight (dawn/golden/night) flows over the entire storefront as you scroll, driven by the same sky state as the hero and the footer override; JEB-ONLINE main at b833558, local == remote
+
+---
+Task ID: 35
+Agent: Super Z (main agent)
+Task: User: "make the whole catalog box clickable also find areas where the designs are mismatched and tell me before making any change"
+
+Work Log:
+- product-grid.tsx: .ms-tile div gained onClick -> onSelect(p) + cursor-pointer (whole box is now the hit target); stopPropagation added to image button, title button, BUY, weight-pack toggles, NOTIFY ME, and the notify email <form> so inner controls keep their own behavior; keyboard path unchanged (image/title/BUY remain real buttons)
+- Verified live (agent-browser @1440x900): served CSS has cursor:pointer on tile (no stale chunk); REAL mouse click on the stock-line (non-button area) of Finger Millet tile opened quick view; Escape closed; clicking 5KG BAG toggle on Long-Grain Rice engaged the detent WITHOUT opening quick view; BUY aria-button still opens the sheet with SELECT PACK + QUANTITY; zero page errors; localStorage cleared
+- eslint clean on product-grid.tsx; tsc noise is the pre-existing scripts/examples set only
+- Commit ca6997c "Make the whole catalog tile clickable — any click opens the quick-view sheet" pushed to origin main; remote SHA verified ca6997c306f692890a37945b793adcf5504a2180
+- Design-mismatch audit (report-only, NO fixes applied): walked every storefront component + globals.css + ui primitives; findings: (1) magazine-style giant headings on checkout/confirmation/track vs the Task 34 catalog toolbar module; (2) drop-shadow contract violations (hero search shadow-xl, header region dropdown shadow-lg, confirmation + track-order cards shadow-sm, dialog/sheet primitives shadow-lg, header-scrolled shadow) vs "inset-only, nothing floats"; (3) two grey families — warm cabinet greys (#a19f97/#8e8d85/#fbfaf5/#3c3b36) vs cool slate chrome (#E2E8F0/#64748B/#F8FAFC); (4) stock shadcn toast un-themed (rounded-md, shadow-lg, Inter, lucide X); (5) selection-state language split (ink detents on cabinet controls vs brand fills on commerce controls; region dropdown navy vs checkout destination orange for the same job); (6) muted-text via text-hush token vs opacity-50/60/70 scattered; (7) price type ms-price (Space Grotesk) on tiles vs font-black Inter in quick view/cart/checkout; (8) corner language: 6px system vs square confirmation/track cards vs 4px toggles/badges; (9) copy-voice mismatches: "BAG(S) IN STOCK" + (S) pluralization in quick view vs smart plurals on tiles; aria "Open cart, 1 items"; (10) ENTER CATALOG hover-to-white is the only primary button that doesn't hover to brand-dark; (11) placeholder greys bg-slate-100 vs bg-neutral-100 vs bg-neutral-200
+
+Stage Summary:
+- Whole catalog tile is clickable (opens quick view) with inner-control propagation guards; pushed at ca6997c, local == remote
+- Design-mismatch audit delivered to user as a numbered report with file/line evidence and proposed fixes; awaiting user's pick before any changes
