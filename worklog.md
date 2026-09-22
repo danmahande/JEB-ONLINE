@@ -503,3 +503,20 @@ Stage Summary:
 - Live site cannot be spawned persistently from agent context (platform reaps all tool-spawned processes); it comes up automatically at container boot
 - dev.sh is now a supervisor: any future dev-server death respawns within ~15s — no more dead preview after OOM/crash
 - After restart: verify served CSS chunk contains .ms-drawer-well + max-height:460px before trusting visuals (stale-chunk trap), then hand user the preview link
+
+---
+Task ID: 29
+Agent: Super Z (main agent)
+Task: User: "send all files to this repo (https://github.com/danmahande/JEB-ONLINE) - token (ghp_...)"
+
+Work Log:
+- Audited git state: platform auto-commits everything (HEAD 85cc874 @ 14:07, 460 tracked files, 0 pending); .gitignore excludes skills/ + node_modules/ (1.2G) only
+- Size audit: ~200MB pushable, largest file 2.8MB (well under GitHub 100MB limit)
+- ls-remote auth OK → remote repo was completely empty (no refs)
+- Secret scan (ghp_ pattern) across tracked tree: clean
+- git remote add origin (token embedded in .git/config, not in repo); git push -u origin main → new branch main created
+- Verified: remote refs/heads/main 85cc874... == local HEAD 85cc874...
+
+Stage Summary:
+- Full project (Next.js app, prisma db, scripts, download artifacts, kwanza-erp-src reference) is on github.com/danmahande/JEB-ONLINE @ main, SHA-verified
+- Token stored in local .git/config for frictionless future pushes; user advised to rotate it since it was shared in chat
