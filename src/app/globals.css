@@ -733,25 +733,27 @@ html {
 /* recompile trigger: 2026-09-23 glass shopfront (Task 38) */
 
 /* ─── The shopfront (Task 38 · Phases 1+2 — THE WINDOW, THE LIGHT) ─────────
-   The catalog grid is one steel-framed shop window. Frame = painted navy
-   steel (Task 39 recolor — the classic shop-window frame color, and it
-   keeps the frontage inside the kwanza navy family instead of charcoal);
-   the grid's gaps show that material through as mullions. The white
-   toolbar mounts flush on the frame as the fascia board. Every pane of
-   goods sits behind a sheet of glass (.ms-glass) that mirrors the living
-   sky: the section carries data-sky={dawn|day|golden|night} from the same
-   useSky store that drives the hero and the page-wide sun wash, so the
-   day-part light crossing the page is answered BY the window. Highlights
-   and gradients only — nothing floats. */
+   The catalog grid is one steel-framed shop window. Frame = warm steel
+   grey (Task 40 recolor — mid-grey, clearly grey rather than the old
+   near-black charcoal or the brief navy experiment; same warm family as
+   the painted-steel cabinets, so the frame reads as one rack of steel
+   holding the panes). The grid's gaps show that material through as
+   mullions. The white toolbar mounts flush on the frame as the fascia
+   board. Every pane of goods sits behind a sheet of glass (.ms-glass)
+   that mirrors the living sky: the section carries
+   data-sky={dawn|day|golden|night} from the same useSky store that drives
+   the hero and the page-wide sun wash, so the day-part light crossing the
+   page is answered BY the window. Highlights and gradients only — nothing
+   floats. */
 .ms-shopfront {
-  border: 2px solid #131f38;
+  border: 2px solid #47463f;
   border-radius: 6px;
-  /* frame steel — navy, what shows through the grid gaps as mullions */
-  background-image: linear-gradient(180deg, #33476f 0%, #1b2a4a 55%, #17233e 100%);
+  /* frame steel — warm mid-grey, what shows through the grid gaps as mullions */
+  background-image: linear-gradient(180deg, #828078 0%, #6e6d65 55%, #5a5951 100%);
   padding: 10px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* The pane — glass over the goods. Layers, front to back:
