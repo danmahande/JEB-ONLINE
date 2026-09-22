@@ -388,3 +388,20 @@ Work Log:
 Stage Summary:
 - Markings (stencil + castings) fully removed; tiles rebuilt as visible slabs: thickness you can see (edge wall grows on lift, collapses on press), gravity you can feel (heavier shadows, -3px hard lift, 0.06s press snap, slower settling wobble, less tilt), cargo that shifts inside (photo settles 2px on lift), steel material cues (bevels, darker border, 5px crate corners, bottom-weighted corrugated panel); DOM untouched, eslint clean, reduced-motion parity kept
 - Screenshots: download/meridian-slab-rest.png + meridian-slab-hover.png
+
+---
+Task ID: 24
+Agent: Super Z (main agent)
+Task: "still looks like paper — I want them to seem like really heavy real world containers without changing the structure"
+
+Work Log:
+- Diagnosis: Task 23's light-gray edges read as paper stack; what communicates "really heavy" is DARK MASS — solid ink side-walls, hard contact occlusion, big detached shadow
+- Rebuilt .ms-tile shadow system as a navy container wall (all on existing DOM): rest = solid #16233f wall 1.5px-right/4px-down + contact occlusion 0.35 + two ambient layers + inset bevels (6 layers per state for layer-for-layer interpolation); hover = wall grows to 3px/10px as the face lifts -5px (thickness revealed, both sides visible since light is top-left) + detached shadow 0.45 @ 44px; :active = wall crushed to 1px/2px #14203a with 0.06s snap
+- Material: radius 5px -> 4px, border #b6bfcf, steel gradient strengthened (top #fefefd -> bottom ink 0.05), corrugation up to 0.055/0.03
+- Motion weight: transform 0.5s bezier(0.18,0.8,0.28,1.06) slow settle; tilt cap ±1.8deg -> ±1.4deg (JS multiplier 3.6 -> 2.8); reduced-motion hover parity -5px
+- Hit stale dev CSS again (right-wall offsets absent from CSSOM) — bumped recompile trigger, reloaded, rules delivered
+- Verified live: rest/hover/press computed shadows (wall 1.5px/4px -> 3px/10px -> 1px/2px), lift -5 in matrix, tilt 0.62deg/0.84deg under new cap, press 0.06s; press-release on the image button opened the detail sheet (existing behavior) — closed via Escape, recaptured clean screenshots; sheetOpen false, cart clean, no page errors
+- Screenshots: download/meridian-wall-rest2.png + meridian-wall-hover3.png (hovered tile on thick two-sided navy wall with detached shadow)
+
+Stage Summary:
+- Tiles now carry visible dark mass: solid navy side-walls on every box (bottom + right, per top-left light), wall thickens 4px -> 10px when lifted, crushes to 2px when pressed, deep detached shadow while airborne; face gradient + corrugation + bevels + 4px crate corners; slower 0.5s settle, ±1.4deg tilt; DOM untouched, eslint clean

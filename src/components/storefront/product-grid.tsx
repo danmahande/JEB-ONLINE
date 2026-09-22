@@ -193,9 +193,9 @@ export default function ProductGrid({
                   const py = (e.clientY - r.top) / r.height - 0.5;
                   el.style.setProperty("--mx", `${e.clientX - r.left}px`);
                   el.style.setProperty("--my", `${e.clientY - r.top}px`);
-                  // push a loaded slab and it leans away — capped at ±1.8deg
-                  el.style.setProperty("--ms-rx", `${(-py * 3.6).toFixed(2)}deg`);
-                  el.style.setProperty("--ms-ry", `${(px * 3.6).toFixed(2)}deg`);
+                  // push a loaded container and it barely leans — capped at ±1.4deg
+                  el.style.setProperty("--ms-rx", `${(-py * 2.8).toFixed(2)}deg`);
+                  el.style.setProperty("--ms-ry", `${(px * 2.8).toFixed(2)}deg`);
                 }}
                 onMouseEnter={(e) => {
                   // pulling one box out of the stack — horizontal neighbors lean into the gap

@@ -197,60 +197,62 @@ html {
   animation-play-state: paused;
 }
 
-/* Product card — a loaded slab, not a paper card (Task 23) */
+/* Product card — a solid cargo container with a visible dark side-wall.
+   The wall is the weight: 4px of solid ink at rest, 10px revealed when the
+   box is lifted, crushed to 2px when pressed into the dock. (Task 24) */
 .ms-tile {
-  border-radius: 5px;
-  border-color: #c7cfdc;
+  border-radius: 4px;
+  border-color: #b6bfcf;
   /* steel face: weight settles to the bottom + corrugation ridges on the panel */
   background-image:
-    linear-gradient(180deg, rgba(27, 42, 74, 0) 55%, rgba(27, 42, 74, 0.035) 100%),
+    linear-gradient(180deg, #fefefd 0%, rgba(27, 42, 74, 0) 46%, rgba(27, 42, 74, 0.05) 100%),
     repeating-linear-gradient(
       90deg,
       transparent 0 15px,
-      rgba(27, 42, 74, 0.045) 15px 16px,
+      rgba(27, 42, 74, 0.055) 15px 16px,
       transparent 16px 31px,
-      rgba(27, 42, 74, 0.025) 31px 32px
+      rgba(27, 42, 74, 0.03) 31px 32px
     );
-  /* the slab: two hard edge layers = visible thickness, plus ambient weight.
-     Lift and the wall grows (you see the side); press and it collapses. */
+  /* the mass: solid navy wall + hard contact occlusion + detached ambient.
+     Six layers per state so every transition interpolates layer-for-layer. */
   box-shadow:
-    0 1px 0 #d9dfe9,
-    0 3px 0 #c9d1de,
-    0 8px 14px -6px rgba(27, 42, 74, 0.1),
-    0 16px 24px -12px rgba(27, 42, 74, 0.1),
+    1.5px 4px 0 0 #16233f,
+    2px 6px 10px -4px rgba(27, 42, 74, 0.35),
+    2px 14px 22px -10px rgba(27, 42, 74, 0.18),
+    2px 22px 30px -14px rgba(27, 42, 74, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
-  /* mass: tilt + stack-lean composed through vars; slow-out easing with a
-     settling overshoot so every release wobbles like a suspended load */
+    inset 0 -1px 0 rgba(27, 42, 74, 0.06);
+  /* mass: tilt + stack-lean composed through vars; long slow-out easing so
+     every release wobbles like a suspended load */
   transform: perspective(900px) translateY(0px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
-  transition: transform 0.38s cubic-bezier(0.18, 0.8, 0.28, 1.07),
-    box-shadow 0.32s cubic-bezier(0.2, 0.6, 0.2, 1);
+  transition: transform 0.5s cubic-bezier(0.18, 0.8, 0.28, 1.06),
+    box-shadow 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
   will-change: transform;
 }
 .ms-tile:hover {
-  transform: perspective(900px) translateY(-3px) rotateX(var(--ms-rx, 0deg))
+  transform: perspective(900px) translateY(-5px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
   box-shadow:
-    0 2px 0 #d9dfe9,
-    0 6px 0 #c9d1de,
-    0 12px 18px -6px rgba(27, 42, 74, 0.14),
-    0 28px 40px -16px rgba(27, 42, 74, 0.36),
+    3px 10px 0 0 #16233f,
+    4px 16px 18px -6px rgba(27, 42, 74, 0.32),
+    4px 30px 44px -16px rgba(27, 42, 74, 0.45),
+    4px 40px 60px -20px rgba(27, 42, 74, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
+    inset 0 -1px 0 rgba(27, 42, 74, 0.06);
 }
-/* pressing drives the slab into the dock — edge collapses, snappy, slow release */
+/* pressing drives the container into the dock — wall crushes, snappy, slow release */
 .ms-tile:active {
   transition-duration: 0.06s;
   transform: perspective(900px) translateY(-1px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg)) scale(0.99);
   box-shadow:
-    0 0 0 rgba(27, 42, 74, 0),
-    0 1px 0 #c2cbd9,
-    0 2px 4px rgba(27, 42, 74, 0.22),
-    0 4px 8px rgba(27, 42, 74, 0.16),
+    1px 2px 0 0 #14203a,
+    1px 3px 6px -1px rgba(27, 42, 74, 0.4),
+    1px 4px 8px rgba(27, 42, 74, 0.22),
+    1px 6px 12px rgba(27, 42, 74, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
+    inset 0 -1px 0 rgba(27, 42, 74, 0.06);
 }
 .ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
@@ -307,7 +309,7 @@ html {
     transform: none;
   }
   .ms-tile:hover {
-    transform: translateY(-3px);
+    transform: translateY(-5px);
   }
   .ms-root :where(button):active {
     transform: none;
@@ -671,3 +673,7 @@ html {
 /* recompile trigger: 2026-09-22 container physics */
 
 /* recompile trigger: 2026-09-22 slab weight — no markings */
+
+/* recompile trigger: 2026-09-22 navy side-wall — real container mass */
+
+/* recompile trigger: 2026-09-22 two-sided wall (top-left light) */
