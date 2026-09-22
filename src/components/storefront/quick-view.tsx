@@ -106,11 +106,7 @@ export default function QuickView({
                     <button
                       key={pv.label}
                       onClick={() => setVariantIdx(i)}
-                      className={`ms-label border border-line px-3 py-2 transition-colors ${
-                        i === variantIdx
-                          ? "bg-brand text-white"
-                          : "hover:bg-ink hover:text-white"
-                      }`}
+                      className={`ms-weight-toggle ${i === variantIdx ? "is-on" : ""}`}
                     >
                       {pv.label}
                     </button>

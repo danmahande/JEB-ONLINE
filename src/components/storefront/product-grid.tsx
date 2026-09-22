@@ -161,8 +161,8 @@ export default function ProductGrid({
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 md:gap-3">
+          {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="aspect-square bg-neutral-200 animate-pulse rounded-lg" />
           ))}
         </div>
@@ -182,7 +182,7 @@ export default function ProductGrid({
       ) : (
         <div
           key={`${tab}|${q}`}
-          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 md:gap-3"
         >
           {filtered.map((p, i) => {
             const variants = p.variants;
@@ -248,13 +248,13 @@ export default function ProductGrid({
                 )}
 
                 {/* info panel */}
-                <div className="flex flex-col gap-1.5 flex-1 p-3 md:p-4">
+                <div className="flex flex-col gap-1.5 flex-1 p-3">
                   <p className="ms-label ms-file-label truncate" title={p.brand}>{p.brand}</p>
                   <button
                     onClick={() => setOpenId(open ? null : p.productId)}
                     aria-expanded={open}
                     aria-controls={`ms-drawer-${p.productId}`}
-                    className="text-left font-bold text-sm md:text-[15px] leading-snug line-clamp-2 hover:text-brand transition-colors"
+                    className="text-left font-bold text-sm leading-snug line-clamp-2 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
                     {p.productLabel}
@@ -275,22 +275,18 @@ export default function ProductGrid({
                       {/* key={region} remounts on currency switch — replays the flash */}
                       <span
                         key={region}
-                        className="ms-price ms-price-flash text-lg md:text-xl tracking-tight text-brand leading-none whitespace-nowrap"
+                        className="ms-price ms-price-flash text-lg tracking-tight text-brand leading-none whitespace-nowrap"
                       >
                         {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                       </span>
                       {variants.length > 1 ? (
-                        <div className="flex flex-wrap gap-1 mt-1">
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {variants.map((vv, vi) => (
                             <button
                               key={vv.label}
                               onClick={() => setPicked((s) => ({ ...s, [p.productId]: vi }))}
                               aria-pressed={vi === idx}
-                              className={`ms-label rounded px-1.5 py-0.5 border transition-colors ${
-                                vi === idx
-                                  ? "bg-ink text-white border-ink"
-                                  : "border-line text-hush hover:border-ink hover:text-ink"
-                              }`}
+                              className={`ms-weight-toggle ${vi === idx ? "is-on" : ""}`}
                             >
                               {vv.label}
                             </button>

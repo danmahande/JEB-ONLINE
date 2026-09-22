@@ -232,8 +232,12 @@ html {
 }
 
 /* --- the drawer box -------------------------------------------------------
-   Hides under the face at 0fr, cracks a lip on hover, pulls fully out on
-   click. grid-template-rows interpolation = true sliding, no dead travel. */
+   MECHANICAL travel (Task 27): a real drawer answers the pull instantly,
+   cruises at constant speed and hits a hard stop — no spring, no fade.
+   grid-template-rows interpolation = true sliding, no dead travel.
+   States: base = slam-shut (accelerates into closed), hover = quick crack,
+   open = decisive pull. Content is RIGID — welded to the box, revealed by
+   the moving edge, never faded in. */
 .ms-drawer {
   position: absolute;
   top: 100%;
@@ -244,39 +248,60 @@ html {
   grid-template-rows: 0fr;
   visibility: hidden;
   pointer-events: none;
+  /* retract = pushed shut: accelerates the whole way, stops dead */
   transition:
-    grid-template-rows 0.65s cubic-bezier(0.3, 0.72, 0.22, 1),
-    visibility 0s linear 0.65s;
+    grid-template-rows 0.3s cubic-bezier(0.55, 0, 0.85, 0.36),
+    visibility 0s linear 0.3s;
 }
 .ms-tile:hover .ms-drawer {
-  /* a crack — just the steel lip slides out, slow */
+  /* a crack — the lip jumps out fast, like a detent catching */
   grid-template-rows: 0.12fr;
   visibility: visible;
-  transition-delay: 0s;
+  transition:
+    grid-template-rows 0.26s cubic-bezier(0.2, 0.65, 0.15, 1),
+    visibility 0s;
 }
 .ms-tile.ms-open .ms-drawer {
-  /* pulled out — full drawer, interactive (keep after :hover rule) */
+  /* pulled out — full travel: instant catch, constant cruise, hard stop.
+     (keep after :hover rule) */
   grid-template-rows: 1fr;
   visibility: visible;
   pointer-events: auto;
-  transition-delay: 0s;
+  transition:
+    grid-template-rows 0.45s cubic-bezier(0.2, 0.65, 0.15, 1),
+    visibility 0s;
 }
 .ms-drawer-inner {
+  position: relative;
   overflow: hidden;
   min-height: 0;
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: opacity 0.28s ease, transform 0.32s ease;
   /* the drawer box — grey steel, slightly darker inside (it was in the dark) */
   background: linear-gradient(180deg, #c9c8c2 0%, #b0afa9 100%);
   border: 1px solid #8e8d85;
   border-radius: 0 0 7px 7px;
 }
-.ms-tile:hover .ms-drawer-inner,
-.ms-tile.ms-open .ms-drawer-inner {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.35s ease 0.14s, transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) 0.1s;
+/* ball-bearing slide rails — the box rides on visible steel gliders.
+   They start behind the lip (top: 28px) and run to the box floor. */
+.ms-drawer-inner::before,
+.ms-drawer-inner::after {
+  content: "";
+  position: absolute;
+  top: 28px;
+  bottom: 0;
+  width: 6px;
+  pointer-events: none;
+}
+.ms-drawer-inner::before {
+  left: 0;
+  background: linear-gradient(90deg, #ecebe5 0%, #bcbbae 45%, #8a897f 100%);
+  border-right: 1px solid #7f7e74;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.4);
+}
+.ms-drawer-inner::after {
+  right: 0;
+  background: linear-gradient(270deg, #ecebe5 0%, #bcbbae 45%, #8a897f 100%);
+  border-left: 1px solid #7f7e74;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.4);
 }
 
 /* steel lip — the shadowed box edge you see through the crack */
@@ -286,7 +311,7 @@ html {
   justify-content: space-between;
   gap: 12px;
   height: 28px;
-  padding: 0 14px;
+  padding: 0 16px;
   background: linear-gradient(180deg, #b3b2ac 0%, #a5a49e 100%);
   border-bottom: 1px solid #8e8d85;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
@@ -299,7 +324,7 @@ html {
 
 /* the interior — product files laid on the drawer floor */
 .ms-drawer-body {
-  padding: 12px 14px 14px;
+  padding: 12px 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -790,3 +815,37 @@ html {
 }
 
 /* recompile trigger: 2026-09-22 vertical filing cabinet (Task 26) */
+
+/* ─── Weight pack toggle (Task 27) ─────────────────────────────────────────
+   The pack/weight selector was a whisper — 10px pills with hairline borders.
+   Now it's a selector switch: chunky steel buttons, heavy 1.5px borders,
+   800-weight type, and a solid ink detent on the engaged pack. Inset
+   shadows only — nothing floats. */
+.ms-weight-toggle {
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  border-radius: 4px;
+  background: #fbfaf5;
+  color: #45443f;
+  border: 1.5px solid #8e8d85;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.ms-weight-toggle:hover {
+  border-color: #1b2a4a;
+  color: #1b2a4a;
+}
+.ms-weight-toggle.is-on {
+  background: #1b2a4a;
+  border-color: #1b2a4a;
+  color: #fff;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.28);
+}
+
+/* recompile trigger: 2026-09-22 mechanical drawer + bold pack toggle (Task 27) */

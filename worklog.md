@@ -444,3 +444,23 @@ Work Log:
 
 Stage Summary:
 - Catalog tiles now read as drawers of the user's vertical filing cabinet: matte grey painted faces, dark-framed white label card (brand) centered under the photo window with the recessed pull below, hover cracks the shadowed box edge out slowly, click pulls the grey drawer fully out revealing white paper file cards (SKU/HS/origin/weight/stock) and the orange full-spec path; no drop shadows anywhere; eslint clean, verified live
+
+---
+Task ID: 27
+Agent: Super Z (main agent)
+Task: User feedback on Task 26 filing cabinet: (1) drawer opening is "cartoonish" — make it mechanical like a real-world drawer; (2) weight toggle between packs must be bolder/easy to notice; (3) catalog cards too big — reduce size.
+
+Work Log:
+- Mechanical drawer (globals.css .ms-drawer system):
+  * Killed the cartoon sources: 0.65s soft bezier AND the inner-content fade (opacity 0→1 + translateY(-8px) removed entirely — content is now rigid, welded to the box, revealed by the moving clip edge, never faded in)
+  * Three-state mechanical timing: open = 0.45s cubic-bezier(0.2,0.65,0.15,1) (instant catch → constant cruise → hard stop); hover crack = 0.26s same family; close = 0.3s cubic-bezier(0.55,0,0.85,0.36) (accelerates the whole way = slam-shut, stops dead). visibility delay synced per state
+  * Added ball-bearing slide rails: .ms-drawer-inner::before/::after — 6px steel gliders flanking the box (top:28px below lip → floor), machined 90deg gradients + inset highlight + dark border edge; lip/body padding 14→16px to clear them
+- Bold weight toggle (new .ms-weight-toggle in globals.css, replaces tiny 10px hairline pills on card + SELECT PACK buttons in quick-view): 11.5px/800 Space Grotesk, 7px 13px padding, 1.5px steel borders, paper-white inactive with navy hover; active = solid ink #1b2a4a detent with inset top-light + bottom shade (inset shadows only — nothing floats)
+- Smaller cards (product-grid.tsx): grid grid-cols-2 lg:3 xl:4 → grid-cols-2 md:3 lg:4 xl:5 2xl:6, gap-3/4 → 2.5/3; at 1440px tiles now 269px wide × 5-up (was ~336px × 4-up, ~35% less area); info panel p-3 md:p-4 → p-3, title md:[15px] → sm, price md:xl → lg; skeleton grid matched (10 placeholders)
+- Live verification (agent-browser, 1440×900): 5 cols / 269px tiles confirmed; base transition 0.3s slam bezier, inner opacity 1 + zero transition + rails 6px present; hover crack 39px @ 0.26s; click open 323px @ 0.45s, z-30, pointer-events auto, CTA reachable; toggle audit: active rgb(27,42,74) white 800/11.5px, inactive paper-white steel-border; clicked 50KG BAG → price USh 117,660→223,480 + drawer NET WEIGHT synced to "50 KG"; CTA → spec sheet (role=dialog, Long-Grain Rice, 3 bold packs, 25KG detent = base pack by design); Escape → dialog gone, drawer persists; toggle close → back to hover crack (mouse still over, z-20); zero page errors
+- Screenshots: download/meridian-task27-grid-rest.png, meridian-task27-drawer-open.png, meridian-task27-mechanical-drawer.png
+
+Stage Summary:
+- Drawer motion now reads mechanical: instant catch, constant-velocity travel, hard stop, slam-shut retract, visible slide rails, zero content fade
+- Weight pack selector is a chunky steel switch with solid navy detent — unmissable on both catalog card and spec sheet
+- Catalog is 5-up at 1440px (6-up 2xl), cards ~20% narrower / ~35% smaller area, structure and all prior behaviors (single-open interlock, hover crack, spec sheet chain, reduced-motion) intact
