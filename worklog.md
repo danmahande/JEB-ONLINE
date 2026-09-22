@@ -534,3 +534,21 @@ Work Log:
 Stage Summary:
 - Repo now renders a full README on GitHub: overview, setup, architecture, API and design-system docs
 - README pushed at e947f54; main branch tracking origin/main
+
+---
+Task ID: 31
+Agent: Super Z (main agent)
+Task: User: "yes" → add screenshots + deployment guide + contributing guidelines to README
+
+Work Log:
+- Loaded agent-browser skill; built capture scripts (scripts/capture-readme-shots.sh + v2): dev server started INSIDE each script run (sandbox reaps background servers), browser driven through the real interactions
+- v1 issue: eval rect JSON came back double-quoted → json.loads returned a string → mouse move failed → crack/open shots were rest-state; spec-sheet + checkout eval chains still worked (querySelector clicks; dialog opened via hidden CTA textContent match)
+- v2 fix: double json.loads; viewport 1440x1040 so the fully extended drawer (~350px) fits below the tile; re-captured 02 crack + 03 drawer-open — verified visually (03 shows steel drawer box with SKU/HS/ORIGIN/NET WEIGHT + CTA under Long-Grain Rice)
+- Final gallery: 01-shop-hero, 03-drawer-open, 04-spec-sheet (Finger Millet dialog), 05-checkout (region chips, duty/VAT/freight breakdown, payment methods, USh 151,478 total). 02 dropped (crack sliver unreadable at README scale)
+- Optimized with sharp (scripts/optimize-shots.mjs): 1200w palette PNG → 808KB total (was 3.6MB)
+- README: added Screenshots 2x2 gallery after intro; expanded Deployment (VPS: build/start + systemd unit + persist db note; Vercel: SQLite ephemerality → swap to Postgres/Turso); added Contributing (fork/branch, db:push, design-system contract incl. inset-only shadows + reduced-motion, lint)
+- Pushed e947f54..e81f53b (5 files: README + 4 shots); remote SHA verified == local HEAD
+
+Stage Summary:
+- GitHub repo homepage now renders with real product screenshots, deployment runbooks for VPS and serverless, and contribution guidelines
+- Capture scripts persisted (scripts/capture-readme-shots*.sh, optimize-shots.mjs) — re-runnable whenever the visuals change
