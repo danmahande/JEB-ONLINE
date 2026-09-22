@@ -142,11 +142,17 @@ export default function ProductGrid({
                 key={p.productId}
                 style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
                 onMouseMove={(e) => {
-                  // cabinet sheen — the spotlight follows the cursor via CSS vars, no re-render
+                  // cabinet sheen + approach parallax — cursor tracked via CSS
+                  // vars, no re-render; --nx/--ny (0..1) drive the goods
+                  // drifting behind the glass, --mx/--my drive the spotlight
                   const el = e.currentTarget;
                   const r = el.getBoundingClientRect();
-                  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
-                  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+                  const x = e.clientX - r.left;
+                  const y = e.clientY - r.top;
+                  el.style.setProperty("--mx", `${x}px`);
+                  el.style.setProperty("--my", `${y}px`);
+                  el.style.setProperty("--nx", (x / r.width).toFixed(4));
+                  el.style.setProperty("--ny", (y / r.height).toFixed(4));
                 }}
                 onClick={() => onSelect(p)}
                 className={`ms-tile ms-tile-in group relative flex flex-col border border-line cursor-pointer ${
@@ -181,25 +187,27 @@ export default function ProductGrid({
                   </div>
                 </button>
 
-                {/* badges */}
-                <div className="absolute top-2 left-2 flex flex-col items-start gap-1 pointer-events-none">
-                  <span className="ms-label rounded bg-white border border-line px-2 py-1 text-ink">
+                {/* badges — die-cut stickers stuck on the outside of the
+                    glass (Task 39); pointer-events-none so the whole tile
+                    stays the hit target */}
+                <div className="ms-sticker-stack absolute top-2 left-2 flex flex-col items-start gap-1.5 pointer-events-none">
+                  <span className="ms-label ms-sticker bg-white px-2 py-1 text-ink">
                     {p.category}
                   </span>
                   {active?.isEac && (
-                    <span className="ms-label rounded bg-emerald-500 text-white px-2 py-1">
+                    <span className="ms-label ms-sticker bg-emerald-500 text-white px-2 py-1">
                       0% DUTY
                     </span>
                   )}
                   {p.category === "GRAINS" && !out && (
-                    <span className="ms-label rounded inline-flex items-center gap-1.5 bg-white/90 border border-emerald-200 text-emerald-700 px-2 py-1">
+                    <span className="ms-label ms-sticker inline-flex items-center gap-1.5 bg-white/90 text-emerald-700 px-2 py-1">
                       <span className="ms-fresh-dot" aria-hidden="true" />
                       HARVESTED THIS WEEK
                     </span>
                   )}
                 </div>
                 {out && (
-                  <span className="ms-label rounded absolute top-2 right-2 bg-red-500 text-white px-2 py-1">
+                  <span className="ms-label ms-sticker ms-sticker-alt absolute top-2 right-2 bg-red-500 text-white px-2 py-1">
                     SOLD OUT
                   </span>
                 )}
@@ -269,10 +277,10 @@ export default function ProductGrid({
                             setNotifyOpen((o) => (o === p.productId ? null : p.productId));
                           }}
                           aria-expanded={notifyOpen === p.productId}
-                          className={`ms-label shrink-0 px-3 py-2.5 border transition-colors ${
+                          className={`ms-label ms-slip shrink-0 px-3 py-2.5 border transition-colors ${
                             notifyOpen === p.productId
-                              ? "border-ink bg-ink text-white"
-                              : "border-line bg-white hover:bg-ink hover:text-white"
+                              ? "ms-slip-open border-ink text-white"
+                              : "border-line hover:bg-ink hover:text-white"
                           }`}
                         >
                           {notifyOpen === p.productId ? "✕" : "NOTIFY ME"}

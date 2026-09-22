@@ -383,20 +383,12 @@ html {
   background: #f1f5f9;
 }
 
-/* Out-of-stock diagonal — visual only, never blocks tile interactions */
+/* Out-of-stock — visual only, never blocks tile interactions.
+   Task 39: the navy hatch is gone; sold-out goods now sit behind FROSTED
+   glass (see .ms-oos .ms-glass::before in the shopfront block below) —
+   the pane mists over, the info panel stays crisp. */
 .ms-oos {
   position: relative;
-}
-.ms-oos::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    -45deg,
-    rgba(27, 42, 74, 0.55) 0 10px,
-    rgba(27, 42, 74, 0.08) 10px 20px
-  );
 }
 
 /* recompile trigger */
@@ -741,24 +733,25 @@ html {
 /* recompile trigger: 2026-09-23 glass shopfront (Task 38) */
 
 /* ─── The shopfront (Task 38 · Phases 1+2 — THE WINDOW, THE LIGHT) ─────────
-   The catalog grid is one steel-framed shop window. Frame = warm charcoal
-   steel, same family as the cabinet label-holder frame (#3c3b36); the
-   grid's gaps show that material through as mullions. The white toolbar
-   mounts flush on the frame as the fascia board. Every pane of goods sits
-   behind a sheet of glass (.ms-glass) that mirrors the living sky: the
-   section carries data-sky={dawn|day|golden|night} from the same useSky
-   store that drives the hero and the page-wide sun wash, so the day-part
-   light crossing the page is answered BY the window. Highlights and
-   gradients only — nothing floats. */
+   The catalog grid is one steel-framed shop window. Frame = painted navy
+   steel (Task 39 recolor — the classic shop-window frame color, and it
+   keeps the frontage inside the kwanza navy family instead of charcoal);
+   the grid's gaps show that material through as mullions. The white
+   toolbar mounts flush on the frame as the fascia board. Every pane of
+   goods sits behind a sheet of glass (.ms-glass) that mirrors the living
+   sky: the section carries data-sky={dawn|day|golden|night} from the same
+   useSky store that drives the hero and the page-wide sun wash, so the
+   day-part light crossing the page is answered BY the window. Highlights
+   and gradients only — nothing floats. */
 .ms-shopfront {
-  border: 2px solid #2e2d29;
+  border: 2px solid #131f38;
   border-radius: 6px;
-  /* frame steel — what shows through the grid gaps as mullions */
-  background-image: linear-gradient(180deg, #45443f 0%, #3c3b36 55%, #34332e 100%);
+  /* frame steel — navy, what shows through the grid gaps as mullions */
+  background-image: linear-gradient(180deg, #33476f 0%, #1b2a4a 55%, #17233e 100%);
   padding: 10px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* The pane — glass over the goods. Layers, front to back:
@@ -826,10 +819,106 @@ html {
   mix-blend-mode: screen;
 }
 
+/* Frosted pane — sold-out goods behind misted glass (Task 39, THE PROPS).
+   Rides the glass pane (image zone only) so the cabinet text below stays
+   crisp. The warm-paper wash alone is the no-backdrop-filter fallback. */
+.ms-oos .ms-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 250, 245, 0.45);
+  /* -webkit first so the minifier keeps the standard property too */
+  -webkit-backdrop-filter: blur(3px) saturate(0.8);
+  backdrop-filter: blur(3px) saturate(0.8);
+}
+
 /* Reduced motion: static glass, rake band parked off-pane */
 @media (prefers-reduced-motion: reduce) {
   .ms-glass {
     animation: none;
     background-position: 130% 0, 0 0, 0 0;
+  }
+}
+
+/* recompile trigger: 2026-09-23 navy frame + the props (Task 39) */
+
+/* ─── THE PROPS (Task 39 · Phase 3) ─────────────────────────────────────
+   The window is dressed like a real one: die-cut price stickers stuck on
+   the outside of the glass, a taped paper slip for the restock waitlist,
+   and the goods drifting gently behind the glass as you approach.
+   Overlays stay pointer-events:none; shadows stay inset; nothing floats. */
+
+/* Die-cut sticker — white cut edge + 1px flat keyline (an outline, not a
+   float shadow: zero offset, zero blur) so the cut reads even over pale
+   photos. Slight hand-applied rotation; each sticker in the stack gets
+   its own angle. */
+.ms-sticker {
+  border: 2px solid #fff;
+  border-radius: 6px;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.14);
+}
+.ms-sticker-stack .ms-sticker:nth-child(1) { transform: rotate(-1.8deg); }
+.ms-sticker-stack .ms-sticker:nth-child(2) { transform: rotate(1.2deg); }
+.ms-sticker-stack .ms-sticker:nth-child(3) { transform: rotate(-1deg); }
+.ms-sticker-alt { transform: rotate(1.8deg); }
+
+/* Taped paper slip — the NOTIFY ME button as a paper note stuck over the
+   fascia edge, held by one strip of translucent tape. The tape is a
+   pseudo-element of the button itself, so tapping it taps the button. */
+.ms-slip {
+  position: relative;
+  background: #fbfaf5;
+}
+.ms-slip.ms-slip-open {
+  background: var(--color-ink);
+  color: #fff;
+}
+.ms-slip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 30px;
+  height: 11px;
+  transform: translateX(-50%) rotate(-2.5deg);
+  border-radius: 1px;
+  border: 1px solid rgba(27, 42, 74, 0.12);
+  background-color: rgba(252, 250, 244, 0.6);
+  background-image: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Approach parallax — the goods shift a couple of pixels behind the glass
+   while the glass, its reflections and the stickers stay put. --nx/--ny
+   are cursor position normalized to the tile (set alongside --mx/--my in
+   product-grid.tsx). GPU-only: translate3d + scale on the img. The 1.06
+   overscan is permanent so the drift never exposes an edge. */
+.ms-tile img {
+  transform: scale(1.06);
+  transition: transform 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ms-tile:hover img {
+    transform: translate3d(
+        calc((var(--nx, 0.5) - 0.5) * -5px),
+        calc((var(--ny, 0.5) - 0.5) * -5px),
+        0
+      )
+      scale(1.06);
+    transition-duration: 0.15s;
+  }
+}
+
+/* Reduced motion: goods sit still behind the glass */
+@media (prefers-reduced-motion: reduce) {
+  .ms-tile img {
+    transform: none;
+    transition: none;
   }
 }
