@@ -705,3 +705,23 @@ Work Log:
 Stage Summary:
 - Preview back live; dev server now orphaned to init (reaper-proof) with dev.sh supervisor intact for self-healing
 - No code changes this turn; glass shopfront itself already landed earlier at ab186c7 (Phases 1+2); Phase 3 THE PROPS still awaiting user review
+
+---
+Task ID: 39
+Agent: Super Z (main agent)
+Task: User: frame black doesn't match theme — pick a color that still feels like windows but keeps the theme; keep everything else; proceed with Phase 3 (THE PROPS)
+
+Work Log:
+- Frame recolor: .ms-shopfront charcoal (#45443f→#34332e, border #2e2d29) → painted navy steel (linear-gradient #33476f→#1b2a4a→#17233e, border #131f38, brighter bevels) — the classic shop-window frame color, inside the kwanza navy family
+- Phase 3a stickers: .ms-sticker (2px white die-cut edge + 1px flat keyline ring, 6px radius, rotation), .ms-sticker-stack nth-child angles (-1.8°/+1.2°/-1°), .ms-sticker-alt (+1.8°) for SOLD OUT; applied to category / 0% DUTY / HARVESTED / SOLD OUT badges (dropped rounded/border utilities)
+- Phase 3b frost: navy hatch (.ms-oos::after) deleted; frost rides .ms-oos .ms-glass::before (warm-paper rgba(251,250,245,.45) + backdrop blur(3px) saturate(.8)) — image zone only, info panel stays crisp; minifier kept only -webkit variant at first → reordered declarations (-webkit first) so standard backdrop-filter survives
+- Phase 3c slip: NOTIFY ME button → .ms-slip (paper #fbfaf5) + .ms-slip-open (ink) + ::before tape (30×11px translucent strip, rotate -2.5°, 105° sheen, top -6px); tape is a pseudo-element of the button so it stays tappable
+- Phase 3d parallax: mousemove handler now also sets normalized --nx/--ny (0..1); .ms-tile img base scale(1.06) overscan + hover translate3d(calc((--nx-.5)*-5px), ...) — goods drift ≤2.5px against cursor while glass/stickers stay put; gated (hover:hover)+(pointer:fine); reduced-motion parks transform
+- Ops (recurring trap): file watcher dead again — touch() did NOT recompile; killed bun wrapper but orphaned next-server child held :3000 (EADDRINUSE loop, poison in-memory cache); full fix = kill whole chain (next-dev + next-server + postcss) → wipe .next (Turbopack persistent cache was poisoned mid-MultiEdit) → supervisor respawn → fresh compile. New lesson: a stale chunk can survive process restarts inside .next — wipe the dir, not just the process
+- Verified live (agent-browser 1440×900): frame computed rgb(51,71,111)→rgb(27,42,74)→rgb(23,35,62); 35 stickers with white 2px edges + alternating matrices; frost ::before blur(3px) saturate(0.8) + paper wash (injected .ms-oos on live tile — no OOS products in current data, 14/14 in stock); tape 30×11 rotated translucent (injected .ms-slip on BUY); parallax vars --nx/--ny set correctly (nx .2502 at 25% cursor), translate math verified (media gate not matched in headless — correct; desktop will engage); whole-tile click → quick view Long-Grain Rice; BUY real-mouse click → quick view; GOLDEN sky → data-sky + wash #e9744a5c; AUTO restored; localStorage cleared; zero page errors; screenshots reviewed then deleted
+- eslint clean product-grid.tsx; tsc src/ clean (892 pre-existing noise errors in scripts/examples/kwanza-erp-src)
+
+Stage Summary:
+- Shopfront is now theme-true and fully dressed: navy steel frame, die-cut sticker badges, frosted sold-out panes, taped restock slips, approach parallax behind static glass
+- JEB-ONLINE main at 07dfac9, local == remote verified
+- All three GLASS FRONT phases complete; README screenshots not yet refreshed for the new frame color
