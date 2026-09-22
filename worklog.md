@@ -725,3 +725,17 @@ Stage Summary:
 - Shopfront is now theme-true and fully dressed: navy steel frame, die-cut sticker badges, frosted sold-out panes, taped restock slips, approach parallax behind static glass
 - JEB-ONLINE main at 07dfac9, local == remote verified
 - All three GLASS FRONT phases complete; README screenshots not yet refreshed for the new frame color
+
+---
+Task ID: 40
+Agent: Super Z (main agent)
+Task: User: "use grey instead blue i dont know something feels off"
+
+Work Log:
+- .ms-shopfront recolor: navy (#33476f→#1b2a4a→#17233e, border #131f38) → warm steel grey (linear-gradient #828078→#6e6d65→#5a5951, border #47463f, bevels 0.3/0.35) — mid-grey that clearly reads GREY (old charcoal read as black; navy felt off per user), same warm family as the painted-steel cabinet tiles
+- Recompile via proven reset cycle (pkill next chain + rm -rf .next + supervisor respawn) — served CSS verified with new gradient
+- Verified live (agent-browser 1440×900): computed bg rgb(130,128,120)→rgb(110,109,101)→rgb(90,89,81), border rgb(71,70,63); screenshot reviewed — mullions read as warm grey rack steel, fascia clean, stickers/glass/props intact; zero page errors
+- Opinion noted for the record: user asked black vs navy honestly first (answered navy 80/20), then chose grey after seeing navy live — grey reconciles both concerns: not off-theme black, not off-family blue
+
+Stage Summary:
+- Catalog frame is now warm steel grey; the frontage reads as one steel rack holding glass panes; JEB-ONLINE main at this commit, local == remote
