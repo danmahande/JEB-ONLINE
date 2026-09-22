@@ -671,3 +671,21 @@ Work Log:
 
 Stage Summary:
 - Shop-window concept delivered as a physics-to-mechanics pitch with build phases; no code touched this turn; JEB-ONLINE main remains at 0566de3
+
+---
+Task ID: 38
+Agent: Super Z (main agent)
+Task: User: "go" — approved the glass-shopfront concept; build Phase 1 (THE WINDOW) + Phase 2 (THE LIGHT)
+
+Work Log:
+- product-grid.tsx: grid (incl. loading/empty states) wrapped in .ms-shopfront; CATALOG toolbar mounts flush on the frame as fascia (rounded-t-lg border-b-0, mb removed); search status strip continues the fascia (border-x bg-white, mb-6 removed); section carries data-sky={sky} from useSky (s.override ?? s.natural — same store as hero/sun wash); .ms-glass span added inside each image box (rake delay = tile stagger + 350ms)
+- globals.css: .ms-shopfront (2px #2e2d29 border, charcoal steel gradient #45443f→#34332e, 10px padding, inset bevels) — grid gaps show frame material as mullions; .ms-glass (3 background layers: arrival rake band 260% size 130%→-30%, fixed 105deg glare, --glass-wash sky mirror; inset top highlight 0.5 + glazing beads); [data-sky] wash overrides (dawn 244,166,94 / golden 233,116,74 / night 27,42,74); night display-case glow via .ms-glass::after radial warm + mix-blend screen; reduced-motion parks rake; recompile trigger comment added
+- Dev-server incidents: watcher was dead (stale chunk — served CSS had 0 new rules after reload+touch); killed next dev per old habit and the defunct start.sh boot flow did NOT respawn it (supervisor tree is dead — only tini + zombie start.sh remain); setsid nohup spawn confirmed REAPED between tool calls (worklog line 495 law re-confirmed). Solution: scripts/verify-shopfront.sh — dev server started INSIDE the script run, full agent-browser pass executed before exit, fresh compile per run also eliminates stale chunks
+- Harness lessons: {q && ( /* comment */ <div>)} is invalid JSX (caught + fixed); eval top-level const collides across calls (use IIFE); scroll-behavior:smooth makes scrollBy async — use behavior:'instant' before measuring click coords; parse coords via window vars not stdout
+- Verified live (agent-browser 1440x900, all in-script): served CSS 7 rule-hits; shopfront computed steel gradient + 10px pad + 2px border; glass inset shadow + ms-rake + pointer-events none; whole-tile blank click -> quick view opens, Escape closes; BUY real-mouse click -> quick view opens (stopPropagation intact); GRAINS tab -> 7 tiles/7 panes; fascia flush 0px (426==426); data-sky night->golden->day->dawn via footer SKY buttons, golden wash color confirmed in computed style; screenshots reviewed for all 4 skies then deleted; zero page errors; sky restored AUTO, localStorage cleared
+- eslint clean product-grid.tsx; tsc: src/ clean (only pre-existing examples/kwanza-erp-src noise)
+
+Stage Summary:
+- Catalog is now a glass-fronted shop: steel frame + mullions unify the grid into one frontage, fascia toolbar, panes mirror the living sky and glow from inside at night
+- Commit ab186c7 pushed to origin main, remote SHA verified ab186c79c42ff1a5cbbabdc726eede63620f404e, local == remote
+- Phase 3 (THE PROPS: sticker badges, frosted OOS + taped notify slip, hover parallax) deliberately NOT started — awaiting user review of phases 1+2
