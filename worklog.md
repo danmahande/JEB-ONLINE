@@ -552,3 +552,22 @@ Work Log:
 Stage Summary:
 - GitHub repo homepage now renders with real product screenshots, deployment runbooks for VPS and serverless, and contribution guidelines
 - Capture scripts persisted (scripts/capture-readme-shots*.sh, optimize-shots.mjs) — re-runnable whenever the visuals change
+
+---
+Task ID: 31
+Agent: Super Z (main agent)
+Task: User: "that drawer is so ugly first remove it for now and push the changes to my github also replace add with buy that opens to the other tab that has the option to chose quantity"
+
+Work Log:
+- product-grid.tsx: removed the entire slide-out spec drawer — openId state, drawer JSX block (cavity/well/lip/spec rows/CTA), ORIGIN_LABELS, quickAdd + justAdded morph + addTimers + unmount cleanup, useCart/useFly/ProductVariant imports; tile image + title buttons repointed from drawer-open to onSelect(p) (quick view)
+- Tile ADD button replaced with BUY: solid brand button, onClick -> onSelect(p), aria-label "Buy X — choose pack and quantity"; sold-out NOTIFY ME flow untouched; weight toggles + steel face + spotlight kept
+- quick-view.tsx: inherited the fly-to-cart dot (previously fired from tile ADD) — handleAdd captures ADD TO CART button rect and calls flyTo; button label shows "ADD N TO CART" when qty > 1
+- globals.css: deleted all drawer-box rules (ms-drawer, -inner, -well, -lip, -body, -desc, -row, -cta, ms-tile.ms-open, hover z-index stack, reduced-motion refs); rewrote tile comment (cabinet face, no drawer); new recompile trigger comment; net -291 CSS lines (3 files: 29+/320-)
+- Verification (agent-browser @1440x900, dev server live after user restart): 0 ms-drawer rules in served CSS (stale-chunk check), 14 tiles / 14 BUY / 0 drawer elements; BUY -> quick view opens with pack + qty stepper; qty 3 -> ADD TO CART -> CART [3] badge + ADDED TO CART toast, dialog auto-closes; tile title click opens quick view, Escape closes; hover shows spotlight sheen only, no crack/cavity; zero page errors; localStorage cleared (CART [0])
+- Screenshot artifact download/meridian-no-drawer-hover.png taken then removed after verification
+- Commit 39374dc "Remove catalog drawer; BUY button opens quick-view quantity picker" pushed to origin main; remote SHA verified 39374dcae5fad8c91b905c2b5f11c7afb3d632f3
+
+Stage Summary:
+- Catalog tiles are clean steel cards again: no drawer, no hover crack; BUY (replacing ADD) opens the quick-view sheet where pack and quantity are chosen, then ADD TO CART
+- GitHub JEB-ONLINE main at 39374dc, local == remote
+- Note: git log shows README enhancement commit e81f53b (screenshots gallery + deployment guide + contributing) already on main from the earlier "yes" — superseded/pushed before this task
