@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCart, useRegion } from "@/lib/store";
+import { useCart, useFly, useRegion } from "@/lib/store";
 import { fmt } from "@/lib/format";
 import type { Product, RegionConfig } from "@/lib/types";
 
@@ -23,6 +23,7 @@ export default function QuickView({
   onAdded: () => void;
 }) {
   const addLine = useCart((s) => s.addLine);
+  const flyTo = useFly((s) => s.flyTo);
   const region = useRegion((s) => s.region);
   const active = regions.find((r) => r.region === region);
   // open on the BASE pack (closest to 0 delta) — the one the tile advertises
@@ -47,7 +48,7 @@ export default function QuickView({
   const priceUsd = product.unitSellingPrice + (v?.priceDelta || 0);
   const out = product.currentStock <= 0;
 
-  function handleAdd() {
+  function handleAdd(e: MouseEvent<HTMLButtonElement>) {
     if (!product || out || !v) return;
     addLine({
       productId: product.productId,
@@ -61,6 +62,10 @@ export default function QuickView({
       image: product.image,
       maxStock: product.currentStock,
     });
+    // fly a dot from the ADD TO CART button to the cart badge — the badge
+    // pop is the payoff (moved here when the tile ADD became BUY)
+    const r = e.currentTarget.getBoundingClientRect();
+    flyTo(r.left + r.width / 2, r.top + r.height / 2);
     onAdded();
     onClose();
   }
@@ -163,7 +168,7 @@ export default function QuickView({
                 disabled={out}
                 className="ms-label flex-1 bg-brand text-white px-6 py-3 hover:bg-brand-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                {out ? "UNAVAILABLE" : "ADD TO CART"}
+                {out ? "UNAVAILABLE" : qty > 1 ? `ADD ${qty} TO CART` : "ADD TO CART"}
               </button>
             </div>
 

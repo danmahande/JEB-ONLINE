@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Product, ProductVariant, RegionConfig } from "@/lib/types";
+import { useState } from "react";
+import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
-import { useCart, useFly } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 
 const TABS = [
@@ -11,15 +10,6 @@ const TABS = [
   { key: "GRAINS", label: "GRAINS" },
   { key: "HARDWARE", label: "HARDWARE" },
 ];
-
-// origin codes -> display names (drawer interior)
-const ORIGIN_LABELS: Record<string, string> = {
-  UG: "UGANDA",
-  KE: "KENYA",
-  TZ: "TANZANIA",
-  RW: "RWANDA",
-  BI: "BURUNDI",
-};
 
 export default function ProductGrid({
   products,
@@ -39,25 +29,12 @@ export default function ProductGrid({
   onClearQuery: () => void;
 }) {
   const [tab, setTab] = useState("ALL");
-  const [justAdded, setJustAdded] = useState<Set<string>>(new Set());
-  const addTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [picked, setPicked] = useState<Record<string, number>>({}); // productId -> variant index
   const [notifyOpen, setNotifyOpen] = useState<string | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
-  const [openId, setOpenId] = useState<string | null>(null); // which drawer is pulled out
-  const addLine = useCart((s) => s.addLine);
-  const flyTo = useFly((s) => s.flyTo);
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
-
-  // clear any pending "✓ ADDED" reset timers on unmount
-  useEffect(
-    () => () => {
-      Object.values(addTimers.current).forEach(clearTimeout);
-    },
-    []
-  );
 
   const q = query.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -78,41 +55,6 @@ export default function ProductGrid({
       if (Math.abs(v.priceDelta) < Math.abs(p.variants[best].priceDelta)) best = i;
     });
     return best;
-  }
-
-  function quickAdd(p: Product, v?: ProductVariant, btn?: HTMLElement) {
-    if (!v || p.currentStock <= 0) return;
-    addLine({
-      productId: p.productId,
-      slug: p.slug,
-      productLabel: p.productLabel,
-      brand: p.brand,
-      variantLabel: v.label,
-      unitPriceUsd: p.unitSellingPrice + (v?.priceDelta || 0),
-      weightKg: v.weightKg,
-      qty: 1,
-      image: p.image,
-      maxStock: p.currentStock,
-    });
-    // fly a dot from the button to the cart badge — the badge pop is the payoff
-    if (btn) {
-      const r = btn.getBoundingClientRect();
-      flyTo(r.left + r.width / 2, r.top + r.height / 2);
-    }
-    toast({
-      title: "ADDED TO CART",
-      description: `${p.productLabel} (${v.label.toLowerCase()}) — open the cart to check out.`,
-    });
-    // button morphs to "✓ ADDED" for a moment — feedback lands on the control
-    setJustAdded((s) => new Set(s).add(p.productId));
-    clearTimeout(addTimers.current[p.productId]);
-    addTimers.current[p.productId] = setTimeout(() => {
-      setJustAdded((s) => {
-        const next = new Set(s);
-        next.delete(p.productId);
-        return next;
-      });
-    }, 1300);
   }
 
   return (
@@ -191,7 +133,6 @@ export default function ProductGrid({
             const priceUsd = p.unitSellingPrice + (v?.priceDelta || 0);
             const out = p.currentStock <= 0;
             const low = !out && p.currentStock <= 50;
-            const open = openId === p.productId;
             return (
               <div
                 key={p.productId}
@@ -204,15 +145,13 @@ export default function ProductGrid({
                   el.style.setProperty("--my", `${e.clientY - r.top}px`);
                 }}
                 className={`ms-tile ms-tile-in group relative flex flex-col border border-line ${
-                  open ? "ms-open" : ""
-                } ${out ? "ms-oos" : ""}`}
+                  out ? "ms-oos" : ""
+                }`}
               >
                 <button
-                  onClick={() => setOpenId(open ? null : p.productId)}
+                  onClick={() => onSelect(p)}
                   className="relative block w-full text-left"
-                  aria-expanded={open}
-                  aria-controls={`ms-drawer-${p.productId}`}
-                  aria-label={open ? `Close ${p.productLabel} drawer` : `Open ${p.productLabel} drawer`}
+                  aria-label={`View ${p.productLabel} details`}
                 >
                   <div className="aspect-square overflow-hidden bg-neutral-100">
                     <img
@@ -251,9 +190,7 @@ export default function ProductGrid({
                 <div className="flex flex-col gap-1.5 flex-1 p-3">
                   <p className="ms-label ms-file-label truncate" title={p.brand}>{p.brand}</p>
                   <button
-                    onClick={() => setOpenId(open ? null : p.productId)}
-                    aria-expanded={open}
-                    aria-controls={`ms-drawer-${p.productId}`}
+                    onClick={() => onSelect(p)}
                     className="text-left font-bold text-sm leading-snug line-clamp-2 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
@@ -318,15 +255,11 @@ export default function ProductGrid({
                       )
                     ) : (
                       <button
-                        onClick={(e) => quickAdd(p, v, e.currentTarget)}
-                        className={`ms-label px-3 py-2.5 shrink-0 transition-colors ${
-                          justAdded.has(p.productId)
-                            ? "bg-ink text-white"
-                            : "bg-brand text-white hover:bg-brand-dark"
-                        }`}
-                        aria-label={`Add ${p.productLabel} to cart`}
+                        onClick={() => onSelect(p)}
+                        className="ms-label px-3 py-2.5 shrink-0 bg-brand text-white hover:bg-brand-dark transition-colors"
+                        aria-label={`Buy ${p.productLabel} — choose pack and quantity`}
                       >
-                        {justAdded.has(p.productId) ? "✓ ADDED" : "ADD"}
+                        BUY
                       </button>
                     )}
                   </div>
@@ -363,49 +296,6 @@ export default function ProductGrid({
                       </button>
                     </form>
                   )}
-                </div>
-
-                {/* the drawer — slides out from under the steel face.
-                    hover cracks it open, click pulls it fully out */}
-                <div className="ms-drawer" id={`ms-drawer-${p.productId}`} inert={!open}>
-                  <div className="ms-drawer-inner">
-                    <div className="ms-drawer-well">
-                      <div className="ms-drawer-lip" aria-hidden="true">
-                        <span className="ms-label">{p.category}</span>
-                        <span className="ms-label">PRODUCT DATA</span>
-                      </div>
-                      <div className="ms-drawer-body">
-                      {p.description && <p className="ms-drawer-desc">{p.description}</p>}
-                      <dl>
-                        <div className="ms-drawer-row">
-                          <dt>SKU</dt>
-                          <dd>{p.productId}</dd>
-                        </div>
-                        <div className="ms-drawer-row">
-                          <dt>HS CODE</dt>
-                          <dd>{p.hsCode || "—"}</dd>
-                        </div>
-                        <div className="ms-drawer-row">
-                          <dt>ORIGIN</dt>
-                          <dd>{ORIGIN_LABELS[p.originCountry] ?? p.originCountry}</dd>
-                        </div>
-                        <div className="ms-drawer-row">
-                          <dt>NET WEIGHT</dt>
-                          <dd>{v ? `${v.weightKg} KG` : (p.weight || p.unit).toUpperCase()}</dd>
-                        </div>
-                        <div className="ms-drawer-row">
-                          <dt>IN STOCK</dt>
-                          <dd>
-                            {p.currentStock} {p.unit.toUpperCase()}
-                          </dd>
-                        </div>
-                      </dl>
-                      <button onClick={() => onSelect(p)} className="ms-label ms-drawer-cta">
-                        OPEN FULL SPEC SHEET →
-                      </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {/* cursor spotlight — light follows the mouse across the steel */}

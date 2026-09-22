@@ -197,12 +197,12 @@ html {
   animation-play-state: paused;
 }
 
-/* Product card — a drawer in a VERTICAL FILING CABINET (Task 26).
-   Reference: grey painted-steel office file cabinet — matte grey faces,
-   dark-framed label card holder + recessed pull on every drawer.
-   The tile is the drawer FACE. A real drawer box hangs under it and slides
-   out slowly: a crack on hover (the shadowed box edge), fully out on click
-   revealing the files inside. Zero drop shadows — nothing floats. */
+/* Product card — a painted-steel cabinet face (Task 26).
+   Reference: grey painted-steel office cabinet — matte grey faces,
+   dark-framed label card holder on every face.
+   (The slide-out spec drawer was removed in Task 31 — the BUY button now
+   opens the quick-view sheet where pack and quantity are chosen.)
+   Zero drop shadows — nothing floats. */
 .ms-tile {
   border-radius: 6px;
   border-color: #a19f97;
@@ -220,190 +220,6 @@ html {
     inset 0 -1px 0 rgba(40, 40, 30, 0.18),
     inset 1px 0 0 rgba(255, 255, 255, 0.45),
     inset -1px 0 0 rgba(40, 40, 30, 0.1);
-}
-
-/* stack order: a peeking drawer rides over the grid gap, an open one
-   rides over the whole bank */
-.ms-tile:hover {
-  z-index: 20;
-}
-.ms-tile.ms-open {
-  z-index: 30;
-}
-
-/* --- the drawer box -------------------------------------------------------
-   REAL BOX GEOMETRY (Task 28): under every face is the cabinet's DARK
-   CAVITY; pulling the drawer slides a STEEL BOX (light walls, dark interior
-   well) out of that cavity. Content is RIGID — welded to the box, revealed
-   by the moving edge, never faded in.
-   TRAVEL: driven by max-height on the inner (rest 0 / crack 42px / open
-   460px). grid-template-rows fractions are FORBIDDEN here — Chromium
-   double-dips flex factors below 1 (a 0.12fr track resolved to 5px inside
-   a 43px container = a void of empty cavity behind the box, the "black
-   slab" bug). max-height is a plain length transition: the container's
-   auto height tracks min(content, max-height) exactly, so the cavity and
-   the box move in lockstep with zero dead space.
-   States: base = slam-shut (accelerates into closed), hover = quick crack,
-   open = decisive pull (instant catch, constant cruise, hard stop). */
-.ms-drawer {
-  position: absolute;
-  top: 100%;
-  left: 6px;
-  right: 6px;
-  z-index: 1;
-  display: grid;
-  grid-template-rows: 1fr;
-  /* the cavity — the cabinet's interior the box slides out of.
-     vertical padding is 0 closed / 7px open so the mouth seals exactly
-     when the travel ends — nothing left hanging. */
-  padding: 0 7px;
-  background: linear-gradient(180deg, #0f1116 0%, #1e222b 55%, #141720 100%);
-  border: 1px solid #090a0e;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  box-shadow:
-    inset 0 4px 7px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-  visibility: hidden;
-  pointer-events: none;
-  /* retract = pushed shut: accelerates the whole way, stops dead */
-  transition:
-    padding 0.3s cubic-bezier(0.55, 0, 0.85, 0.36),
-    visibility 0s linear 0.3s;
-}
-.ms-tile:hover .ms-drawer {
-  /* a crack — the mouth opens and the box rim catches the light */
-  padding: 7px;
-  visibility: visible;
-  transition:
-    padding 0.26s cubic-bezier(0.2, 0.65, 0.15, 1),
-    visibility 0s;
-}
-.ms-tile.ms-open .ms-drawer {
-  /* pulled out — full travel. (keep after :hover rule) */
-  padding: 7px;
-  visibility: visible;
-  pointer-events: auto;
-  transition:
-    padding 0.45s cubic-bezier(0.2, 0.65, 0.15, 1),
-    visibility 0s;
-}
-/* the steel box itself — thick light walls catch the light; the well
-   inside is the dark interior (it was in the cabinet). max-height owns
-   the travel; overflow clips the content as the box extends. */
-.ms-drawer-inner {
-  position: relative;
-  overflow: hidden;
-  min-height: 0;
-  max-height: 0;
-  background: linear-gradient(180deg, #d8d7d1 0%, #c0bfba 50%, #a9a8a2 100%);
-  border: 1px solid #7f7e77;
-  border-top: none;
-  border-radius: 0 0 5px 5px;
-  box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.9),
-    inset 2px 0 0 rgba(255, 255, 255, 0.5),
-    inset -2px 0 0 rgba(255, 255, 255, 0.5);
-  transition: max-height 0.3s cubic-bezier(0.55, 0, 0.85, 0.36);
-}
-.ms-tile:hover .ms-drawer-inner {
-  /* the crack — steel rim + band + a sliver of the dark well */
-  max-height: 42px;
-  transition: max-height 0.26s cubic-bezier(0.2, 0.65, 0.15, 1);
-}
-.ms-tile.ms-open .ms-drawer-inner {
-  /* the pull — must stay AFTER the :hover rule. 460px ≥ tallest drawer
-     content; whatever the content doesn't use is dead travel, invisible
-     because the box stops at its own height. */
-  max-height: 460px;
-  transition: max-height 0.45s cubic-bezier(0.2, 0.65, 0.15, 1);
-}
-/* the well — recessed dark interior floor, inset by 10px side walls with a
-   9px steel back-wall band across the top (the box rim you see when a
-   drawer is cracked open) */
-.ms-drawer-well {
-  margin: 9px 10px 10px;
-  background: linear-gradient(180deg, #272b35 0%, #171a21 100%);
-  border-radius: 0 0 3px 3px;
-  box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(0, 0, 0, 0.25);
-}
-
-/* stencil header strip on the interior back wall — what you read when the
-   drawer is cracked open. Light scratch divider on dark steel. */
-.ms-drawer-lip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  height: 26px;
-  padding: 0 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  color: #8b93a5;
-}
-.ms-drawer-lip .ms-label {
-  font-size: 9px;
-  letter-spacing: 0.18em;
-}
-
-/* the interior — spec data stenciled on the dark drawer floor */
-.ms-drawer-body {
-  padding: 11px 12px 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.ms-drawer-desc {
-  font-size: 11px;
-  line-height: 1.55;
-  color: #a6adbc;
-  padding-bottom: 2px;
-}
-.ms-drawer-row {
-  /* machined groove-separated rows — a stamped chart, not paper */
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-.ms-drawer-row:last-of-type {
-  border-bottom: none;
-}
-.ms-drawer-row dt {
-  margin: 0;
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #7d8698;
-}
-.ms-drawer-row dd {
-  margin: 0;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #eef1f6;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-}
-.ms-drawer-cta {
-  margin-top: 4px;
-  padding: 10px 12px;
-  text-align: center;
-  border-radius: 4px;
-  background: #e8622c;
-  color: #fff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22);
-  transition: background-color 0.18s ease;
-}
-.ms-drawer-cta:hover {
-  background: #d4541f;
 }
 
 /* --- Interactive-system feedback loops ------------------------------------ */
@@ -445,10 +261,6 @@ html {
   }
   .ms-tile,
   .ms-tile img {
-    transition: none;
-  }
-  .ms-drawer,
-  .ms-drawer-inner {
     transition: none;
   }
   .ms-root :where(button):active {
@@ -765,7 +577,7 @@ html {
 /* ─── Cabinet sheen — surface light only (Task 25) ────────────────────────── */
 
 /* Specular sweep — light glints across the steel once as you arrive.
-   The drawer cracking open is motion; this is the metal answering it. */
+   The cursor arriving is motion; this is the metal answering it. */
 .ms-spot::after {
   content: "";
   position: absolute;
@@ -879,3 +691,5 @@ html {
 /* recompile trigger: 2026-09-22 mechanical drawer + bold pack toggle (Task 27) */
 
 /* recompile trigger: 2026-09-22 drawer box in dark cavity — real cabinet geometry (Task 28) */
+
+/* recompile trigger: 2026-09-22 drawer removed — BUY opens quick view (Task 31) */
