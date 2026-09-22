@@ -584,3 +584,19 @@ Work Log:
 
 Stage Summary:
 - Quick view quantity area now carries a visible QUANTITY label for easy identification; GitHub JEB-ONLINE main at c2c5839, local == remote
+
+---
+Task ID: 33
+Agent: Super Z (main agent)
+Task: User: "update screenshots in readme"
+
+Work Log:
+- Found README screenshots stale: 01-shop-hero + 03-drawer-open + 04-spec-sheet + 05-checkout all showed the removed drawer interaction; surrounding copy (pitch, Features, project-structure comments, design-system interaction contract) also still described the drawer
+- Retook the full set live with agent-browser @1440x900: 01-shop-hero (hero + ticker), 02-catalog (retaken after first shot put the CATALOG heading under the sticky header — scrollBy -104 fix), 03-quick-view (Long-Grain Rice so SELECT PACK + QUANTITY label both show; first take used Finger Millet which has no pack row), 04-cart (retaken — first take caught the catalog+toast instead of the drawer; opened via "Open cart, 1 items" aria name), 05-checkout (destination pills, duty/VAT/freight summary, payment methods)
+- Deleted stale 03-drawer-open.png + 04-spec-sheet.png (git rm); docs/screenshots now = 01-shop-hero / 02-catalog / 03-quick-view / 04-cart / 05-checkout
+- README.md: rebuilt Screenshots gallery (2x2 + full-width checkout row, new captions); rewrote pitch line (drawer metaphor -> BUY + spec sheet), Features/Catalog bullets, globals.css + product-grid.tsx + quick-view.tsx structure comments, design-system interaction contract (spotlight sheen, press physics, fly-to-cart, inset-only)
+- Remaining "drawer" mentions in README are cart-drawer only (still exists); test localStorage cleared after shooting
+- Commit 48dac9c "Update README screenshots and copy for the BUY + quick-view catalog (drawer removed)" pushed to origin main; remote SHA verified 48dac9c6123877756bbfefd3b30ebb2976a311cf
+
+Stage Summary:
+- GitHub README now shows the current storefront (BUY tiles, quick-view quantity sheet, cart, checkout) with copy matching the post-drawer UI; JEB-ONLINE main at 48dac9c, local == remote
