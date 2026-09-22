@@ -656,3 +656,18 @@ Work Log:
 Stage Summary:
 - All 11 audit findings fixed in one pass: the three remaining magazine headings are toolbar modules, the toast is on-system, the inset-only shadow contract holds site-wide, overlays share the cabinet paper, selection = ink / action = orange everywhere, prices speak Space Grotesk, corners and muted text follow tokens, copy plurals fixed
 - JEB-ONLINE main at 0566de3, local == remote
+
+---
+Task ID: 37
+Agent: Super Z (main agent)
+Task: User: "imagine this was a real store front with goods displayed through a glass window how could that help us make the catalog feel more alive and engage the background as well"
+
+Work Log:
+- Confirmed Task 36 (all 11 audit fixes) landed at 0566de3, pushed and verified; dev server up at localhost:3000
+- Re-read product-grid.tsx, hero.tsx, globals.css (739 lines) to ground the concept in current code: tiles are painted-steel cabinets (ms-tile), cursor sheen + specular sweep (ms-spot), page-wide day-part sun wash (.ms-sun, Task 34), living-sky day-parts via useSky store, badges already positioned over the image zone
+- Delivered "THE GLASS FRONT" concept (report-only, NO code changes): (1) frame + mullions — grid becomes one shopfront, gap color = frame steel, toolbar = fascia; (2) ms-glass pane over every image — top edge highlight, diagonal glare, no drop shadows (inset contract holds); (3) data-sky wiring — product-grid consumes useSky, panes mirror day-part sky (dawn peach / day pale / golden amber / night navy); (4) night interior glow — display-case light rises behind goods at night while street darkens, catalog becomes the light source; (5) approach parallax — image translates against cursor via existing --mx/--my vars while glass stays still; (6) props — badges become die-cut stickers (-1.5deg, 2px white border), NOTIFY ME becomes taped paper slip, OOS hatch replaced by backdrop-blur frost; (7) arrival glare rake in reading order after tile-in stagger
+- Phases proposed: Phase 1 THE WINDOW (frame+mullions+static glass) -> Phase 2 THE LIGHT (data-sky+reflections+night glow+rake) -> Phase 3 THE PROPS (stickers+frost+parallax); all overlays pointer-events:none (whole-tile click intact), hover-gated, reduced-motion-safe, no new deps
+- Awaiting user greenlight before implementation
+
+Stage Summary:
+- Shop-window concept delivered as a physics-to-mechanics pitch with build phases; no code touched this turn; JEB-ONLINE main remains at 0566de3
