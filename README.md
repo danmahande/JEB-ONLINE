@@ -2,28 +2,33 @@
 
 A cross-border e-commerce storefront for a Ugandan exporter of grain and hardware equipment — built to make regional trade feel as solid and physical as the goods being sold.
 
-The catalog is designed as a wall of steel filing cabinets: hover a product tile and its drawer cracks open; click and the drawer slides fully out to reveal the product data stamped inside. Behind the storefront sits a region-aware pricing engine that estimates duties, VAT and freight for every East African Community (EAC) destination before checkout.
+The catalog tiles read as painted-steel cabinet faces: every tile carries weight-pack switches, live stock and a **BUY** button that opens a spec-sheet dialog where the pack and quantity are chosen before adding to the cart. Behind the storefront sits a region-aware pricing engine that estimates duties, VAT and freight for every East African Community (EAC) destination before checkout.
 
 ## Screenshots
 
-| Shop | Drawer interaction |
+| Shop | Catalog |
 |---|---|
-| ![Catalog at rest](docs/screenshots/01-shop-hero.png) | ![Drawer pulled out](docs/screenshots/03-drawer-open.png) |
-| *Catalog at rest — a wall of steel cabinets* | *Hover cracks a drawer; click pulls it fully out* |
+| ![Shop hero](docs/screenshots/01-shop-hero.png) | ![Catalog tiles](docs/screenshots/02-catalog.png) |
+| *Living-sky hero with live search and EAC ticker* | *Steel tiles with weight-pack switches and BUY* |
 
-| Spec sheet | Checkout |
+| Quick view | Cart |
 |---|---|
-| ![Spec sheet](docs/screenshots/04-spec-sheet.png) | ![Checkout](docs/screenshots/05-checkout.png) |
-| *Full spec sheet with pack selection* | *Duty, VAT and freight quoted per destination* |
+| ![Quick view](docs/screenshots/03-quick-view.png) | ![Cart drawer](docs/screenshots/04-cart.png) |
+| *BUY opens the spec sheet: pack selector + quantity stepper* | *Duty, VAT and freight quoted live in the cart* |
+
+| Checkout |
+|---|
+| ![Checkout](docs/screenshots/05-checkout.png) |
+| *Destination-aware totals and regional payment methods* |
 
 ---
 
 ## Features
 
 **Catalog**
-- Product grid (2–6 columns, responsive) of cabinet-style tiles with a physical drawer interaction: hover cracks the drawer, clicking pulls it fully open to reveal SKU, HS code, origin, net weight and live stock
-- Weight-pack switcher on every card (e.g. 25 KG / 50 KG bags) — price and drawer data update together
-- Quick-view spec sheet dialog with full product details and pack selection
+- Product grid (2–6 columns, responsive) of painted-steel tiles with weight-pack switches, live stock counts and a BUY button per tile
+- Weight-pack switcher on every card (e.g. 25 KG / 50 KG bags) — the tile price updates instantly
+- BUY opens the quick-view spec sheet: full product details, pack selection and a quantity stepper before adding to cart
 - Live search from the hero section
 
 **Cross-border pricing**
@@ -102,7 +107,7 @@ src/
   app/
     page.tsx              # storefront shell: shop / checkout / confirmation / track views
     layout.tsx            # fonts (Space Grotesk + Inter), global chrome
-    globals.css           # design system incl. the cabinet/drawer interaction styles
+    globals.css           # design system (steel-tile catalog, motion, labels)
     api/
       products/route.ts   # GET   catalog with variants + stock
       fx/route.ts         # GET   region configs: currency, FX rate, duty, VAT, freight
@@ -110,8 +115,8 @@ src/
   components/storefront/
     header.tsx            # brand, region selector, cart badge, navigation
     hero.tsx              # living-sky hero with search
-    product-grid.tsx      # cabinet tiles + drawer + weight-pack toggles
-    quick-view.tsx        # full spec sheet dialog
+    product-grid.tsx      # steel tiles, weight-pack toggles, BUY -> quick view
+    quick-view.tsx        # spec sheet dialog: pack selector + quantity stepper
     cart-drawer.tsx       # cart panel
     checkout.tsx          # customer + delivery details, price breakdown
     confirmation.tsx      # order confirmation
@@ -151,7 +156,7 @@ scripts/                  # seeding + image tooling
 
 - **Palette:** navy ink `#1B2A4A`, brand orange `#E8622C`, paper white, hairline greys
 - **Type:** Space Grotesk (display) + Inter (body), uppercase letterspaced labels
-- **Interaction contract:** the catalog behaves like real hardware — hover cracks a drawer open, click pulls it out with mechanical easing (instant catch, constant travel, hard stop), and closing slams shut. All depth is drawn with inset shadows; nothing floats.
+- **Interaction contract:** hardware-feel feedback — a cursor spotlight sheen drifts across the steel tiles, every button depresses on press, and adding flies a dot into the cart badge. All depth is drawn with inset shadows; nothing floats; motion respects `prefers-reduced-motion`.
 
 ## Deployment
 
