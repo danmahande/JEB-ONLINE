@@ -311,3 +311,20 @@ Work Log:
 Stage Summary:
 - Full interactive-system pass shipped: every action has visible feedback (morph, pop, flash, stagger, reveal, compress, transitions), sold-out tiles are conversations not dead ends, pack selection is explicit; images no longer contradict the packs being added
 - Screenshots: download/meridian-interactive-catalog.png + meridian-interactive-mobile.png
+
+---
+Task ID: 20
+Agent: Super Z (main agent)
+Task: Fix React hydration mismatch on Reveal-wrapped sections (user pasted Next.js hydration error from reveal.tsx:40)
+
+Work Log:
+- Root cause: reveal.tsx initialized state from a server/client branch — useState(!supported) where supported = typeof IntersectionObserver !== "undefined". Server has no IntersectionObserver -> inView=true -> SSR HTML shipped "ms-reveal ms-reveal-in"; browser has it -> inView=false -> client initial render "ms-reveal " -> attribute mismatch on every load (trust strip + footer), and React kept server HTML so those blocks never animated
+- History: this branch was introduced in Task 19 as the "fix" for react-hooks/set-state-in-effect (synchronous setInView in effect body) — a lint warning had been traded for a hydration error
+- Fix in reveal.tsx: (1) useState(false) unconditionally — server and client render byte-identical hidden HTML, visibility decided only after mount; (2) no-IntersectionObserver fallback reveals via requestAnimationFrame(() => setInView(true)) inside the effect — asynchronous, so hydration-safe AND react-hooks/set-state-in-effect clean (state stays the single source of truth, survives re-renders); (3) className built via ["ms-reveal", inView && "ms-reveal-in", className].filter(Boolean).join(" ") — kills the double-space in the class list
+- Audited the rest of Task 19 for the same class of bug: header.tsx scrolled state is useState(false) + scrollY read only inside the effect (safe); product-grid price flash is key={region} remount (safe); no Date.now/Math.random/window reads in render paths (sidebar.tsx Math.random is unused shadcn boilerplate)
+- Hit stale dev-server CSS again (.ms-header-scrolled rule in source but absent from CSSOM) — bumped recompile trigger in globals.css, rule delivered on reload
+- Verified live: curl SSR HTML contains exactly 2x plain "ms-reveal" (zero ms-reveal-in) matching client DOM pre-scroll byte-for-byte; after scroll both reveals fire; ticker collapses + main bar shadow rgba(27,42,74,.1) 0 6px 18px computes; dev overlay has no hydration dialog (hasDialog:false, no "A tree hydrated" text); eslint exit 0 on reveal.tsx
+- Screenshots: download/meridian-hydration-fix-desktop.png + meridian-hydration-fix-mobile.png
+
+Stage Summary:
+- Hydration error eliminated at the root (identical SSR/client initial render, observer-driven reveal after mount); scroll reveals, header compress + shadow confirmed working after fix; no other Task 19 component carries server/client divergence

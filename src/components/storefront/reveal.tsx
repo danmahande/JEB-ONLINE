@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * Scroll-in reveal — children fade-rise once when the block enters the viewport.
- * Degrades to always-visible (no observer / reduced motion handled in CSS).
+ * Initial state is deliberately identical on server and client (always hidden)
+ * so hydration can never mismatch — visibility is only decided after mount.
+ * Reduced motion is neutralized in CSS.
  */
 export default function Reveal({
   children,
@@ -16,13 +18,15 @@ export default function Reveal({
   delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  // no IntersectionObserver -> start revealed (no effect needed)
-  const supported = typeof IntersectionObserver !== "undefined";
-  const [inView, setInView] = useState(!supported);
+  const [inView, setInView] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || !supported) return;
+    // no IntersectionObserver -> reveal next frame (async: hydration-safe, lint-clean)
+    if (!el || typeof IntersectionObserver === "undefined") {
+      const raf = requestAnimationFrame(() => setInView(true));
+      return () => cancelAnimationFrame(raf);
+    }
     const io = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
@@ -34,13 +38,15 @@ export default function Reveal({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [supported]);
+  }, []);
 
   return (
     <div
       ref={ref}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-      className={`ms-reveal ${inView ? "ms-reveal-in" : ""} ${className}`}
+      className={["ms-reveal", inView ? "ms-reveal-in" : "", className]
+        .filter(Boolean)
+        .join(" ")}
     >
       {children}
     </div>
