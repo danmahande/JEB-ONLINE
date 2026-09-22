@@ -197,44 +197,67 @@ html {
   animation-play-state: paused;
 }
 
-/* Product card — behaves like a loaded cargo container (Task 22) */
+/* Product card — a loaded slab, not a paper card (Task 23) */
 .ms-tile {
-  border-radius: 8px;
-  /* corrugated steel face — ridges show on the info panel below the photo */
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent 0 15px,
-    rgba(27, 42, 74, 0.03) 15px 16px,
-    transparent 16px 31px,
-    rgba(27, 42, 74, 0.015) 31px 32px
-  );
-  /* grounded: tight contact shadow, like a box sitting on the dock */
-  box-shadow: 0 1px 0 rgba(27, 42, 74, 0.05), 0 2px 6px -1px rgba(27, 42, 74, 0.08);
+  border-radius: 5px;
+  border-color: #c7cfdc;
+  /* steel face: weight settles to the bottom + corrugation ridges on the panel */
+  background-image:
+    linear-gradient(180deg, rgba(27, 42, 74, 0) 55%, rgba(27, 42, 74, 0.035) 100%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 15px,
+      rgba(27, 42, 74, 0.045) 15px 16px,
+      transparent 16px 31px,
+      rgba(27, 42, 74, 0.025) 31px 32px
+    );
+  /* the slab: two hard edge layers = visible thickness, plus ambient weight.
+     Lift and the wall grows (you see the side); press and it collapses. */
+  box-shadow:
+    0 1px 0 #d9dfe9,
+    0 3px 0 #c9d1de,
+    0 8px 14px -6px rgba(27, 42, 74, 0.1),
+    0 16px 24px -12px rgba(27, 42, 74, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
   /* mass: tilt + stack-lean composed through vars; slow-out easing with a
-     slight overshoot so every release settles like a suspended load */
+     settling overshoot so every release wobbles like a suspended load */
   transform: perspective(900px) translateY(0px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
-  transition: transform 0.28s cubic-bezier(0.18, 0.8, 0.28, 1.05),
-    box-shadow 0.28s cubic-bezier(0.2, 0.6, 0.2, 1);
+  transition: transform 0.38s cubic-bezier(0.18, 0.8, 0.28, 1.07),
+    box-shadow 0.32s cubic-bezier(0.2, 0.6, 0.2, 1);
   will-change: transform;
 }
 .ms-tile:hover {
-  transform: perspective(900px) translateY(-4px) rotateX(var(--ms-rx, 0deg))
+  transform: perspective(900px) translateY(-3px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg));
-  box-shadow: 0 22px 38px -14px rgba(27, 42, 74, 0.3), 0 6px 14px -6px rgba(27, 42, 74, 0.12);
+  box-shadow:
+    0 2px 0 #d9dfe9,
+    0 6px 0 #c9d1de,
+    0 12px 18px -6px rgba(27, 42, 74, 0.14),
+    0 28px 40px -16px rgba(27, 42, 74, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
 }
-/* pressing pushes the box into the dock — snappy compress, slow release */
+/* pressing drives the slab into the dock — edge collapses, snappy, slow release */
 .ms-tile:active {
-  transition-duration: 0.07s;
+  transition-duration: 0.06s;
   transform: perspective(900px) translateY(-1px) rotateX(var(--ms-rx, 0deg))
     rotateY(var(--ms-ry, 0deg)) rotate(var(--ms-lean, 0deg)) scale(0.99);
-  box-shadow: 0 3px 8px -2px rgba(27, 42, 74, 0.2);
+  box-shadow:
+    0 0 0 rgba(27, 42, 74, 0),
+    0 1px 0 #c2cbd9,
+    0 2px 4px rgba(27, 42, 74, 0.22),
+    0 4px 8px rgba(27, 42, 74, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(27, 42, 74, 0.05);
 }
 .ms-tile img {
   transition: transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 .ms-tile:hover img {
-  transform: scale(1.045);
+  /* the load settles downward inside as the box lifts — cargo has inertia */
+  transform: scale(1.045) translateY(2px);
 }
 
 /* --- Interactive-system feedback loops ------------------------------------ */
@@ -249,17 +272,18 @@ html {
   animation: ms-badge-pop 0.45s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
-/* Tile entrance — crane-lowered into the stack: drop from above, compress on
-   landing, micro-rebound, settle. fill-mode: backwards holds the hidden state
-   during the stagger delay, then releases so hover physics keep working. */
+/* Tile entrance — crane-lowered into the stack: heavy drop from above, hard
+   compress on landing, micro-rebound, settle. fill-mode: backwards holds the
+   hidden state during the stagger delay, then releases so hover physics
+   keep working afterwards. */
 @keyframes ms-tile-in {
-  0% { opacity: 0; transform: translateY(-14px) scale(1.02); }
-  60% { opacity: 1; transform: translateY(1px) scale(0.997); }
-  82% { transform: translateY(-0.5px) scale(1.0008); }
+  0% { opacity: 0; transform: translateY(-18px) scale(1.02); }
+  55% { opacity: 1; transform: translateY(1.5px) scale(0.994); }
+  78% { transform: translateY(-0.5px) scale(1.0008); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .ms-tile-in {
-  animation: ms-tile-in 0.38s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  animation: ms-tile-in 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
 
 /* Buttons depress on press, system-wide (Windows-7-style physical click) */
@@ -283,7 +307,7 @@ html {
     transform: none;
   }
   .ms-tile:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
   }
   .ms-root :where(button):active {
     transform: none;
@@ -594,19 +618,7 @@ html {
 
 /* recompile trigger: 2026-09-22 living sky */
 
-/* ─── Container physics — cargo markings & surface light (Task 22) ────────── */
-
-/* Corner castings engage as you lift the box — four brand dots join the
-   spotlight layer, so touch devices (spot display:none) skip them for free */
-.ms-tile .ms-spot {
-  background-image:
-    radial-gradient(190px circle at var(--mx, 50%) var(--my, 50%),
-      rgba(251, 246, 236, 0.18), transparent 65%),
-    radial-gradient(5px 5px at 10px 10px, rgba(232, 98, 44, 0.6) 42%, transparent 58%),
-    radial-gradient(5px 5px at calc(100% - 10px) 10px, rgba(232, 98, 44, 0.6) 42%, transparent 58%),
-    radial-gradient(5px 5px at 10px calc(100% - 10px), rgba(232, 98, 44, 0.6) 42%, transparent 58%),
-    radial-gradient(5px 5px at calc(100% - 10px) calc(100% - 10px), rgba(232, 98, 44, 0.6) 42%, transparent 58%);
-}
+/* ─── Container physics — surface light only, no markings (Task 23) ───────── */
 
 /* Corrugation catches the light — steel ridges lit only within cursor reach,
    via a mask pinned to the same --mx/--my vars the spotlight uses */
@@ -649,33 +661,6 @@ html {
   to { opacity: 1; background-position: -30% 0; }
 }
 
-/* Fleet stencil — owner code + weight plate appear while you inspect the box
-   (4-letter owner code + serial + check digit, per ISO 6346 convention) */
-.ms-tile::before {
-  content: "MRDN UG 241007 7 · 50KG MAX";
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: rgba(27, 42, 74, 0.55);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.85), 0 0 2px rgba(255, 255, 255, 0.9);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 2;
-}
-.ms-tile:hover::before {
-  opacity: 1;
-}
-/* sold-out tiles keep their diagonal + SOLD OUT corner clean — no stencil */
-.ms-oos::before {
-  display: none;
-}
-
 /* Reduced motion: freeze the sweep (tilt/lean/entrance handled above) */
 @media (prefers-reduced-motion: reduce) {
   .ms-tile:hover .ms-spot::after {
@@ -684,3 +669,5 @@ html {
 }
 
 /* recompile trigger: 2026-09-22 container physics */
+
+/* recompile trigger: 2026-09-22 slab weight — no markings */

@@ -370,3 +370,21 @@ Work Log:
 
 Stage Summary:
 - Catalog tiles now behave like loaded cargo: they resist then settle (mass), lean away from the cursor (±2.5deg cap), cast contact-then-detached shadows, compress when pressed, make row neighbors lean into the gap, engage corner castings + show their ISO-style fleet stencil on inspection, carry a subliminal corrugated-steel face, catch a specular sweep on arrival, and are crane-dropped into the stack on entry — all on the existing DOM (handlers extended in place + one CSS layer); eslint clean, hydration-safe (CSS/JS vars only, no render-path changes)
+
+---
+Task ID: 23
+Agent: Super Z (main agent)
+Task: "remove markings suggested at 5 + catalog boxes still look like paper — make them feel heavy like they're carrying equipment or grain"
+
+Work Log:
+- Markings removed: deleted .ms-tile::before stencil block ("MRDN UG 241007 7 · 50KG MAX"), .ms-tile:hover::before, .ms-oos::before suppression, and the 4-dot corner-castings override on .ms-tile .ms-spot (spot restored to the single living-sky spotlight layer); kept surface-light items (cursor-masked corrugation ridges, specular sweep) which are light behavior, not markings
+- Slab weight system (anti-paper) in .ms-tile rules: two hard edge layers (0 1px/0 3px #d9dfe9/#c9d1de) = visible thickness; hover grows the wall (0 2px/0 6px) as the box lifts -3px so you "see the side"; :active collapses it (0 0/0 1px #c2cbd9) with 0.06s snap = slab driven into the dock; ambient shadows deepened (hover 0 28px 40px -16px @0.36); all three states padded to 6 shadow layers for clean list interpolation
+- Material cues: border darkened to #c7cfdc, radius 8px -> 5px (crate, not card), inset bevels (top highlight + bottom shade), panel background = bottom-weight gradient (transparent -> ink 0.035 at bottom, weight sits low) + corrugation ridges strengthened (0.045/0.025)
+- Motion weight: transform transition 0.28s -> 0.38s with overshoot 1.05 -> 1.07 (slower settle, more wobble); tilt cap reduced ±2.5deg -> ±1.8deg (multiplier 5 -> 3.6 in product-grid handler — heavy loads tilt less); hover lift -4px -> -3px (hard to lift); cargo inertia: :hover img now scale(1.045) translateY(2px) — the load settles downward inside while the box lifts
+- Entrance: crane drop deepened (-18px), landing compress hard (scale 0.994 at 55%), 0.42s; reduced-motion block parity (-3px hover lift)
+- Verified live: CSSOM shows stencil/castings rules GONE, spot 1 layer, slab edge rule present (hex serializes to rgb — first check false-negatived on '#d9dfe9' literal); rest/hover/press computed shadows + lift -3px in matrix + tilt vars 0.79deg/1.08deg (3.6x confirmed); img matrix(1.045,...,2.09); press 0.06s; no page errors; cart clean
+- Debug notes: (1) fresh agent-browser session resets viewport to default — tile x/width changed and hardcoded coords landed in the grid gap (elementFromPoint = grid div); fixed by set viewport 1440 900 + computing hover point from live rect; (2) smooth scroll-behavior means scrollIntoView needs ~1s settle before geometry reads
+
+Stage Summary:
+- Markings (stencil + castings) fully removed; tiles rebuilt as visible slabs: thickness you can see (edge wall grows on lift, collapses on press), gravity you can feel (heavier shadows, -3px hard lift, 0.06s press snap, slower settling wobble, less tilt), cargo that shifts inside (photo settles 2px on lift), steel material cues (bevels, darker border, 5px crate corners, bottom-weighted corrugated panel); DOM untouched, eslint clean, reduced-motion parity kept
+- Screenshots: download/meridian-slab-rest.png + meridian-slab-hover.png
