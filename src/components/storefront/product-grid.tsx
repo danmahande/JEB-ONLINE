@@ -209,7 +209,7 @@ export default function ProductGrid({
                         : `In stock — ${p.currentStock} ${p.unit.toLowerCase()}${p.currentStock === 1 ? "" : "s"}`}
                   </p>
                   <div className="flex items-end justify-between gap-2 mt-auto pt-1.5">
-                    <span className="font-black text-lg md:text-xl tracking-tight text-brand leading-none whitespace-nowrap">
+                    <span className="ms-price text-lg md:text-xl tracking-tight text-brand leading-none whitespace-nowrap">
                       {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                     </span>
                     <button

@@ -242,3 +242,20 @@ Work Log:
 
 Stage Summary:
 - Hero is now a compact full-bleed photo band (image covers 100% of the section at 1920x500 native) with legibility veil + catalog dissolve preserved; slim search-first layout unchanged
+
+---
+Task ID: 16
+Agent: Super Z (main agent)
+Task: Find and implement a more trending font for the storefront
+
+Work Log:
+- Audit found the site had NO real webfont: @theme referenced undefined --font-geist-sans and .ms-root fell back to a plain Helvetica/Arial stack
+- Chose the current industrial-marketplace pairing: Space Grotesk (display/labels/buttons/prices — geometric-industrial grotesque with distinctive uppercase cuts, fits grains+hardware) + Inter (body — modern web standard, high readability)
+- layout.tsx: loaded both via next/font/google as variable fonts with CSS vars --font-display / --font-body attached to <html> (self-hosted, zero runtime requests, metric-adjusted fallbacks)
+- globals.css: --font-sans now wired to var(--font-body) (also fixes shadcn Sheet/Toaster inheriting the dead Geist var); .ms-root uses var(--font-body); .ms-display + .ms-label use var(--font-display); .ms-display weight 900 -> true 700 (Space Grotesk's real max, avoids synthesized faux-bold) with letter-spacing -0.01em / line-height 0.95; new .ms-price class for display-font price numerals
+- product-grid.tsx: tile price span font-black -> ms-price
+- Verified via computed styles + document.fonts.check: body=Inter, display/label/price="Space Grotesk", weight 700, sgLoaded=true interLoaded=true
+- Screenshots: download/meridian-fonts-live.png (desktop hero), meridian-fonts-catalog.png (catalog tiles+prices), meridian-fonts-mobile.png (390x844) — no clipping/overflow, layout intact on both viewports
+
+Stage Summary:
+- Storefront typography upgraded from generic Helvetica stack to trending Space Grotesk + Inter pairing, loaded self-hosted via next/font; all ms-* type classes and prices now render in Space Grotesk with true weights
