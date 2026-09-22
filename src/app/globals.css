@@ -555,6 +555,45 @@ html {
   50% { opacity: 1; transform: scale(1); }
 }
 
+/* ─── Page-wide sunlight (Task 34) ─────────────────────────────────
+   The hero keeps its own deep sky; this fixed wash carries the same
+   day-part light over EVERYTHING else as you scroll — catalog, trust
+   strip, footer, chrome. z-45: above the sticky header (z-40) so the
+   whole page warms together, below dialogs/sheets (z-50) so commerce
+   stays crisp. pointer-events: none — pure light, never blocks. */
+.ms-sun {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+}
+/* light enters from the sky above and dissolves before the fold —
+   night keeps a full-body ink so the whole page sleeps */
+.ms-sun-dawn {
+  background: linear-gradient(
+    to bottom,
+    rgba(244, 166, 94, 0.3) 0%,
+    rgba(233, 132, 94, 0.14) 34%,
+    rgba(233, 132, 94, 0) 62%
+  );
+}
+.ms-sun-golden {
+  background: linear-gradient(
+    to bottom,
+    rgba(233, 116, 74, 0.32) 0%,
+    rgba(212, 90, 122, 0.15) 38%,
+    rgba(212, 90, 122, 0) 66%
+  );
+}
+.ms-sun-night {
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 14, 28, 0.34) 0%,
+    rgba(19, 30, 56, 0.24) 44%,
+    rgba(27, 42, 74, 0.14) 100%
+  );
+}
+
 /* Reduced motion: freeze the sky system's ambient layers too */
 @media (prefers-reduced-motion: reduce) {
   .ms-cloud-a,
@@ -569,6 +608,9 @@ html {
   }
   .ms-fly-dot {
     display: none;
+  }
+  .ms-sky {
+    transition: none;
   }
 }
 
@@ -693,3 +735,5 @@ html {
 /* recompile trigger: 2026-09-22 drawer box in dark cavity — real cabinet geometry (Task 28) */
 
 /* recompile trigger: 2026-09-22 drawer removed — BUY opens quick view (Task 31) */
+
+/* recompile trigger: 2026-09-22 page-wide sunlight + catalog toolbar (Task 34) */

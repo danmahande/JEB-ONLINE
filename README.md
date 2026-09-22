@@ -42,7 +42,7 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 - Full checkout flow: customer details → order placement → confirmation
 - Order tracking by order number (order events timeline)
 - Restock alert signup on out-of-stock products
-- Kampala clock and a day-part "living sky" that follows real time of day
+- Kampala clock and a day-part "living sky" — the light (dawn / golden hour / night) follows real time of day across the whole page, not just the hero
 
 ---
 

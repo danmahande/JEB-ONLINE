@@ -63,21 +63,16 @@ export default function ProductGrid({
       className="bg-[linear-gradient(to_bottom,#FBF6EC_0px,#F8FAFC_360px)] px-4 md:px-8 py-10 md:py-14"
       aria-label="Catalog"
     >
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-        <h2 className="ms-display text-4xl md:text-6xl">
-          CATALOG
-          <sup className="text-sm md:text-base align-super ml-2 text-brand">
-            {String(filtered.length).padStart(2, "0")}
-          </sup>
-        </h2>
-        <div className="flex border border-line bg-white" role="tablist" aria-label="Category filter">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 md:mb-5 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+        <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CATALOG</h2>
+        <div className="flex border border-line" role="tablist" aria-label="Category filter">
           {TABS.map((t) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
-              className={`ms-label px-4 md:px-6 py-3 border-r border-line last:border-r-0 transition-colors ${
+              className={`ms-label px-4 md:px-6 py-2.5 md:py-3 border-r border-line last:border-r-0 transition-colors ${
                 tab === t.key ? "bg-brand text-white" : "hover:bg-ink hover:text-white"
               }`}
             >
