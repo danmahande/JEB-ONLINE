@@ -520,3 +520,17 @@ Work Log:
 Stage Summary:
 - Full project (Next.js app, prisma db, scripts, download artifacts, kwanza-erp-src reference) is on github.com/danmahande/JEB-ONLINE @ main, SHA-verified
 - Token stored in local .git/config for frictionless future pushes; user advised to rotate it since it was shared in chat
+
+---
+Task ID: 30
+Agent: Super Z (main agent)
+Task: User: "add a readme so people can understand"
+
+Work Log:
+- Surveyed codebase for accuracy: package.json (stack/scripts), prisma schema (6 models), api routes (products/fx/orders), page.tsx view composition (shop/checkout/confirmation/track), storefront component inventory
+- Wrote README.md (156 lines): project pitch (Ugandan exporter, cabinet-drawer catalog, EAC pricing engine), features (catalog interaction, cross-border pricing, commerce flow), tech stack table, getting-started (bun install / db:push / dev), scripts table, env note, project structure tree, data model table, API table, design system (palette #1B2A4A/#E8622C, fonts, drawer interaction contract), deployment (standalone build), demo-data + kwanza-erp-src reference notes
+- Committed "Add README: ..." and pushed origin main: 85cc874..e947f54; remote SHA verified == local HEAD e947f54
+
+Stage Summary:
+- Repo now renders a full README on GitHub: overview, setup, architecture, API and design-system docs
+- README pushed at e947f54; main branch tracking origin/main
