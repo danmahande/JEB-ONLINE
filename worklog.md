@@ -328,3 +328,26 @@ Work Log:
 
 Stage Summary:
 - Hydration error eliminated at the root (identical SSR/client initial render, observer-driven reveal after mount); scroll reveals, header compress + shadow confirmed working after fix; no other Task 19 component carries server/client divergence
+
+---
+Task ID: 21
+Agent: Super Z (main agent)
+Task: "Living sky" + aliveness batch (user approved Tier 1 minus sun-glow, plus Tiers 2-3): time-aware hero tint, time-aware copy, live Kampala clock, fly-to-cart dot, subtotal count-up, cursor spotlight, freshness chips, sky override toggle
+
+Work Log:
+- store.ts: added useSky (natural day-part from visitor clock + manual override, non-persisted) and useFly (flight origin coords + key); exported DayPart type
+- src/lib/use-daypart.ts: useDaypartTicker — computes dawn 5-8 / day 8-17 / golden 17-19 / night 19-5 local hours, re-checks every 60s; mounted once in page.tsx. SSR + first client render always "day" (Task 20 hydration lesson)
+- hero.tsx: three day-part tint layers (dawn rose-amber horizon wash, golden orange-magenta, night ink wash) crossfading via .ms-sky-on (1.8s); .ms-stars starfield ABOVE the navy veil so it stays crisp; two drifting cloud layers (75s/105s alternate) UNDER the tints so dawn/golden warm them; hero label keyed by day-part with ms-fade-swap (500ms) — four greetings
+- header.tsx: BAND_LINE record prepends a time-band announcement to the marquee for non-day parts; KampalaClock component (Africa/Kampala via Intl, ticks 30s, SSR renders "KAMPALA --:-- EAT" placeholder, rAF-first-set keeps set-state-in-effect clean) pinned right of the ticker under a gradient mask; marquee aria-hidden moved to the track so the clock is readable; data-cart-badge attr on CART button as flight target. Fixed rules-of-hooks error (useSky ?? useSky -> two separate calls)
+- footer.tsx: SKY override group (AUTO/DAWN/DAY/GOLDEN/NIGHT, aria-pressed, brand highlight) in the bottom bar
+- fly-dot.tsx: page-level imperative dot — WAAPI 3-keyframe arc from ADD button rect to live-queried badge rect (680ms, scales 1->0.35, fades), onfinish/oncancel cleanup, reduced-motion + missing-badge short-circuits; triggered from product-grid quickAdd via e.currentTarget rect
+- cart-drawer.tsx: use-count-up.ts (rAF ease-out 300ms tween, shownRef tracks mid-flight value, reduced-motion snaps via rAF-setState) on SUBTOTAL + TOTAL
+- product-grid.tsx: tile onMouseMove sets --mx/--my CSS vars directly (zero re-render) feeding .ms-spot radial sheen (hover-gated, hover:none displays none); HARVESTED THIS WEEK chip with pulsing ms-fresh-dot on in-stock grain tiles (badge column)
+- globals.css: full living-sky block (sky tints, stars w/ bg-size tiling, clouds, fade-swap, spot, fly-dot, fresh-dot) + reduced-motion freeze for clouds/fade/fresh/fly-dot; bumped recompile trigger
+- Fixed during verify: .ms-stars opacity 0 out-ranked .ms-sky-on (defined later, same specificity) -> added .ms-stars.ms-sky-on { opacity: 1 }; MultiEdit partial-apply trap bit twice (header opener line consumed -> file broken mid-session; restored; switched to single edits) — footer verified clean
+- Verified live: all 10 new rule sets in CSSOM; clock KAMPALA 13:00 EAT ticking; SSR ships placeholder + day label only, zero hydration errors (hasDialog false); NIGHT override -> wash 1, stars 1, label swap, ticker band line, aria-pressed; flight dot present mid-arc at t+250ms with badge [1]; spotlight vars set at dispatched coords; 7 freshness chips; subtotal tween mid-flight USh 183,757 -> settled 217,560; screenshots day/golden/night desktop + dawn mobile all read correctly
+- Cleanup: test cart removed from localStorage; override is memory-only (resets on reload)
+- Screenshots: download/meridian-sky-day.png, meridian-sky-golden.png, meridian-sky-night.png, meridian-sky-dawn-mobile.png
+
+Stage Summary:
+- Storefront now responds to the world (time of day) as well as the user: sky re-tints by local hour with stars at night and drifting clouds, copy greets the band, Kampala HQ clock ticks in the ticker, adds fly to the cart, totals count up, tiles carry a cursor spotlight and harvest-freshness chips, and a footer switch demos every mood on demand; eslint clean, hydration clean

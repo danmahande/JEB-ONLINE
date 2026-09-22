@@ -64,3 +64,38 @@ export const useRegion = create<RegionState>()(
     { name: "meridian-region" }
   )
 );
+
+/* ── Living sky ──────────────────────────────────────────────────────────── */
+
+export type DayPart = "dawn" | "day" | "golden" | "night";
+
+interface SkyState {
+  /** computed from the visitor's local clock (see use-daypart.ts) */
+  natural: DayPart;
+  /** footer "VIEW AT DUSK" style override — null = follow the real clock */
+  override: DayPart | null;
+  setNatural: (d: DayPart) => void;
+  setOverride: (d: DayPart | null) => void;
+}
+
+export const useSky = create<SkyState>()((set) => ({
+  natural: "day",
+  override: null,
+  setNatural: (natural) => set({ natural }),
+  setOverride: (override) => set({ override }),
+}));
+
+/* ── Fly-to-cart flight ──────────────────────────────────────────────────── */
+
+interface FlyState {
+  /** viewport coords of the control that fired the add + a remount key */
+  fly: { x: number; y: number; key: number } | null;
+  flyTo: (x: number, y: number) => void;
+  clearFly: () => void;
+}
+
+export const useFly = create<FlyState>()((set) => ({
+  fly: null,
+  flyTo: (x, y) => set({ fly: { x, y, key: Date.now() } }),
+  clearFly: () => set({ fly: null }),
+}));

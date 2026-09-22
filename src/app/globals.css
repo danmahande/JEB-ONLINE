@@ -395,3 +395,168 @@ html {
 /* recompile trigger: 2026-09-22 p1p2 motion */
 
 /* recompile trigger: 2026-09-22 hydration fix + header shadow */
+
+/* ─── Living sky — time-of-day atmosphere (Task 21) ──────────────────────── */
+
+/* Day-part tint layers in the hero; .ms-sky-on crossfades them over ~2s */
+.ms-sky {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+  pointer-events: none;
+}
+.ms-sky-on {
+  opacity: 1;
+}
+.ms-sky-dawn {
+  background: linear-gradient(
+    to top,
+    rgba(244, 166, 94, 0.44) 0%,
+    rgba(233, 132, 94, 0.24) 40%,
+    rgba(233, 132, 94, 0) 68%
+  );
+}
+.ms-sky-golden {
+  background: linear-gradient(
+    to top,
+    rgba(233, 116, 74, 0.5) 0%,
+    rgba(212, 90, 122, 0.26) 44%,
+    rgba(212, 90, 122, 0) 72%
+  );
+}
+.ms-sky-night {
+  background: linear-gradient(
+    to bottom,
+    rgba(9, 14, 28, 0.82) 0%,
+    rgba(19, 30, 56, 0.6) 52%,
+    rgba(27, 42, 74, 0.22) 100%
+  );
+}
+
+/* Starfield — sits ABOVE the navy veil so it stays crisp; tiles via bg-size */
+.ms-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.8s ease;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, 0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 12%, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 28%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 74% 10%, rgba(255, 255, 255, 0.65) 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 88% 20%, rgba(255, 255, 255, 0.75) 50%, transparent 51%),
+    radial-gradient(1px 1px at 46% 8%, rgba(255, 255, 255, 0.6) 50%, transparent 51%);
+  background-size: 640px 460px;
+}
+/* must out-rank .ms-stars' own opacity:0 (defined above) */
+.ms-stars.ms-sky-on {
+  opacity: 1;
+}
+
+/* Drifting clouds — near-invisible, two layers at different speeds */
+.ms-cloud {
+  position: absolute;
+  left: -20%;
+  width: 70%;
+  height: 42%;
+  pointer-events: none;
+  filter: blur(28px);
+  background: radial-gradient(
+    50% 60% at 50% 50%,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0) 70%
+  );
+  opacity: 0.12;
+}
+.ms-cloud-a {
+  top: 4%;
+  animation: ms-cloud-drift 75s ease-in-out infinite alternate;
+}
+.ms-cloud-b {
+  top: 22%;
+  width: 55%;
+  animation: ms-cloud-drift 105s ease-in-out infinite alternate-reverse;
+}
+@keyframes ms-cloud-drift {
+  from { transform: translate3d(-6%, 0, 0); }
+  to { transform: translate3d(16%, 0, 0); }
+}
+
+/* Hero greeting swap on day-part change */
+.ms-fade-swap {
+  animation: ms-fade-swap 0.5s ease both;
+}
+@keyframes ms-fade-swap {
+  from { opacity: 0; transform: translateY(5px); }
+}
+
+/* Cursor spotlight on product tiles (desktop pointers only) */
+.ms-spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    190px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(251, 246, 236, 0.18),
+    transparent 65%
+  );
+}
+.ms-tile:hover .ms-spot {
+  opacity: 1;
+}
+@media (hover: none) {
+  .ms-spot {
+    display: none;
+  }
+}
+
+/* Fly-to-cart dot */
+.ms-fly-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--color-brand);
+  box-shadow: 0 0 14px rgba(232, 98, 44, 0.75);
+  z-index: 90;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Freshness chip pulse (grain tiles) */
+.ms-fresh-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #10b981;
+  animation: ms-fresh-pulse 2.4s ease-in-out infinite;
+}
+@keyframes ms-fresh-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Reduced motion: freeze the sky system's ambient layers too */
+@media (prefers-reduced-motion: reduce) {
+  .ms-cloud-a,
+  .ms-cloud-b {
+    animation: none;
+  }
+  .ms-fade-swap {
+    animation: none;
+  }
+  .ms-fresh-dot {
+    animation: none;
+  }
+  .ms-fly-dot {
+    display: none;
+  }
+}
+
+/* recompile trigger: 2026-09-22 living sky */

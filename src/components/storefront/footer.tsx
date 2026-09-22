@@ -1,8 +1,19 @@
 "use client";
 
 import Reveal from "@/components/storefront/reveal";
+import { useSky, type DayPart } from "@/lib/store";
+
+const SKY_OPTIONS: { key: string; value: DayPart | null }[] = [
+  { key: "AUTO", value: null },
+  { key: "DAWN", value: "dawn" },
+  { key: "DAY", value: "day" },
+  { key: "GOLDEN", value: "golden" },
+  { key: "NIGHT", value: "night" },
+];
 
 export default function Footer({ onNavigate }: { onNavigate: (v: "shop" | "track") => void }) {
+  const override = useSky((s) => s.override);
+  const setOverride = useSky((s) => s.setOverride);
   return (
     <footer className="mt-auto bg-ink text-white" aria-label="Footer">
       <div className="px-4 md:px-8 py-12 md:py-16">
@@ -59,8 +70,31 @@ export default function Footer({ onNavigate }: { onNavigate: (v: "shop" | "track
         </Reveal>
       </div>
 
-      <div className="border-t border-white/10 px-4 md:px-8 py-4 flex flex-wrap justify-between gap-2">
+      <div className="border-t border-white/10 px-4 md:px-8 py-4 flex flex-wrap items-center justify-between gap-3">
         <p className="ms-label opacity-50">© {new Date().getFullYear()} MERIDIAN SUPPLY CO.</p>
+        {/* sky override — demo every mood of the living sky, any hour */}
+        <div
+          className="flex items-center gap-1"
+          role="group"
+          aria-label="Preview the storefront sky at different times of day"
+        >
+          <span className="ms-label opacity-50 mr-1 hidden sm:inline">SKY</span>
+          {SKY_OPTIONS.map((o) => {
+            const on = o.value === null ? override === null : override === o.value;
+            return (
+              <button
+                key={o.key}
+                onClick={() => setOverride(o.value)}
+                aria-pressed={on}
+                className={`ms-label px-2 py-1 border transition-colors ${
+                  on ? "border-brand text-brand" : "border-transparent text-white/40 hover:text-white"
+                }`}
+              >
+                {o.key}
+              </button>
+            );
+          })}
+        </div>
         <p className="ms-label opacity-50">GRAINS & HARDWARE — SOLD ACROSS BORDERS</p>
       </div>
     </footer>

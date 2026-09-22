@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCart, useRegion } from "@/lib/store";
+import { useCart, useRegion, useSky, type DayPart } from "@/lib/store";
 import type { RegionConfig } from "@/lib/types";
+import KampalaClock from "./kampala-clock";
 
 const TICKER_ITEMS = [
   "EAC ORIGIN — 0% IMPORT DUTY WITHIN EAST AFRICA",
@@ -11,6 +12,14 @@ const TICKER_ITEMS = [
   "BULK & WHOLESALE WELCOME",
   "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · USD",
 ];
+
+/* time-band announcement prepended to the marquee (day keeps the base line-up) */
+const BAND_LINE: Record<DayPart, string> = {
+  dawn: "GOOD MORNING — TODAY'S HARVEST JUST LANDED",
+  day: "",
+  golden: "GOLDEN HOUR — ORDER BY 6PM EAT FOR NEXT-DAY DISPATCH IN KAMPALA",
+  night: "OVERNIGHT ORDERS PICKED & PACKED BY DAWN",
+};
 
 export default function Header({
   regions,
@@ -37,23 +46,31 @@ export default function Header({
 
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const active = regions.find((r) => r.region === region);
-  const ticker = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  const skyOverride = useSky((s) => s.override);
+  const skyNatural = useSky((s) => s.natural);
+  const band = skyOverride ?? skyNatural;
+  const base =
+    band !== "day" && BAND_LINE[band] ? [BAND_LINE[band], ...TICKER_ITEMS] : TICKER_ITEMS;
+  const ticker = [...base, ...base];
 
   return (
     <header className="sticky top-0 z-40 bg-white">
       {/* ticker — collapses when the page scrolls */}
       <div
-        className={`overflow-hidden bg-ink text-white transition-all duration-300 ${
+        className={`relative overflow-hidden bg-ink text-white transition-all duration-300 ${
           scrolled ? "max-h-0 py-0 opacity-0" : "max-h-12 py-1.5 opacity-100"
         }`}
-        aria-hidden="true"
       >
-        <div className="ms-marquee-track">
+        <div className="ms-marquee-track" aria-hidden="true">
           {ticker.map((t, i) => (
             <span key={i} className="ms-label mx-8 inline-block">
               {t} <span className="ml-8 text-brand">●</span>
             </span>
           ))}
+        </div>
+        {/* live HQ clock — masked into the right edge of the marquee */}
+        <div className="absolute inset-y-0 right-0 flex items-center pl-10 pr-4 md:pr-8 bg-gradient-to-r from-transparent via-ink to-ink">
+          <KampalaClock />
         </div>
       </div>
 
@@ -132,6 +149,7 @@ export default function Header({
           {/* cart */}
           <button
             onClick={onOpenCart}
+            data-cart-badge
             className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
             aria-label={`Open cart, ${count} items`}
           >

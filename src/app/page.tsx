@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart, useRegion } from "@/lib/store";
 import { useCatalog } from "@/hooks/use-catalog";
+import { useDaypartTicker } from "@/lib/use-daypart";
 import Header from "@/components/storefront/header";
 import Hero from "@/components/storefront/hero";
 import ProductGrid from "@/components/storefront/product-grid";
@@ -13,6 +14,7 @@ import Checkout from "@/components/storefront/checkout";
 import Confirmation from "@/components/storefront/confirmation";
 import TrackOrder from "@/components/storefront/track-order";
 import Reveal from "@/components/storefront/reveal";
+import FlyDot from "@/components/storefront/fly-dot";
 import Footer from "@/components/storefront/footer";
 import type { PlacedOrder, Product } from "@/lib/types";
 
@@ -23,6 +25,9 @@ export default function Storefront() {
   const cartLines = useCart((s) => s.lines);
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
+
+  // drives the living sky — recomputes the day-part every minute
+  useDaypartTicker();
 
   const [view, setView] = useState<View>("shop");
   const [selected, setSelected] = useState<Product | null>(null);
@@ -114,6 +119,9 @@ export default function Storefront() {
       </main>
 
       <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />
+
+      {/* fly-to-cart dot — page-level so it can reach the header badge */}
+      <FlyDot />
 
       {/* overlays — keyed by product so variant/qty state resets each open */}
       <QuickView

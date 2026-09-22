@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useCart } from "@/lib/store";
 import { fmt, quoteCart, fmtWeight } from "@/lib/format";
+import { useCountUp } from "@/lib/use-count-up";
 import type { RegionConfig } from "@/lib/types";
 
 export default function CartDrawer({
@@ -28,6 +29,9 @@ export default function CartDrawer({
   const removeLine = useCart((s) => s.removeLine);
   const active = regions.find((r) => r.region === region);
   const q = active ? quoteCart(lines, active) : null;
+  // subtotal + total count up/down as the cart changes (secondary rows snap)
+  const subtotal = useCountUp(q ? q.subtotal : 0);
+  const total = useCountUp(q ? q.total : 0);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -105,7 +109,7 @@ export default function CartDrawer({
                 </p>
                 <div className="flex justify-between text-sm">
                   <span className="opacity-60">SUBTOTAL</span>
-                  <span className="font-bold">{fmt(q.subtotal, active)}</span>
+                  <span className="font-bold">{active ? fmt(subtotal, active) : `$${subtotal.toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="opacity-60">
@@ -123,7 +127,7 @@ export default function CartDrawer({
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 mt-3">
                   <span className="ms-label">TOTAL</span>
-                  <span className="font-black text-xl">{fmt(q.total, active)}</span>
+                  <span className="font-black text-xl">{active ? fmt(total, active) : `$${total.toFixed(2)}`}</span>
                 </div>
                 <button
                   onClick={onCheckout}

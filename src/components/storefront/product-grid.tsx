@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Product, ProductVariant, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
-import { useCart } from "@/lib/store";
+import { useCart, useFly } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 
 const TABS = [
@@ -37,6 +37,7 @@ export default function ProductGrid({
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
   const addLine = useCart((s) => s.addLine);
+  const flyTo = useFly((s) => s.flyTo);
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
 
@@ -69,7 +70,7 @@ export default function ProductGrid({
     return best;
   }
 
-  function quickAdd(p: Product, v?: ProductVariant) {
+  function quickAdd(p: Product, v?: ProductVariant, btn?: HTMLElement) {
     if (!v || p.currentStock <= 0) return;
     addLine({
       productId: p.productId,
@@ -83,6 +84,11 @@ export default function ProductGrid({
       image: p.image,
       maxStock: p.currentStock,
     });
+    // fly a dot from the button to the cart badge — the badge pop is the payoff
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      flyTo(r.left + r.width / 2, r.top + r.height / 2);
+    }
     toast({
       title: "ADDED TO CART",
       description: `${p.productLabel} (${v.label.toLowerCase()}) — open the cart to check out.`,
@@ -179,6 +185,13 @@ export default function ProductGrid({
               <div
                 key={p.productId}
                 style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
+                onMouseMove={(e) => {
+                  // spotlight follows the cursor via CSS vars — no React re-render
+                  const el = e.currentTarget;
+                  const r = el.getBoundingClientRect();
+                  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+                  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+                }}
                 className={`ms-tile ms-tile-in group relative flex flex-col border border-line overflow-hidden bg-white shadow-sm ${
                   out ? "ms-oos" : ""
                 }`}
@@ -206,6 +219,12 @@ export default function ProductGrid({
                   {active?.isEac && (
                     <span className="ms-label rounded bg-emerald-500 text-white px-2 py-1">
                       0% DUTY
+                    </span>
+                  )}
+                  {p.category === "GRAINS" && !out && (
+                    <span className="ms-label rounded inline-flex items-center gap-1.5 bg-white/90 border border-emerald-200 text-emerald-700 px-2 py-1">
+                      <span className="ms-fresh-dot" aria-hidden="true" />
+                      HARVESTED THIS WEEK
                     </span>
                   )}
                 </div>
@@ -288,7 +307,7 @@ export default function ProductGrid({
                       )
                     ) : (
                       <button
-                        onClick={() => quickAdd(p, v)}
+                        onClick={(e) => quickAdd(p, v, e.currentTarget)}
                         className={`ms-label px-3 py-2.5 shrink-0 transition-colors ${
                           justAdded.has(p.productId)
                             ? "bg-ink text-white"
@@ -334,6 +353,9 @@ export default function ProductGrid({
                     </form>
                   )}
                 </div>
+
+                {/* cursor spotlight — light follows the mouse across the tile */}
+                <div className="ms-spot" aria-hidden="true" />
               </div>
             );
           })}
