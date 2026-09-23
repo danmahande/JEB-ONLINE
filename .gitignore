@@ -64,3 +64,9 @@ server.log
 /worklog.md
 /scripts/*
 !/scripts/seed.ts
+# purged from tracking (Task 44) — old ERP source + design source photos
+/kwanza-erp-src/
+/examples/
+/farm-*.jpg
+/wh-*.jpg
+/wh-*.png
