@@ -214,12 +214,19 @@ html {
       rgba(255, 255, 255, 0) 1px 3px
     ),
     linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
-  /* machined edges only — light catches the bevels, nothing floats */
+  /* machined edges — light catches the bevels; the deepened bottom bevel
+     reads as slab thickness. No shadows, no walls: the 3D is real
+     perspective (lean + cursor tilt + press sink), nothing painted on. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(40, 40, 30, 0.18),
+    inset 0 -2px 0 rgba(40, 40, 30, 0.26),
     inset 1px 0 0 rgba(255, 255, 255, 0.45),
     inset -1px 0 0 rgba(40, 40, 30, 0.1);
+  /* 3D slab resting state: leans back out of the rack base */
+  --tilt-rest: 4deg;
+  transform: perspective(800px) rotateX(var(--tilt-rest));
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
+  will-change: transform;
 }
 
 /* --- Interactive-system feedback loops ------------------------------------ */
@@ -235,14 +242,15 @@ html {
 }
 
 /* Tile entrance — crane-lowered into the stack: heavy drop from above, hard
-   compress on landing, micro-rebound, settle. fill-mode: backwards holds the
-   hidden state during the stagger delay, then releases so hover physics
-   keep working afterwards. */
+   compress on landing, micro-rebound, settle onto the resting lean (the 3D
+   rest state is baked into every frame so the handoff is invisible).
+   fill-mode: backwards holds the hidden state during the stagger delay,
+   then releases so hover physics keep working afterwards. */
 @keyframes ms-tile-in {
-  0% { opacity: 0; transform: translateY(-18px) scale(1.02); }
-  55% { opacity: 1; transform: translateY(1.5px) scale(0.994); }
-  78% { transform: translateY(-0.5px) scale(1.0008); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: perspective(800px) translateY(-18px) rotateX(10deg) scale(1.02); }
+  55% { opacity: 1; transform: perspective(800px) translateY(1.5px) rotateX(3.1deg) scale(0.994); }
+  78% { transform: perspective(800px) translateY(-0.5px) rotateX(4.4deg) scale(1.0008); }
+  100% { opacity: 1; transform: perspective(800px) rotateX(4deg) scale(1); }
 }
 .ms-tile-in {
   animation: ms-tile-in 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
@@ -251,6 +259,15 @@ html {
 /* Buttons depress on press, system-wide (Windows-7-style physical click) */
 .ms-root :where(button:not(:disabled)):active {
   transform: scale(0.97);
+}
+
+/* The tile itself is the button: pressing the face punches the slab flat
+   back into the rack base; release springs it onto its lean again.
+   Inner controls are excluded (:active bubbles to the tile from them) —
+   they depress as buttons, the panel holds still. */
+.ms-tile:active:not(:has(button:active)) {
+  transform: perspective(800px) rotateX(1deg) scale(0.985);
+  transition-duration: 0.07s;
 }
 
 /* Respect users who opt out of motion */
@@ -265,6 +282,12 @@ html {
   }
   .ms-root :where(button):active {
     transform: none;
+  }
+  /* static lean stays (it's position, not motion); tilt/lift/press do not */
+  .ms-tile,
+  .ms-tile:hover,
+  .ms-tile:active {
+    transform: perspective(800px) rotateX(var(--tilt-rest));
   }
 }
 
@@ -906,6 +929,15 @@ html {
   transition: transform 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 @media (hover: hover) and (pointer: fine) {
+  /* cursor tilt + lift: the slab floats up to meet the pointer and tips
+     toward it (the corner under the cursor rises) — --nx/--ny already
+     tracked on the tile, so this is pure CSS, no re-render */
+  .ms-tile:hover {
+    transform: perspective(800px)
+      rotateX(calc(var(--tilt-rest) + (var(--ny, 0.5) - 0.5) * 7deg))
+      rotateY(calc((var(--nx, 0.5) - 0.5) * 7deg))
+      translateZ(18px);
+  }
   .ms-tile:hover img {
     transform: translate3d(
         calc((var(--nx, 0.5) - 0.5) * -5px),
