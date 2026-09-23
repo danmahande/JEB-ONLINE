@@ -66,14 +66,19 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 # 1. install dependencies
 bun install
 
-# 2. create/push the database schema (SQLite, zero config)
+# 2. point Prisma at the shipped SQLite database (creates .env)
+echo DATABASE_URL=file:../db/custom.db > .env
+
+# 3. verify the database link (should say "already in sync")
 bun run db:push
 
-# 3. start the dev server
+# 4. start the dev server
 bun run dev
 ```
 
 Open http://localhost:3000. A seeded database (`db/custom.db`) ships with the repo, so the storefront has products, regions and FX rates out of the box.
+
+> **Windows:** everything above works the same in PowerShell — with `npm` instead of Bun (`npm install`, `npm run db:push`, `npm run dev`).
 
 ### Scripts
 
@@ -90,13 +95,13 @@ Open http://localhost:3000. A seeded database (`db/custom.db`) ships with the re
 
 ### Environment
 
-`.env` at the project root:
+`.env` at the project root (not committed — create it once after cloning):
 
 ```
-DATABASE_URL=file:./db/custom.db
+DATABASE_URL=file:../db/custom.db
 ```
 
-The path above points at `db/custom.db` relative to the project root — adjust it if your checkout lives elsewhere.
+Prisma resolves SQLite paths relative to `prisma/schema.prisma`, so `../db/custom.db` points at the seeded database in the project root — on any OS, no absolute paths needed.
 
 ---
 
