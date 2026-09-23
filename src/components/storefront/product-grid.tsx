@@ -159,6 +159,10 @@ export default function ProductGrid({
                   out ? "ms-oos" : ""
                 }`}
               >
+                {/* the slab&apos;s base — extruded steel thickness hanging
+                    under the face (Task 43); painted behind the face,
+                    pointer-events none so the grid gaps stay click-dead */}
+                <span className="ms-base" aria-hidden="true" />
                 {/* the whole tile is the hit target — inner controls below stop
                     propagation so they don't also open the quick-view sheet */}
                 <button

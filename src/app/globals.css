@@ -202,7 +202,13 @@ html {
    dark-framed label card holder on every face.
    (The slide-out spec drawer was removed in Task 31 — the BUY button now
    opens the quick-view sheet where pack and quantity are chosen.)
-   Zero drop shadows — nothing floats. */
+   Zero drop shadows — nothing floats.
+   Task 43 v3 — straight extruded slabs: the face stays parallel to the
+   screen (no lean, no cursor tilt — cards must read as straight
+   rectangles), and the 3D comes from geometry instead: a real steel base
+   face (.ms-base) hangs under every card, rotateX'd away from the viewer,
+   so each tile reads as a slab of extruded stock standing in the rack.
+   Grid gaps are untouched — the base tapers INTO a gap without filling it. */
 .ms-tile {
   border-radius: 6px;
   border-color: #a19f97;
@@ -215,18 +221,51 @@ html {
     ),
     linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
   /* machined edges — light catches the bevels; the deepened bottom bevel
-     reads as slab thickness. No shadows, no walls: the 3D is real
-     perspective (lean + cursor tilt + press sink), nothing painted on. */
+     is the face's own edge over the base. No shadows, no walls, no tilt:
+     the thickness lives in the base face below. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     inset 0 -2px 0 rgba(40, 40, 30, 0.26),
     inset 1px 0 0 rgba(255, 255, 255, 0.45),
     inset -1px 0 0 rgba(40, 40, 30, 0.1);
-  /* 3D slab resting state: leans back out of the rack base */
-  --tilt-rest: 4deg;
-  transform: perspective(800px) rotateX(var(--tilt-rest));
+  /* straight face — but keep a stacking context so the base can slot
+     behind the face without slipping under the shopfront frame */
+  isolation: isolate;
   transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
   will-change: transform;
+}
+
+/* The base — the slab's underside, real geometry. It hinges from the
+   card's bottom edge and turns away from the viewer (rotateX, origin at
+   the hinge), so perspective tapers it into a trapezoid: visible
+   thickness, honest projection, and it never bridges the mullion gaps.
+   Shaded as painted steel sitting in the face's shadow — darkest at the
+   far edge, one bright machined line where it meets the face. Painted
+   behind the face (z-index:-1 inside the tile's stacking context) and
+   pointer-events:none keeps the grid gaps click-dead. */
+.ms-base {
+  --base-t: perspective(210px) rotateX(-60deg);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 16px;
+  z-index: -1;
+  transform-origin: top center;
+  transform: var(--base-t);
+  border-radius: 0 0 6px 6px;
+  background-image: linear-gradient(180deg, #aaa9a1 0%, #8b8a82 42%, #615f58 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.38),
+    inset 1px 0 0 rgba(40, 40, 30, 0.14),
+    inset -1px 0 0 rgba(40, 40, 30, 0.14);
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
+  pointer-events: none;
+}
+/* sold-out stock reads duller, matching the frost on the face */
+.ms-oos .ms-base {
+  filter: saturate(0.35) brightness(0.94);
 }
 
 /* --- Interactive-system feedback loops ------------------------------------ */
@@ -242,15 +281,16 @@ html {
 }
 
 /* Tile entrance — crane-lowered into the stack: heavy drop from above, hard
-   compress on landing, micro-rebound, settle onto the resting lean (the 3D
-   rest state is baked into every frame so the handoff is invisible).
+   compress on landing, micro-rebound, settle flat onto the rack (straight
+   faces throughout — slab and base drop as one rigid piece, and the final
+   frame matches the no-transform rest state so the handoff is invisible).
    fill-mode: backwards holds the hidden state during the stagger delay,
    then releases so hover physics keep working afterwards. */
 @keyframes ms-tile-in {
-  0% { opacity: 0; transform: perspective(800px) translateY(-18px) rotateX(10deg) scale(1.02); }
-  55% { opacity: 1; transform: perspective(800px) translateY(1.5px) rotateX(3.1deg) scale(0.994); }
-  78% { transform: perspective(800px) translateY(-0.5px) rotateX(4.4deg) scale(1.0008); }
-  100% { opacity: 1; transform: perspective(800px) rotateX(4deg) scale(1); }
+  0% { opacity: 0; transform: translateY(-18px) scale(1.02); }
+  55% { opacity: 1; transform: translateY(1.5px) scale(0.994); }
+  78% { transform: translateY(-0.5px) scale(1.0008); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .ms-tile-in {
   animation: ms-tile-in 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
@@ -261,12 +301,18 @@ html {
   transform: scale(0.97);
 }
 
-/* The tile itself is the button: pressing the face punches the slab flat
-   back into the rack base; release springs it onto its lean again.
+/* The tile itself is the button: pressing the face sinks the slab straight
+   down onto the rack while the base face collapses beneath it — a keycap
+   bottoming out. Release springs it back up onto its base. No rotation,
+   no scale: pure vertical travel, the face stays square.
    Inner controls are excluded (:active bubbles to the tile from them) —
    they depress as buttons, the panel holds still. */
 .ms-tile:active:not(:has(button:active)) {
-  transform: perspective(800px) rotateX(1deg) scale(0.985);
+  transform: translateY(7px);
+  transition-duration: 0.07s;
+}
+.ms-tile:active:not(:has(button:active)) .ms-base {
+  transform: var(--base-t) scaleY(0.04);
   transition-duration: 0.07s;
 }
 
@@ -277,17 +323,22 @@ html {
     animation: none;
   }
   .ms-tile,
-  .ms-tile img {
+  .ms-tile img,
+  .ms-base {
     transition: none;
   }
   .ms-root :where(button):active {
     transform: none;
   }
-  /* static lean stays (it's position, not motion); tilt/lift/press do not */
+  /* the straight slab and its base stay (position, not motion); press
+     sink and hover lift do not */
   .ms-tile,
   .ms-tile:hover,
   .ms-tile:active {
-    transform: perspective(800px) rotateX(var(--tilt-rest));
+    transform: none;
+  }
+  .ms-tile:active .ms-base {
+    transform: var(--base-t);
   }
 }
 
@@ -929,14 +980,13 @@ html {
   transition: transform 0.3s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 @media (hover: hover) and (pointer: fine) {
-  /* cursor tilt + lift: the slab floats up to meet the pointer and tips
-     toward it (the corner under the cursor rises) — --nx/--ny already
-     tracked on the tile, so this is pure CSS, no re-render */
+  /* hover: the slab — face and base as one rigid piece — floats straight
+     up off the rack. No tilt, no scale, no translateZ: the card stays a
+     perfect rectangle and the grid gaps keep their size. --nx/--ny still
+     drive the goods parallax and the spotlight; the face itself never
+     skews. */
   .ms-tile:hover {
-    transform: perspective(800px)
-      rotateX(calc(var(--tilt-rest) + (var(--ny, 0.5) - 0.5) * 7deg))
-      rotateY(calc((var(--nx, 0.5) - 0.5) * 7deg))
-      translateZ(18px);
+    transform: translateY(-3px);
   }
   .ms-tile:hover img {
     transform: translate3d(
