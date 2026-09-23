@@ -52,3 +52,15 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# sandbox-local ops & agent artifacts (not part of the store)
+/.zscripts/
+/tests/
+/mini-services/
+/upload/
+/download/
+/tool-results/
+/Caddyfile
+/worklog.md
+/scripts/*
+!/scripts/seed.ts

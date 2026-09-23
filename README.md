@@ -93,10 +93,10 @@ Open http://localhost:3000. A seeded database (`db/custom.db`) ships with the re
 `.env` at the project root:
 
 ```
-DATABASE_URL=file:/home/z/my-project/db/custom.db
+DATABASE_URL=file:./db/custom.db
 ```
 
-Adjust the path to point at `db/custom.db` relative to your checkout.
+The path above points at `db/custom.db` relative to the project root — adjust it if your checkout lives elsewhere.
 
 ---
 
@@ -128,8 +128,7 @@ src/
   lib/                    # store (zustand), types, pricing helpers
 prisma/schema.prisma      # data model
 public/products/          # product imagery
-kwanza-erp-src/           # reference: the merchant-side ERP the storefront feeds into
-scripts/                  # seeding + image tooling
+scripts/seed.ts           # catalog seed data
 ```
 
 ## Data model (Prisma)
@@ -204,4 +203,3 @@ The app deploys, but serverless filesystems are ephemeral — a SQLite file won'
 ## Notes
 
 - Orders, stock levels and tracking events are demo data intended for demonstration and further development — wire them to a payment provider and fulfillment pipeline before production use.
-- `kwanza-erp-src/` is included as reference material for the merchant-side ERP (warehouse, order processing, cash-on-delivery reconciliation) that this storefront is designed to feed into.
