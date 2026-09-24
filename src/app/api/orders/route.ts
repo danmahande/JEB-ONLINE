@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { db } from "@/lib/db";
 
 type CartLine = { productId: string; variantLabel?: string; qty: number };
+
+class StockConflictError extends Error {}
 
 /**
  * GET /api/orders?orderNumber=DS100001
@@ -192,16 +195,11 @@ export async function POST(req: NextRequest) {
       regionCfg.shippingBase + totalWeightKg * regionCfg.shippingPerKg;
     const totalAmount = subtotal + dutyAmount + vatAmount + shippingAmount;
 
-    // ---------- order numbers (ERP convention: DS + sequence) ----------
-    const now = new Date();
-    const seq = (await db.orderProcessing.count()) + 1;
-    const orderNumber = `DS${100000 + seq}`;
-    const orderId = `ORD-${now.getTime()}-${seq}`;
-    const trackingNumber = `TRK-${orderNumber}-${regionCfg.region}`;
-
+    const customerNameValue = customerName.trim();
+    const contactValue = contact.trim();
     const customerInfo = [
-      customerName.trim(),
-      contact.trim(),
+      customerNameValue,
+      contactValue,
       email?.trim() || null,
       [address?.trim(), city?.trim()].filter(Boolean).join(", "),
       regionCfg.countryName,
@@ -209,9 +207,35 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join(" | ");
 
-    // ---------- transaction: create customer, order, lines, decrement stock ----------
-    const created = await db.$transaction(async (tx) => {
-      const baseContact = contact.trim();
+    // The sequence is allocated immediately before each transaction attempt.
+    // If another checkout claims the same number first, retry the whole
+    // transaction so customer/order/stock writes remain atomic.
+    let created: Awaited<ReturnType<typeof createOrderAttempt>>;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        created = await createOrderAttempt();
+        break;
+      } catch (error) {
+        const isOrderNumberConflict =
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          Array.isArray(error.meta?.target) &&
+          error.meta.target.includes("orderNumber");
+        if (!isOrderNumberConflict || attempt >= 2) throw error;
+      }
+    }
+
+    async function createOrderAttempt() {
+      // ---------- order numbers (ERP convention: DS + sequence) ----------
+      const now = new Date();
+      const seq = (await db.orderProcessing.count()) + 1;
+      const orderNumber = `DS${100000 + seq}`;
+      const orderId = `ORD-${now.getTime()}-${seq}`;
+      const trackingNumber = `TRK-${orderNumber}-${regionCfg.region}`;
+
+      // ---------- transaction: create customer, order, lines, decrement stock ----------
+      return db.$transaction(async (tx) => {
+      const baseContact = contactValue;
       const existing = await tx.customer.findUnique({
         where: { contact: baseContact },
       });
@@ -232,7 +256,7 @@ export async function POST(req: NextRequest) {
         const cust = await tx.customer.create({
           data: {
             customerId: `CUS-${now.getTime()}`,
-            name: customerName.trim(),
+            name: customerNameValue,
             contact: baseContact,
             email: email?.trim() || null,
             address: [address?.trim(), city?.trim()].filter(Boolean).join(", ") || null,
@@ -250,7 +274,7 @@ export async function POST(req: NextRequest) {
           orderId,
           orderNumber,
           customerId,
-          customerName: customerName.trim(),
+          customerName: customerNameValue,
           customerInfo,
           totalAmount: Math.round(totalAmount * 100) / 100,
           paymentMethod,
@@ -282,10 +306,16 @@ export async function POST(req: NextRequest) {
       });
 
       for (const l of resolved) {
-        await tx.product.update({
-          where: { productId: l.productId },
+        const stockUpdate = await tx.product.updateMany({
+          where: {
+            productId: l.productId,
+            isActive: true,
+            currentStock: { gte: l.qty },
+          },
           data: { currentStock: { decrement: l.qty } },
         });
+        if (stockUpdate.count !== 1)
+          throw new StockConflictError(`Insufficient stock for ${l.productName}`);
       }
 
       await tx.orderEvent.create({
@@ -298,7 +328,8 @@ export async function POST(req: NextRequest) {
       });
 
       return order;
-    });
+      });
+    }
 
     return NextResponse.json(
       {
@@ -325,6 +356,12 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    if (error instanceof StockConflictError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 409 }
+      );
+    }
     console.error("POST /api/orders error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to place order" },
