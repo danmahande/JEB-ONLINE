@@ -993,3 +993,9 @@ html {
     transition: none;
   }
 }
+
+/* Compact email field for the tile-level NOTIFY ME form */
+.ms-notify-field {
+  padding: 8px 10px;
+  font-size: 12px;
+}

@@ -142,7 +142,7 @@ export default function TrackOrder() {
               <div className="p-5 space-y-1.5">
                 <p className="ms-label text-hush mb-2">PAYMENT</p>
                 <p className="text-sm"><b>METHOD:</b> {order.paymentMethod}</p>
-<p className="text-sm">
+                <p className="text-sm">
                   <b>TOTAL:</b> ${order.totalAmount.toFixed(2)}
                   {order.currency !== "USD" && order.fxRate && (
                     <span className="text-hush">
