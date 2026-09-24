@@ -31,10 +31,12 @@ export default function Header({
   onOpenCart: () => void;
 }) {
   const lines = useCart((s) => s.lines);
+  const cartHasHydrated = useCart((s) => s.hasHydrated);
   const region = useRegion((s) => s.region);
   const setRegion = useRegion((s) => s.setRegion);
   const [regionOpen, setRegionOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const hasHydrated = useRegion((s) => s.hasHydrated);
 
   // header compresses on scroll: ticker collapses, main bar gains a shadow
   useEffect(() => {
@@ -109,16 +111,16 @@ export default function Header({
 
         <div className="flex items-center gap-3 md:gap-6">
           {/* region selector */}
-          <div className="relative">
-            <button
-              onClick={() => setRegionOpen((o) => !o)}
-              className="ms-label border border-line px-3 py-2 hover:bg-ink hover:text-white transition-colors"
-              aria-haspopup="listbox"
-              aria-expanded={regionOpen}
-            >
-              {active ? `${active.region} · ${active.currency}` : "REGION"}
-              <span className="ml-2">▾</span>
-            </button>
+<div className="relative">
+    <button
+      onClick={() => setRegionOpen((o) => !o)}
+      className="ms-label border border-line px-3 py-2 hover:bg-ink hover:text-white transition-colors"
+      aria-haspopup="listbox"
+      aria-expanded={regionOpen}
+    >
+      {active ? `${active.region} · ${active.currency}` : (hasHydrated ? "REGION" : "UG · UGX")}
+      <span className="ml-2">▾</span>
+    </button>
             {regionOpen && (
               <ul
                 className="absolute right-0 mt-1 w-56 rounded-lg border border-line bg-white z-50"
@@ -153,7 +155,7 @@ export default function Header({
             className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
             aria-label={`Open cart, ${count} ${count === 1 ? "item" : "items"}`}
           >
-            CART [<span key={count} className="ms-badge-pop inline-block">{count}</span>]
+            CART [<span key={count} className="ms-badge-pop inline-block">{cartHasHydrated ? count : 0}</span>]
           </button>
         </div>
       </div>

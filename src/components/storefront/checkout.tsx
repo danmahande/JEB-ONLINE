@@ -26,6 +26,7 @@ export default function Checkout({
   const clear = useCart((s) => s.clear);
   const region = useRegion((s) => s.region);
   const setRegion = useRegion((s) => s.setRegion);
+  const regionHasHydrated = useRegion((s) => s.hasHydrated);
   const active = regions.find((r) => r.region === region);
 
   const [form, setForm] = useState({
@@ -38,24 +39,35 @@ export default function Checkout({
     notes: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const q = useMemo(
     () => (active ? quoteCart(lines, active) : null),
     [lines, active]
   );
 
+  const totalFmt = (usd: number) =>
+    active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   async function placeOrder() {
-    setError(null);
-    if (!form.customerName.trim() || !form.contact.trim() || !form.paymentMethod) {
-      setError("NAME, PHONE AND PAYMENT METHOD ARE REQUIRED.");
+    setValidationError(null);
+    if (!form.customerName.trim()) {
+      setValidationError("CUSTOMER NAME IS REQUIRED.");
       return;
     }
-    if (!active) {
-      setError("SELECT A DESTINATION REGION.");
+    if (!form.contact.trim()) {
+      setValidationError("CONTACT INFORMATION IS REQUIRED.");
+      return;
+    }
+    if (!form.paymentMethod) {
+      setValidationError("SELECT A PAYMENT METHOD.");
+      return;
+    }
+    if (active && !regionHasHydrated) {
+      setValidationError("LOADING…");
       return;
     }
     setSubmitting(true);
@@ -65,7 +77,7 @@ export default function Checkout({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          country: active.region,
+          country: active?.region,
           cart: lines.map((l) => ({
             productId: l.productId,
             variantLabel: l.variantLabel,
@@ -79,8 +91,9 @@ export default function Checkout({
       }
       clear();
       onPlaced(data.order);
-    } catch (e: any) {
-      setError((e.message || "ORDER FAILED").toUpperCase());
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "ORDER FAILED";
+      setValidationError(msg.toUpperCase());
     } finally {
       setSubmitting(false);
     }
@@ -231,30 +244,30 @@ export default function Checkout({
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-hush">SUBTOTAL</span>
-                  <span className="font-bold">{fmt(q.subtotal, active)}</span>
+                  <span className="font-bold">{totalFmt(q.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hush">DUTY ({Math.round(active.dutyRate * 100)}%)</span>
-                  <span className="font-bold">{fmt(q.duty, active)}</span>
+                  <span className="font-bold">{totalFmt(q.duty)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
-                  <span className="font-bold">{fmt(q.vat, active)}</span>
+                  <span className="font-bold">{totalFmt(q.vat)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hush">FREIGHT</span>
-                  <span className="font-bold">{fmt(q.shipping, active)}</span>
+                  <span className="font-bold">{totalFmt(q.shipping)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 mt-3">
                   <span className="ms-label">TOTAL DUE</span>
-                  <span className="ms-price text-2xl text-brand">{fmt(q.total, active)}</span>
+                  <span className="ms-price text-2xl text-brand">{totalFmt(q.total)}</span>
                 </div>
               </div>
             )}
 
-            {error && (
+            {validationError && (
               <p className="ms-label mt-4 bg-red-500 text-white px-3 py-2" role="alert">
-                ⚠ {error}
+                ⚠ {validationError}
               </p>
             )}
 

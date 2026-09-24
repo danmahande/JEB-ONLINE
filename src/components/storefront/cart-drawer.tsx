@@ -6,7 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useCart } from "@/lib/store";
+import { useCart, useRegion } from "@/lib/store";
 import { fmt, quoteCart, fmtWeight } from "@/lib/format";
 import { useCountUp } from "@/lib/use-count-up";
 import type { RegionConfig } from "@/lib/types";
@@ -29,9 +29,12 @@ export default function CartDrawer({
   const removeLine = useCart((s) => s.removeLine);
   const active = regions.find((r) => r.region === region);
   const q = active ? quoteCart(lines, active) : null;
-  // subtotal + total count up/down as the cart changes (secondary rows snap)
   const subtotal = useCountUp(q ? q.subtotal : 0);
   const total = useCountUp(q ? q.total : 0);
+  const regionHasHydrated = useRegion((s) => s.hasHydrated);
+
+  const totalFmt = (usd: number) =>
+    active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -87,7 +90,7 @@ export default function CartDrawer({
                         </button>
                       </div>
                       <span className="ms-price text-sm">
-                        {active ? fmt(l.unitPriceUsd * l.qty, active) : `$${(l.unitPriceUsd * l.qty).toFixed(2)}`}
+                        {totalFmt(l.unitPriceUsd * l.qty)}
                       </span>
                     </div>
                   </div>
@@ -109,25 +112,25 @@ export default function CartDrawer({
                 </p>
                 <div className="flex justify-between text-sm">
                   <span className="text-hush">SUBTOTAL</span>
-                  <span className="font-bold">{active ? fmt(subtotal, active) : `$${subtotal.toFixed(2)}`}</span>
+                  <span className="font-bold">{totalFmt(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-hush">
                     IMPORT DUTY ({Math.round(active.dutyRate * 100)}%)
                   </span>
-                  <span className="font-bold">{fmt(q.duty, active)}</span>
+                  <span className="font-bold">{totalFmt(q.duty)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
-                  <span className="font-bold">{fmt(q.vat, active)}</span>
+                  <span className="font-bold">{totalFmt(q.vat)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-hush">FREIGHT</span>
-                  <span className="font-bold">{fmt(q.shipping, active)}</span>
+                  <span className="font-bold">{totalFmt(q.shipping)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 mt-3">
                   <span className="ms-label">TOTAL</span>
-                  <span className="ms-price text-xl">{active ? fmt(total, active) : `$${total.toFixed(2)}`}</span>
+                  <span className="ms-price text-xl">{totalFmt(total)}</span>
                 </div>
                 <button
                   onClick={onCheckout}

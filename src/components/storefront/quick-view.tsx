@@ -25,6 +25,7 @@ export default function QuickView({
   const addLine = useCart((s) => s.addLine);
   const flyTo = useFly((s) => s.flyTo);
   const region = useRegion((s) => s.region);
+  const regionHasHydrated = useRegion((s) => s.hasHydrated);
   const active = regions.find((r) => r.region === region);
   // open on the BASE pack (closest to 0 delta) — the one the tile advertises
   const [variantIdx, setVariantIdx] = useState(() => {
@@ -47,6 +48,9 @@ export default function QuickView({
 
   const priceUsd = product.unitSellingPrice + (v?.priceDelta || 0);
   const out = product.currentStock <= 0;
+
+  const totalFmt = (usd: number) =>
+    active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
 
   function handleAdd(e: MouseEvent<HTMLButtonElement>) {
     if (!product || out || !v) return;
@@ -125,7 +129,7 @@ export default function QuickView({
               <div>
                 <p className="ms-label text-hush mb-1">UNIT PRICE</p>
                 <p className="ms-price text-2xl md:text-3xl tracking-tight text-brand">
-                  {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
+                  {totalFmt(priceUsd)}
                 </p>
               </div>
               <p className="ms-label text-right">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
-import { useSky } from "@/lib/store";
+import { useSky, useRegion } from "@/lib/store";
 
 const TABS = [
   { key: "ALL", label: "ALL" },
@@ -38,6 +38,7 @@ export default function ProductGrid({
   const active = regions.find((r) => r.region === region);
   // the day-part light the whole page shares — the shopfront answers it
   const sky = useSky((s) => s.override ?? s.natural);
+  const regionHasHydrated = useRegion((s) => s.hasHydrated);
 
   const q = query.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -247,7 +248,7 @@ export default function ProductGrid({
                         key={region}
                         className="ms-price ms-price-flash text-lg tracking-tight text-brand leading-none whitespace-nowrap"
                       >
-                        {active ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
+                        {active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                       </span>
                       {variants.length > 1 ? (
                         <div className="flex flex-wrap gap-1.5 mt-1.5">

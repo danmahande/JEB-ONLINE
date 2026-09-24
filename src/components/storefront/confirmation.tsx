@@ -1,6 +1,7 @@
 "use client";
 
 import { fmt } from "@/lib/format";
+import { useRegion } from "@/lib/store";
 import type { PlacedOrder, RegionConfig } from "@/lib/types";
 
 export default function Confirmation({
@@ -15,7 +16,8 @@ export default function Confirmation({
   onTrack: () => void;
 }) {
   const active = regions.find((r) => r.region === order.region);
-  const local = active ? fmt(order.totalAmount, active) : `$${order.totalAmount.toFixed(2)}`;
+  const regionHasHydrated = useRegion((s) => s.hasHydrated);
+  const local = active && regionHasHydrated ? fmt(order.totalAmount, active) : `$${order.totalAmount.toFixed(2)}`;
 
   return (
     <section className="px-4 md:px-8 py-10 md:py-14" aria-label="Order confirmation">

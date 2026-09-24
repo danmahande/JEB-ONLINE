@@ -344,12 +344,16 @@ html {
 /* Respect users who opt out of motion */
 @media (prefers-reduced-motion: reduce) {
   .ms-tile-in,
-  .ms-badge-pop {
+  .ms-badge-pop,
+  .ms-kenburns,
+  .ms-price-flash,
+  .ms-view-in {
     animation: none;
   }
   .ms-tile,
   .ms-tile img,
-  .ms-base {
+  .ms-base,
+  .ms-reveal {
     transition: none;
   }
   .ms-root :where(button):active {
@@ -367,79 +371,35 @@ html {
   .ms-tile:active .ms-base {
     transform: var(--base-t) scaleY(0.04);
   }
-}
-
-/* --- P1 motion + P2 system loops ----------------------------------------- */
-
-/* Smooth programmatic + anchor scrolling (ENTER CATALOG, view switches) */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Scroll-in reveal — sections fade-rise once when entering the viewport */
-.ms-reveal {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.2, 0.6, 0.2, 1);
-}
-.ms-reveal.ms-reveal-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* Ken-Burns drift — the hero photo breathes */
-@keyframes ms-kenburns {
-  from { transform: scale(1) translateY(0); }
-  to { transform: scale(1.07) translateY(-1.5%); }
-}
-.ms-kenburns {
-  animation: ms-kenburns 24s ease-in-out infinite alternate;
-  will-change: transform;
-}
-
-/* Price flash when currency/region changes */
-@keyframes ms-price-flash {
-  0% { background-color: rgba(255, 107, 53, 0.3); }
-  100% { background-color: transparent; }
-}
-.ms-price-flash {
-  animation: ms-price-flash 0.8s ease-out;
-}
-
-/* Soft transition between shop / checkout / track views */
-@keyframes ms-view-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: none; }
-}
-.ms-view-in {
-  animation: ms-view-in 0.3s ease-out backwards;
-}
-
-/* Keyboard focus — orange ring, only for keyboard navigation */
-.ms-root :where(button, a):focus-visible {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
-}
-
-/* Sticky header when scrolled — subtle drop shadow */
-.ms-header-scrolled {
-  box-shadow: 0 6px 18px rgba(27, 42, 74, 0.1);
-}
-
-/* Compact email field for the tile-level NOTIFY ME form */
-.ms-notify-field {
-  padding: 8px 10px;
-  font-size: 12px;
-}
-
-/* Reduced motion: disable the P1/P2 layers too */
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .ms-reveal { opacity: 1; transform: none; transition: none; }
-  .ms-kenburns,
-  .ms-price-flash,
-  .ms-view-in {
+  html {
+    scroll-behavior: auto;
+  }
+  .ms-reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .ms-cloud-a,
+  .ms-cloud-b,
+  .ms-fade-swap,
+  .ms-fresh-dot {
     animation: none;
+  }
+  .ms-fly-dot {
+    display: none;
+  }
+  .ms-sky {
+    transition: none;
+  }
+  .ms-tile:hover .ms-spot::after {
+    animation: none;
+  }
+  .ms-glass {
+    animation: none;
+    background-position: 130% 0, 0 0, 0 0;
+  }
+  .ms-tile img {
+    transform: none;
+    transition: none;
   }
 }
 

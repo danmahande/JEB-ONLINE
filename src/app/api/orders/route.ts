@@ -207,22 +207,23 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join(" | ");
 
-    // The sequence is allocated immediately before each transaction attempt.
-    // If another checkout claims the same number first, retry the whole
-    // transaction so customer/order/stock writes remain atomic.
-    // NOTE: must stay an arrow function — a hoisted `function` declaration
-    // would defeat TS narrowing of regionCfg / paymentMethod from the
-    // validation guards above.
-    const createOrderAttempt = async () => {
-      // ---------- order numbers (ERP convention: DS + sequence) ----------
-      const now = new Date();
-      const seq = (await db.orderProcessing.count()) + 1;
-      const orderNumber = `DS${100000 + seq}`;
-      const orderId = `ORD-${now.getTime()}-${seq}`;
-      const trackingNumber = `TRK-${orderNumber}-${regionCfg.region}`;
-
-      // ---------- transaction: create customer, order, lines, decrement stock ----------
-      return db.$transaction(async (tx) => {
+// The sequence is generated atomically inside the transaction via the
+// Counter model — $transaction rolls back the increment if any later step
+// throws, so gaps only appear on committed conflicts (acceptable for order
+// numbers) and a retry re-uses the same rolled-back sequence value.
+const createOrderAttempt = async () => {
+  // ---------- transaction: counter → customer → order → lines → stock ----------
+  return db.$transaction(async (tx) => {
+    const now = new Date();
+    const counter = await tx.counter.upsert({
+      where: { name: "order_seq" },
+      update: { value: { increment: 1 } },
+      create: { name: "order_seq", value: 1 },
+    });
+    const seq = counter.value;
+    const orderNumber = `DS${100000 + seq}`;
+    const orderId = `ORD-${now.getTime()}-${seq}`;
+    const trackingNumber = `TRK-${orderNumber}-${regionCfg.region}`;
         const baseContact = contactValue;
         const existing = await tx.customer.findUnique({
           where: { contact: baseContact },

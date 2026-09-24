@@ -6,6 +6,7 @@ import type { CartLine } from "./types";
 
 interface CartState {
   lines: CartLine[];
+  hasHydrated: boolean;
   addLine: (line: CartLine) => void;
   removeLine: (productId: string, variantLabel: string) => void;
   setQty: (productId: string, variantLabel: string, qty: number) => void;
@@ -16,6 +17,7 @@ export const useCart = create<CartState>()(
   persist(
     (set) => ({
       lines: [],
+      hasHydrated: false,
       addLine: (line) =>
         set((s) => {
           const idx = s.lines.findIndex(
@@ -46,12 +48,18 @@ export const useCart = create<CartState>()(
         })),
       clear: () => set({ lines: [] }),
     }),
-    { name: "meridian-cart" }
+    {
+      name: "meridian-cart",
+      onRehydrateStorage: () => () => {
+        useCart.setState({ hasHydrated: true });
+      },
+    }
   )
 );
 
 interface RegionState {
   region: string;
+  hasHydrated: boolean;
   setRegion: (r: string) => void;
 }
 
@@ -59,9 +67,15 @@ export const useRegion = create<RegionState>()(
   persist(
     (set) => ({
       region: "UG",
+      hasHydrated: false,
       setRegion: (region) => set({ region }),
     }),
-    { name: "meridian-region" }
+    {
+      name: "meridian-region",
+      onRehydrateStorage: () => () => {
+        useRegion.setState({ hasHydrated: true });
+      },
+    }
   )
 );
 
