@@ -210,22 +210,10 @@ export async function POST(req: NextRequest) {
     // The sequence is allocated immediately before each transaction attempt.
     // If another checkout claims the same number first, retry the whole
     // transaction so customer/order/stock writes remain atomic.
-    let created: Awaited<ReturnType<typeof createOrderAttempt>>;
-    for (let attempt = 0; ; attempt++) {
-      try {
-        created = await createOrderAttempt();
-        break;
-      } catch (error) {
-        const isOrderNumberConflict =
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === "P2002" &&
-          Array.isArray(error.meta?.target) &&
-          error.meta.target.includes("orderNumber");
-        if (!isOrderNumberConflict || attempt >= 2) throw error;
-      }
-    }
-
-    async function createOrderAttempt() {
+    // NOTE: must stay an arrow function — a hoisted `function` declaration
+    // would defeat TS narrowing of regionCfg / paymentMethod from the
+    // validation guards above.
+    const createOrderAttempt = async () => {
       // ---------- order numbers (ERP convention: DS + sequence) ----------
       const now = new Date();
       const seq = (await db.orderProcessing.count()) + 1;
@@ -235,100 +223,118 @@ export async function POST(req: NextRequest) {
 
       // ---------- transaction: create customer, order, lines, decrement stock ----------
       return db.$transaction(async (tx) => {
-      const baseContact = contactValue;
-      const existing = await tx.customer.findUnique({
-        where: { contact: baseContact },
-      });
-      let customerId: string;
-      if (existing) {
-        await tx.customer.update({
+        const baseContact = contactValue;
+        const existing = await tx.customer.findUnique({
           where: { contact: baseContact },
-          data: {
-            totalOrders: existing.totalOrders + 1,
-            totalOrderValue: existing.totalOrderValue + totalAmount,
-            address: address?.trim() || existing.address,
-            email: email?.trim() || existing.email,
-            country: country,
-          },
         });
-        customerId = existing.customerId;
-      } else {
-        const cust = await tx.customer.create({
+        let customerId: string;
+        if (existing) {
+          await tx.customer.update({
+            where: { contact: baseContact },
+            data: {
+              totalOrders: existing.totalOrders + 1,
+              totalOrderValue: existing.totalOrderValue + totalAmount,
+              address: address?.trim() || existing.address,
+              email: email?.trim() || existing.email,
+              country: country,
+            },
+          });
+          customerId = existing.customerId;
+        } else {
+          const cust = await tx.customer.create({
+            data: {
+              customerId: `CUS-${now.getTime()}`,
+              name: customerNameValue,
+              contact: baseContact,
+              email: email?.trim() || null,
+              address: [address?.trim(), city?.trim()].filter(Boolean).join(", ") || null,
+              country: country,
+              createdBy: "STOREFRONT",
+              totalOrders: 1,
+              totalOrderValue: totalAmount,
+            },
+          });
+          customerId = cust.customerId;
+        }
+
+        const order = await tx.orderProcessing.create({
           data: {
-            customerId: `CUS-${now.getTime()}`,
-            name: customerNameValue,
-            contact: baseContact,
-            email: email?.trim() || null,
-            address: [address?.trim(), city?.trim()].filter(Boolean).join(", ") || null,
-            country: country,
+            orderId,
+            orderNumber,
+            customerId,
+            customerName: customerNameValue,
+            customerInfo,
+            totalAmount: Math.round(totalAmount * 100) / 100,
+            paymentMethod,
+            status: "new_order",
+            trackingNumber,
             createdBy: "STOREFRONT",
-            totalOrders: 1,
-            totalOrderValue: totalAmount,
+            currency: regionCfg.currency,
+            fxRate: regionCfg.rateToUsd,
+            region: country,
+            destination: regionCfg.countryName,
+            dutyAmount: Math.round(dutyAmount * 100) / 100,
+            vatAmount: Math.round(vatAmount * 100) / 100,
+            shippingAmount: Math.round(shippingAmount * 100) / 100,
+            totalWeightKg: Math.round(totalWeightKg * 100) / 100,
+            notes: notes?.trim() || null,
+            lineItems: {
+              create: resolved.map((l) => ({
+                orderNumber,
+                productId: l.productId,
+                productName: l.productName,
+                brand: l.brand,
+                variant: l.variant,
+                qty: l.qty,
+                unitSellingPrice: l.unitSellingPrice,
+                lineTotal: Math.round(l.lineTotal * 100) / 100,
+              })),
+            },
           },
         });
-        customerId = cust.customerId;
-      }
 
-      const order = await tx.orderProcessing.create({
-        data: {
-          orderId,
-          orderNumber,
-          customerId,
-          customerName: customerNameValue,
-          customerInfo,
-          totalAmount: Math.round(totalAmount * 100) / 100,
-          paymentMethod,
-          status: "new_order",
-          trackingNumber,
-          createdBy: "STOREFRONT",
-          currency: regionCfg.currency,
-          fxRate: regionCfg.rateToUsd,
-          region: country,
-          destination: regionCfg.countryName,
-          dutyAmount: Math.round(dutyAmount * 100) / 100,
-          vatAmount: Math.round(vatAmount * 100) / 100,
-          shippingAmount: Math.round(shippingAmount * 100) / 100,
-          totalWeightKg: Math.round(totalWeightKg * 100) / 100,
-          notes: notes?.trim() || null,
-          lineItems: {
-            create: resolved.map((l) => ({
-              orderNumber,
+        for (const l of resolved) {
+          const stockUpdate = await tx.product.updateMany({
+            where: {
               productId: l.productId,
-              productName: l.productName,
-              brand: l.brand,
-              variant: l.variant,
-              qty: l.qty,
-              unitSellingPrice: l.unitSellingPrice,
-              lineTotal: Math.round(l.lineTotal * 100) / 100,
-            })),
-          },
-        },
-      });
+              isActive: true,
+              currentStock: { gte: l.qty },
+            },
+            data: { currentStock: { decrement: l.qty } },
+          });
+          if (stockUpdate.count !== 1)
+            throw new StockConflictError(`Insufficient stock for ${l.productName}`);
+        }
 
-      for (const l of resolved) {
-        const stockUpdate = await tx.product.updateMany({
-          where: {
-            productId: l.productId,
-            isActive: true,
-            currentStock: { gte: l.qty },
+        await tx.orderEvent.create({
+          data: {
+            orderNumber,
+            fromStatus: "",
+            toStatus: "new_order",
+            note: `Order placed via storefront — destination ${regionCfg.countryName}`,
           },
-          data: { currentStock: { decrement: l.qty } },
         });
-        if (stockUpdate.count !== 1)
-          throw new StockConflictError(`Insufficient stock for ${l.productName}`);
+
+        return order;
+      });
+    };
+
+    let created: Awaited<ReturnType<typeof createOrderAttempt>>;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        created = await createOrderAttempt();
+        break;
+      } catch (error) {
+        // orderNumber and orderId are both @unique and both derive from the
+        // same sequence — a P2002 on either means another checkout claimed it.
+        const isSequenceConflict =
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          Array.isArray(error.meta?.target) &&
+          (error.meta.target.includes("orderNumber") ||
+            error.meta.target.includes("orderId"));
+        if (!isSequenceConflict || attempt >= 2) throw error;
       }
-
-      await tx.orderEvent.create({
-        data: {
-          orderNumber,
-          fromStatus: "",
-          toStatus: "new_order",
-          note: `Order placed via storefront — destination ${regionCfg.countryName}`,
-        },
-      });
-
-      return order;
-      });
     }
 
     return NextResponse.json(
