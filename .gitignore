@@ -64,10 +64,6 @@ server.log
 /worklog.md
 /scripts/*
 !/scripts/seed.ts
-!/scripts/smoke_orders.sh
-!/scripts/pick_product.js
-!/scripts/verify_smoke_db.js
-!/scripts/smoke_fx.sh
 # purged from tracking (Task 44) — old ERP source + design source photos
 /kwanza-erp-src/
 /examples/
