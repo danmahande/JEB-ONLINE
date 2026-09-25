@@ -67,6 +67,8 @@ export default function Storefront() {
         regions={regions}
         onNavigate={(v) => (v === "shop" ? goShop() : goTrack())}
         onOpenCart={() => setCartOpen(true)}
+        query={query}
+        onQuery={setQuery}
       />
 
       <main className="flex-1 flex flex-col">

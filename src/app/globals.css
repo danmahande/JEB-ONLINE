@@ -1040,3 +1040,192 @@ html {
     animation: none;
   }
 }
+
+/* ============================================================
+   Search (Task 52) — machined steel channel. Same material
+   system as the product cabinets: painted-steel face with the
+   hairline grain, dark inset well for the query, brand-orange
+   key cap. Focused, the whole channel sinks 2px into its
+   housing — the same physical press the tiles make. No glow,
+   no neon: light lands as bevel highlights, nothing floats.
+   ============================================================ */
+.ms-search {
+  display: flex;
+  align-items: stretch;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #47463f;
+  /* cabinet face — identical paint to .ms-tile */
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0 1px,
+      rgba(255, 255, 255, 0) 1px 3px
+    ),
+    linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 0 rgba(40, 40, 30, 0.26),
+    inset 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset -1px 0 0 rgba(40, 40, 30, 0.1);
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1), box-shadow 0.25s;
+}
+/* focused: the channel presses flush into its housing */
+.ms-search:focus-within {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(40, 40, 30, 0.2),
+    inset 1px 0 0 rgba(255, 255, 255, 0.25),
+    inset -1px 0 0 rgba(40, 40, 30, 0.08);
+}
+
+/* the well — dark milled socket the query sits in (socket paint
+   reused from .ms-tile::before), light bone text, orange caret */
+.ms-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 4px;
+  outline: none;
+  padding: 10px 12px;
+  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #f4f3ea;
+  caret-color: var(--color-brand);
+  background-image: linear-gradient(180deg, #4a4942 0%, #55544c 55%, #5f5e55 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+    inset 2px 0 3px rgba(0, 0, 0, 0.28),
+    inset -2px 0 3px rgba(0, 0, 0, 0.28);
+}
+.ms-search-input::placeholder {
+  color: rgba(236, 235, 226, 0.55);
+}
+
+/* stamped magnifier mark on the face, left of the well */
+.ms-search-mark {
+  display: flex;
+  align-items: center;
+  padding: 0 9px 0 7px;
+  color: #47463f;
+  pointer-events: none;
+}
+
+/* the key — brand-orange key cap with a physical top highlight;
+   depresses 1px like every button in the system */
+.ms-search-key {
+  border: 0;
+  border-radius: 4px;
+  color: #ffffff;
+  background: var(--color-brand);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+  transition: background-color 0.2s, transform 0.15s;
+}
+.ms-search-key:hover {
+  background: var(--color-brand-dark);
+}
+.ms-search-key:active {
+  transform: translateY(1px);
+}
+
+/* --- Header variant: the channel slides out of a machined
+   square on the rail (Dribbble 2092541 interaction, shopfront
+   materials). Collapsed it is a 42px steel button; open it
+   stretches across the bar and the nav hands over its space. */
+.ms-hsearch {
+  height: 40px;
+  width: 42px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), transform 0.25s, box-shadow 0.25s;
+}
+.ms-hsearch.is-open {
+  width: clamp(240px, 26vw, 440px);
+  cursor: text;
+}
+.ms-hsearch .ms-search-input {
+  flex: 0 1 0px;
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  transition: flex-grow 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.2s 0.12s, padding 0.4s;
+}
+.ms-hsearch.is-open .ms-search-input {
+  flex-grow: 1;
+  padding: 0 12px;
+  opacity: 1;
+}
+/* grip — the machined square itself; magnifier crossfades to ✕ */
+.ms-hsearch-grip {
+  flex: 0 0 34px;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #47463f;
+  transition: color 0.2s, transform 0.3s;
+}
+.ms-hsearch-grip:hover {
+  color: var(--color-brand);
+}
+.ms-hsearch-grip svg {
+  position: absolute;
+  transition: opacity 0.2s, transform 0.3s;
+}
+.ms-hsearch .icon-close {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+.ms-hsearch.is-open .icon-search {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.6);
+}
+.ms-hsearch.is-open .icon-close {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+/* GO key — grows out of the face once the channel is open */
+.ms-hsearch-key {
+  flex: 0 0 auto;
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), padding 0.4s, opacity 0.2s 0.12s;
+}
+.ms-hsearch.is-open .ms-hsearch-key {
+  width: 52px;
+  padding: 0 14px;
+  opacity: 1;
+}
+
+/* mobile: the open channel takes over the whole header bar —
+   the Dribbble shot's "search replaces the header" moment */
+@media (max-width: 767px) {
+  .ms-hsearch.is-open {
+    position: absolute;
+    inset-block: 4px;
+    inset-inline: 8px;
+    width: auto;
+    z-index: 30;
+  }
+}
+
+/* Reduced motion: states swap instantly, no slide, no sink */
+@media (prefers-reduced-motion: reduce) {
+  .ms-search,
+  .ms-hsearch,
+  .ms-hsearch .ms-search-input,
+  .ms-hsearch-key,
+  .ms-hsearch-grip svg {
+    transition: none;
+  }
+  .ms-search:focus-within {
+    transform: none;
+  }
+}

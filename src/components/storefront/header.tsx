@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart, useRegion, useSky, type DayPart } from "@/lib/store";
 import type { RegionConfig } from "@/lib/types";
 import KampalaClock from "./kampala-clock";
@@ -25,10 +25,14 @@ export default function Header({
   regions,
   onNavigate,
   onOpenCart,
+  query,
+  onQuery,
 }: {
   regions: RegionConfig[];
   onNavigate: (view: "shop" | "track") => void;
   onOpenCart: () => void;
+  query: string;
+  onQuery: (q: string) => void;
 }) {
   const lines = useCart((s) => s.lines);
   const cartHasHydrated = useCart((s) => s.hasHydrated);
@@ -36,7 +40,14 @@ export default function Header({
   const setRegion = useRegion((s) => s.setRegion);
   const [regionOpen, setRegionOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const hasHydrated = useRegion((s) => s.hasHydrated);
+
+  // opening the channel hands focus straight to the well
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
 
   // header compresses on scroll: ticker collapses, main bar gains a shadow
   useEffect(() => {
@@ -78,7 +89,7 @@ export default function Header({
 
       {/* main bar */}
       <div
-        className={`flex items-center justify-between border-b border-line px-4 md:px-8 transition-all duration-300 ${
+        className={`relative flex items-center justify-between border-b border-line px-4 md:px-8 transition-all duration-300 ${
           scrolled ? "py-2 ms-header-scrolled" : "py-3"
         }`}
       >
@@ -94,7 +105,12 @@ export default function Header({
           SUPPLY<span className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
         </button>
 
-        <nav className="hidden md:flex items-center gap-8" aria-label="Main">
+        <nav
+          className={`hidden md:flex items-center gap-8 whitespace-nowrap overflow-hidden transition-all duration-300 ${
+            searchOpen ? "md:max-w-0 md:opacity-0" : "md:max-w-[260px] md:opacity-100"
+          }`}
+          aria-label="Main"
+        >
           <button
             onClick={() => onNavigate("shop")}
             className="ms-label hover:text-brand transition-colors"
@@ -108,6 +124,48 @@ export default function Header({
             TRACK ORDER
           </button>
         </nav>
+
+        {/* search — a machined square on the rail that slides open into
+            a steel channel; the nav hands over its space while it does */}
+        <form
+          role="search"
+          className={`ms-search ms-hsearch ${searchOpen ? "is-open" : ""}`}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setSearchOpen(false);
+          }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          <button
+            type="button"
+            className="ms-hsearch-grip relative"
+            aria-label={searchOpen ? "Close search" : "Open search"}
+            aria-expanded={searchOpen}
+            onClick={() => setSearchOpen((o) => !o)}
+          >
+            <svg className="icon-search" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="M15.5 15.5 21 21" />
+            </svg>
+            <svg className="icon-close" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <path d="M5 5 19 19M19 5 5 19" />
+            </svg>
+          </button>
+          <input
+            ref={searchInputRef}
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            placeholder="Search the catalog…"
+            aria-label="Search the catalog"
+            tabIndex={searchOpen ? 0 : -1}
+            className="ms-search-input"
+          />
+          <button type="submit" className="ms-label ms-search-key ms-hsearch-key" tabIndex={searchOpen ? 0 : -1}>
+            GO
+          </button>
+        </form>
 
         <div className="flex items-center gap-3 md:gap-6">
           {/* region selector */}

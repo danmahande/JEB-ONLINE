@@ -59,26 +59,31 @@ export default function Hero({
         {/* kept for SEO/a11y only — not rendered visually */}
         <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
 
-        {/* search — the storefront's primary entry point */}
+        {/* search — the storefront's primary entry point, machined as a
+            steel channel: cabinet face outside, dark milled well inside,
+            brand-orange key cap. Sinks 2px into its housing on focus. */}
         <form
           role="search"
           onSubmit={(e) => {
             e.preventDefault();
             onShop();
           }}
-          className="flex max-w-xl bg-white border border-line p-1.5"
+          className="ms-search max-w-xl"
         >
+          <span className="ms-search-mark" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="M15.5 15.5 21 21" />
+            </svg>
+          </span>
           <input
             value={query}
             onChange={(e) => onQuery(e.target.value)}
             placeholder="Search maize flour, cement, iron sheets…"
             aria-label="Search products"
-            className="ms-field flex-1 min-w-0"
+            className="ms-search-input"
           />
-          <button
-            type="submit"
-            className="ms-label bg-brand text-white px-5 md:px-8 hover:bg-brand-dark transition-colors shrink-0"
-          >
+          <button type="submit" className="ms-label ms-search-key px-5 md:px-8 shrink-0">
             SEARCH
           </button>
         </form>
