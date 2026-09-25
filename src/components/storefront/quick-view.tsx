@@ -76,14 +76,14 @@ export default function QuickView({
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-[#fbfaf5] border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
+      <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-white border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
         <DialogHeader className="sr-only">
           <DialogTitle>{product.productLabel}</DialogTitle>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2">
           {/* image */}
-          <div className="relative aspect-square bg-neutral-100 border-b md:border-b-0 md:border-r border-line">
+          <div className="relative aspect-square bg-muted border-b md:border-b-0 md:border-r border-line">
             { }
             <img
               src={product.image || "/products/placeholder.png"}

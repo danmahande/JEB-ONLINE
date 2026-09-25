@@ -91,7 +91,7 @@ export default function Storefront() {
               onClearQuery={() => setQuery("")}
             />
             {/* trust strip */}
-            <section className="border-t border-line bg-white px-4 md:px-8 py-10" aria-label="Trade assurances">
+            <section className="border-t border-line bg-mist px-4 md:px-8 py-10" aria-label="Trade assurances">
               <Reveal className="grid sm:grid-cols-3 gap-6">
                 {[
                   ["EAC PREFERENTIAL TARIFFS", "Goods originating in Uganda move duty-free across Kenya, Tanzania and Rwanda under the EAC Common External Tariff."],

@@ -136,6 +136,17 @@
   --color-line: #E2E8F0;       /* hairline borders */
   --color-mist: #F8FAFC;       /* page background */
   --color-hush: #64748B;       /* muted slate text */
+  /* ── Surface rule (Task 58 — one canvas system):  ─────────────
+     mist #F8FAFC  = every full-width canvas (header, catalog, trust
+                     strip, page roots). No section paints its own tone.
+     white #FFFFFF = raised commerce surfaces only (fascia, cards,
+                     dialogs, drawers) — the --card token.
+     paper         = small die-cut props (chips, tabs, slips, file
+                     tags) — physical paper sitting on steel/white.
+     ink           = deliberate dark blocks (ticker, footer, pressed
+                     tabs). Never a "slightly different light tone". */
+  --color-paper: #fbfaf5;      /* prop paper — chips, tabs, slips, tags */
+  --color-paper-deep: #f1efe7; /* prop paper, pressed/hover shade */
 }
 
 /* Page-wide scale: root font-size dial. Everything rem-based (Tailwind spacing,
@@ -753,7 +764,7 @@ html {
   padding: 4px 12px;
   border: 3px solid #3c3b36;
   border-radius: 2px;
-  background: #fbfaf5;
+  background: var(--color-paper);
   color: #57554c;
   font-size: 9px;
   box-shadow:
@@ -792,7 +803,7 @@ html {
   text-transform: uppercase;
   padding: 7px 13px;
   border-radius: 4px;
-  background: #fbfaf5;
+  background: var(--color-paper);
   color: #45443f;
   border: 1.5px solid #8e8d85;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -959,7 +970,7 @@ html {
    pseudo-element of the button itself, so tapping it taps the button. */
 .ms-slip {
   position: relative;
-  background: #fbfaf5;
+  background: var(--color-paper);
 }
 .ms-slip.ms-slip-open {
   background: var(--color-ink);
@@ -1208,7 +1219,7 @@ html {
   text-transform: uppercase;
   padding: 5px 9px;
   border-radius: 3px;
-  background: #fbfaf5;
+  background: var(--color-paper);
   color: #45443f;
   border: 1.5px solid #8e8d85;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -1245,7 +1256,7 @@ html {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 10px 16px;
-  background: #fbfaf5;
+  background: var(--color-paper);
   color: #45443f;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -1259,7 +1270,7 @@ html {
   border-left: 1px solid var(--color-line);
 }
 .ms-tab[aria-selected="false"]:hover {
-  background: #f1efe7;
+  background: var(--color-paper-deep);
   color: var(--color-ink);
 }
 .ms-tab[aria-selected="true"] {

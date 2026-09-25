@@ -104,7 +104,7 @@ export default function ProductGrid({
     <section
       id="catalog"
       data-sky={sky}
-      className="bg-[linear-gradient(to_bottom,#FBF6EC_0px,#F8FAFC_360px)] px-4 md:px-8 py-10 md:py-14"
+      className="bg-mist px-4 md:px-8 py-10 md:py-14"
       aria-label="Catalog"
     >
       {/* fascia board — the toolbar mounts flush on the shopfront frame below */}
@@ -158,7 +158,7 @@ export default function ProductGrid({
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 md:gap-3">
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-neutral-200 animate-pulse rounded-lg" />
+            <div key={i} className="aspect-square bg-line animate-pulse rounded-lg" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -228,7 +228,7 @@ export default function ProductGrid({
                   className="relative block w-full text-left"
                   aria-label={`View ${p.productLabel} details`}
                 >
-                  <div className="relative aspect-square overflow-hidden bg-neutral-100">
+                  <div className="relative aspect-square overflow-hidden bg-muted">
                     <img
                       src={p.image || "/products/placeholder.png"}
                       alt={p.productLabel}

@@ -76,7 +76,7 @@ export default function Header({
   const ticker = [...base, ...base];
 
   return (
-    <header className="sticky top-0 z-40 bg-white">
+    <header className="sticky top-0 z-40 bg-mist">
       {/* ticker — collapses when the page scrolls */}
       <div
         className={`relative overflow-hidden bg-ink text-white transition-all duration-300 ${
