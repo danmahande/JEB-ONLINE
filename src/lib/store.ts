@@ -50,9 +50,9 @@ export const useCart = create<CartState>()(
     }),
     {
       name: "meridian-cart",
-      onRehydrateStorage: () => () => {
-        useCart.setState({ hasHydrated: true });
-      },
+      // hasHydrated flips in a root useEffect (src/app/page.tsx) — zustand
+      // v5's persist never fires onRehydrateStorage's callback here, and a
+      // flag persisted as false would otherwise stay false forever.
     }
   )
 );
@@ -72,9 +72,8 @@ export const useRegion = create<RegionState>()(
     }),
     {
       name: "meridian-region",
-      onRehydrateStorage: () => () => {
-        useRegion.setState({ hasHydrated: true });
-      },
+      // hasHydrated flips in a root useEffect (src/app/page.tsx) — see cart
+      // store note above.
     }
   )
 );

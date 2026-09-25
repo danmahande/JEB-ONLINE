@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart, useRegion, useSky } from "@/lib/store";
 import { useCatalog } from "@/hooks/use-catalog";
@@ -28,6 +28,16 @@ export default function Storefront() {
   const skyOverride = useSky((s) => s.override);
   const sky = skyOverride ?? natural;
   const { toast } = useToast();
+
+  // Mark both persisted stores as hydrated after React hydration completes.
+  // zustand v5's persist never fires onRehydrateStorage's callback here, so
+  // the hasHydrated flag could stay false forever and pin every price to the
+  // $ fallback. Flipping post-hydration means no SSR mismatch, and it
+  // self-heals hasHydrated:false values persisted by older builds.
+  useEffect(() => {
+    useCart.setState({ hasHydrated: true });
+    useRegion.setState({ hasHydrated: true });
+  }, []);
 
   // drives the living sky — recomputes the day-part every minute
   useDaypartTicker();
