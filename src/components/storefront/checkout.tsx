@@ -103,7 +103,7 @@ export default function Checkout({
     return (
       <section className="px-4 md:px-8 py-20 text-center">
         <h2 className="ms-display text-4xl opacity-30 mb-6">CART EMPTY</h2>
-        <button onClick={onBack} className="ms-label bg-brand text-white px-8 py-4 hover:bg-brand-dark transition-colors">
+        <button onClick={onBack} className="ms-label ms-key px-8 py-4">
           ← BACK TO CATALOG
         </button>
       </section>
@@ -274,7 +274,7 @@ export default function Checkout({
             <button
               onClick={placeOrder}
               disabled={submitting}
-              className="ms-label w-full bg-brand text-white py-4 mt-5 hover:bg-brand-dark disabled:opacity-40 transition-colors"
+              className="ms-label ms-key w-full py-4 mt-5 disabled:opacity-40"
             >
               {submitting ? "PLACING ORDER…" : "PLACE ORDER →"}
             </button>

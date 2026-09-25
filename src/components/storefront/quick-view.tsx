@@ -174,7 +174,7 @@ export default function QuickView({
               <button
                 onClick={handleAdd}
                 disabled={out}
-                className="ms-label flex-1 bg-brand text-white px-6 py-3 hover:bg-brand-dark disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="ms-label ms-key flex-1 px-6 py-3 disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 {out ? "UNAVAILABLE" : qty > 1 ? `ADD ${qty} TO CART` : "ADD TO CART"}
               </button>

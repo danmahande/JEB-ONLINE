@@ -134,7 +134,7 @@ export default function CartDrawer({
                 </div>
                 <button
                   onClick={onCheckout}
-                  className="ms-label w-full bg-brand text-white py-4 mt-2 hover:bg-brand-dark transition-colors"
+                  className="ms-label ms-key w-full py-4 mt-2"
                 >
                   CHECKOUT →
                 </button>

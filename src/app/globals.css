@@ -1126,7 +1126,10 @@ html {
 }
 
 /* the key — brand-orange key cap with a physical top highlight;
-   depresses 1px like every button in the system */
+   depresses 1px like every button in the system. Shared cap: the
+   SEARCH key on the channels and every primary CTA in the store
+   (BUY / ADD TO CART / CHECKOUT) press the same machined key. */
+.ms-key,
 .ms-search-key {
   border: 0;
   border-radius: 4px;
@@ -1137,11 +1140,112 @@ html {
     inset 0 -2px 0 rgba(0, 0, 0, 0.25);
   transition: background-color 0.2s, transform 0.15s;
 }
+.ms-key:hover,
 .ms-search-key:hover {
   background: var(--color-brand-dark);
 }
+.ms-key:active,
 .ms-search-key:active {
   transform: translateY(1px);
+}
+/* ink variant — the dark key (restock notify submit) */
+.ms-key.ms-key-ink {
+  background: var(--color-ink);
+}
+.ms-key.ms-key-ink:hover {
+  background: var(--color-ink-soft);
+}
+
+/* ─── Tile pack rail + fascia tabs (Task 55) ─────────────────────────────
+   Uniformity pass: every slab gets the same bottom skeleton — a fixed
+   height pack rail (one line, measure-only chips) over a price/key row.
+   Single-pack products mount one engraved static chip in the same slot,
+   so nothing in the rack changes height or order tile to tile. */
+.ms-pack-rail {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  margin-top: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ms-pack-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* the chip — the weight switch at rail gauge: same material as
+   .ms-weight-toggle, compact enough that a 3-pack bank stays one line */
+.ms-chip {
+  flex: 0 0 auto;
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 3px;
+  background: #fbfaf5;
+  color: #45443f;
+  border: 1.5px solid #8e8d85;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.ms-chip:not(.is-static):hover {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+.ms-chip.is-on {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.28);
+}
+/* static chip — a single-pack product's engraved spec, not a control */
+.ms-chip.is-static {
+  background: rgba(255, 255, 255, 0.42);
+  color: #6f6d63;
+  border-color: #a8a69d;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* fascia tabs — the category selector as one machined key bank bolted
+   to the white board; the engaged tab sinks into its ink socket (same
+   state language as .ms-weight-toggle.is-on) */
+.ms-tab {
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  background: #fbfaf5;
+  color: #45443f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+@media (min-width: 768px) {
+  .ms-tab {
+    padding: 13px 24px;
+  }
+}
+.ms-tab + .ms-tab {
+  border-left: 1px solid var(--color-line);
+}
+.ms-tab[aria-selected="false"]:hover {
+  background: #f1efe7;
+  color: var(--color-ink);
+}
+.ms-tab[aria-selected="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.28);
 }
 
 /* --- Header variant: the channel slides out of a machined

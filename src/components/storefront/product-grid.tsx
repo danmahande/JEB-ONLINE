@@ -82,6 +82,15 @@ export default function ProductGrid({
     return best;
   }
 
+  /* Tile chips carry the measure only ("25KG", "2M", "16OZ") — the pack
+     word stays on the full label (chip title + quick-view sheet), so
+     every rail reads as one uniform bank of spec stamps (Task 55). */
+  const PACK_WORD = /\s+(BAG|PACK|CARTON|SHEET|TRAY|BOX|ROLL)\s*$/i;
+  function chipLabel(label?: string | null) {
+    const s = (label ?? "").trim();
+    return s.replace(PACK_WORD, "") || s;
+  }
+
   /* House plates fill the tail of the last row so the rack never shows a
      hole. Skipped while a search is active — results should stay sparse and
      literal — and while gridCols is still 0 (pre-mount). */
@@ -99,18 +108,27 @@ export default function ProductGrid({
       aria-label="Catalog"
     >
       {/* fascia board — the toolbar mounts flush on the shopfront frame below */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-lg border border-b-0 border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
-        <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CATALOG</h2>
-        <div className="flex border border-line" role="tablist" aria-label="Category filter">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-t-lg border border-b-0 border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+        <div className="min-w-0">
+          {/* the rack counter — replays the greeting swap whenever the count moves */}
+          <p key={loading ? "loading" : `${tab}|${q}|${filtered.length}`} className="ms-label ms-fade-swap mb-1.5 text-hush">
+            {loading
+              ? "CHECKING THE RACK…"
+              : `${filtered.length} ${filtered.length === 1 ? "LINE" : "LINES"} ON THE RACK`}
+          </p>
+          <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">
+            CATALOG
+            <span className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
+          </h2>
+        </div>
+        <div className="flex overflow-hidden rounded-[4px] border border-line" role="tablist" aria-label="Category filter">
           {TABS.map((t) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
-              className={`ms-label px-4 md:px-6 py-2.5 md:py-3 border-r border-line last:border-r-0 transition-colors ${
-                tab === t.key ? "bg-ink text-white" : "hover:bg-secondary"
-              }`}
+              className="ms-tab"
             >
               {t.label}
             </button>
@@ -151,7 +169,7 @@ export default function ProductGrid({
           </p>
           <button
             onClick={onClearQuery}
-            className="ms-label bg-brand text-white px-6 py-3 hover:bg-brand-dark transition-colors"
+            className="ms-label ms-key px-6 py-3"
           >
             SHOW EVERYTHING
           </button>
@@ -255,7 +273,7 @@ export default function ProductGrid({
                       e.stopPropagation();
                       onSelect(p);
                     }}
-                    className="text-left font-bold text-sm leading-snug line-clamp-2 hover:text-brand transition-colors"
+                    className="text-left font-bold text-sm leading-snug line-clamp-2 min-h-10 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
                     {p.productLabel}
@@ -271,7 +289,36 @@ export default function ProductGrid({
                         ? `Only ${p.currentStock} left in stock`
                         : `In stock — ${p.currentStock} ${p.unit.toLowerCase()}${p.currentStock === 1 ? "" : "s"}`}
                   </p>
-                  <div className="flex items-end justify-between gap-2 mt-auto pt-1.5">
+                  {/* pack rail — the same selector slot milled into every
+                      slab: chips for multi-pack lines, one engraved spec
+                      stamp for single-pack lines (Task 55) */}
+                  <div
+                    className="ms-pack-rail"
+                    role={variants.length > 1 ? "group" : undefined}
+                    aria-label={variants.length > 1 ? `Pack options for ${p.productLabel}` : undefined}
+                  >
+                    {variants.length > 1 ? (
+                      variants.map((vv, vi) => (
+                        <button
+                          key={vv.label}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPicked((s) => ({ ...s, [p.productId]: vi }));
+                          }}
+                          aria-pressed={vi === idx}
+                          title={vv.label}
+                          className={`ms-chip ${vi === idx ? "is-on" : ""}`}
+                        >
+                          {chipLabel(vv.label)}
+                        </button>
+                      ))
+                    ) : (
+                      <span className="ms-chip is-static" title={v?.label}>
+                        {chipLabel(v?.label || p.weight || p.unit)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-1.5">
                     <div className="min-w-0">
                       {/* key={region} remounts on currency switch — replays the flash */}
                       <span
@@ -280,27 +327,6 @@ export default function ProductGrid({
                       >
                         {active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
                       </span>
-                      {variants.length > 1 ? (
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {variants.map((vv, vi) => (
-                            <button
-                              key={vv.label}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPicked((s) => ({ ...s, [p.productId]: vi }));
-                              }}
-                              aria-pressed={vi === idx}
-                              className={`ms-weight-toggle ${vi === idx ? "is-on" : ""}`}
-                            >
-                              {vv.label}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="ms-label text-hush mt-1 truncate" title={v?.label}>
-                          {v?.label || p.weight || p.unit}
-                        </p>
-                      )}
                     </div>
                     {out ? (
                       notifyDone.has(p.productId) ? (
@@ -327,7 +353,7 @@ export default function ProductGrid({
                           e.stopPropagation();
                           onSelect(p);
                         }}
-                        className="ms-label px-3 py-2.5 shrink-0 bg-brand text-white hover:bg-brand-dark transition-colors"
+                        className="ms-label ms-key px-3 py-2.5 shrink-0"
                         aria-label={`Buy ${p.productLabel} — choose pack and quantity`}
                       >
                         BUY
@@ -362,7 +388,7 @@ export default function ProductGrid({
                       />
                       <button
                         type="submit"
-                        className="ms-label bg-ink text-white px-3 hover:bg-ink-soft transition-colors shrink-0"
+                        className="ms-label ms-key ms-key-ink px-3 shrink-0"
                       >
                         →
                       </button>
