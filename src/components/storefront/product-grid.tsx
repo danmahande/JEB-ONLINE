@@ -186,6 +186,10 @@ export default function ProductGrid({
             const priceUsd = p.unitSellingPrice + (v?.priceDelta || 0);
             const out = p.currentStock <= 0;
             const low = !out && p.currentStock <= 50;
+            // Alibaba-gauge price splits into a small raised currency mark
+            // and a 20px bold amount ("USh 112,992" -> "USh" + "112,992")
+            const priceStr = active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`;
+            const priceSplit = /^([^\d]+)\s*(.+)$/.exec(priceStr);
             return (
               <div
                 key={p.productId}
@@ -273,13 +277,13 @@ export default function ProductGrid({
                       e.stopPropagation();
                       onSelect(p);
                     }}
-                    className="text-left font-bold text-sm leading-snug line-clamp-2 min-h-10 hover:text-brand transition-colors"
+                    className="text-left text-sm leading-5 line-clamp-2 min-h-10 hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
                     {p.productLabel}
                   </button>
                   <p
-                    className={`text-xs font-semibold ${
+                    className={`text-xs font-normal ${
                       out ? "text-red-500" : low ? "text-amber-500" : "text-emerald-600"
                     }`}
                   >
@@ -320,12 +324,15 @@ export default function ProductGrid({
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-1.5">
                     <div className="min-w-0">
-                      {/* key={region} remounts on currency switch — replays the flash */}
+                      {/* Alibaba-gauge price: small raised currency mark +
+                          20px bold amount, body grotesque (Task 56) —
+                          key={region} remounts on currency switch */}
                       <span
                         key={region}
-                        className="ms-price ms-price-flash text-lg tracking-tight text-brand leading-none whitespace-nowrap"
+                        className="ms-price-flash inline-flex items-start gap-0.5 whitespace-nowrap leading-none text-brand"
                       >
-                        {active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`}
+                        <span className="text-xs font-bold mt-0.5">{priceSplit?.[1]}</span>
+                        <span className="text-xl font-bold tracking-tight">{priceSplit?.[2]}</span>
                       </span>
                     </div>
                     {out ? (
