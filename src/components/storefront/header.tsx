@@ -41,6 +41,10 @@ export default function Header({
   const [regionOpen, setRegionOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // the header search has no permanent seat (Task 54): it stays retracted
+  // into the rail while the hero — with its own search — is on screen, and
+  // slides out only once that one has scrolled out of reach
+  const [searchSeated, setSearchSeated] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const hasHydrated = useRegion((s) => s.hasHydrated);
 
@@ -51,7 +55,12 @@ export default function Header({
 
   // header compresses on scroll: ticker collapses, main bar gains a shadow
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      setSearchSeated(y > 200);
+      if (y <= 200) setSearchOpen(false); // channel can't stay open while retracted
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -126,10 +135,11 @@ export default function Header({
         </nav>
 
         {/* search — a machined square on the rail that slides open into
-            a steel channel; the nav hands over its space while it does */}
+            a steel channel; the nav hands over its space while it does.
+            No permanent seat: retracted until the page scrolls (Task 54). */}
         <form
           role="search"
-          className={`ms-search ms-hsearch ${searchOpen ? "is-open" : ""}`}
+          className={`ms-search ms-hsearch ${searchOpen ? "is-open" : ""} ${searchSeated ? "is-seated" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Escape") setSearchOpen(false);
           }}
