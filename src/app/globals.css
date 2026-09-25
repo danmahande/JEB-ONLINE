@@ -548,6 +548,18 @@ html {
   to { transform: translate3d(16%, 0, 0); }
 }
 
+/* Ken Burns — the window display breathes: a slow push-in drifting up,
+   alternating so it never resets visibly. Was referenced but never
+   defined (Task 53) — restored for the framed hero window. */
+@keyframes ms-kenburns {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.07) translateY(-1.2%); }
+}
+.ms-kenburns {
+  animation: ms-kenburns 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 /* Hero greeting swap on day-part change */
 .ms-fade-swap {
   animation: ms-fade-swap 0.5s ease both;

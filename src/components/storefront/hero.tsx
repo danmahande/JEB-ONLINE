@@ -23,77 +23,91 @@ export default function Hero({
   const sky = override ?? natural;
 
   return (
-    <section className="relative bg-ink text-white overflow-hidden" aria-label="Hero">
-      {/* full-bleed HD composite: maize field dissolving into a warehouse */}
-      <div className="absolute inset-0">
-        <img
-          src="/products/__hero.png"
-          alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
-          className="ms-kenburns absolute inset-0 h-full w-full object-cover"
-        />
-        {/* drifting clouds — sit under the day-part tints so dawn/golden warm them */}
-        <div className="ms-cloud ms-cloud-a" aria-hidden="true" />
-        <div className="ms-cloud ms-cloud-b" aria-hidden="true" />
-        {/* living sky — day-part tints crossfade in after mount (SSR = day) */}
-        <div className={`ms-sky ms-sky-dawn ${sky === "dawn" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-        <div className={`ms-sky ms-sky-golden ${sky === "golden" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-        <div className={`ms-sky ms-sky-night ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-        {/* navy veil — dark behind the text zone, clearing toward the horizon */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/45 to-ink/10"
-          aria-hidden="true"
-        />
-        {/* stars — above the veil so they stay crisp at night */}
-        <div className={`ms-stars ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-        {/* warm haze — dissolves the photo into the catalog below */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-24 md:h-28 bg-gradient-to-t from-[#FBF6EC] via-[#FBF6EC]/25 to-transparent"
-          aria-hidden="true"
-        />
+    <section className="px-4 md:px-8 pt-3 md:pt-5" aria-label="Hero">
+      {/* fascia board — the same white toolbar the CATALOG rack mounts
+          under: shop signage left, primary controls bolted on right.
+          Same rounded top, hairline border, flush onto the frame below. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-t-lg border border-b-0 border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
+        <div className="min-w-0">
+          <p key={sky} className="ms-label ms-fade-swap mb-1.5 text-hush">
+            {HERO_LABEL[sky]}
+          </p>
+          {/* kept visible now — the fascia carries the shop signage */}
+          <h1 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">
+            <span className="sr-only">Meridian Supply Co. — </span>
+            Grains &amp; Hardware
+            <span
+              className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle"
+              aria-hidden="true"
+            />
+          </h1>
+        </div>
+
+        <div className="flex w-full flex-wrap items-center justify-end gap-2.5 sm:w-auto sm:gap-3">
+          {/* search — the same machined steel channel as the header rail
+              (Task 52); mounted on the fascia like the tabs are on the
+              catalog toolbar. Shares one query state with both. */}
+          <form
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onShop();
+            }}
+            className="ms-search w-full sm:w-80 lg:w-96"
+          >
+            <span className="ms-search-mark" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <circle cx="10.5" cy="10.5" r="6.5" />
+                <path d="M15.5 15.5 21 21" />
+              </svg>
+            </span>
+            <input
+              value={query}
+              onChange={(e) => onQuery(e.target.value)}
+              placeholder="Search maize flour, cement, iron sheets…"
+              aria-label="Search products"
+              className="ms-search-input"
+            />
+            <button type="submit" className="ms-label ms-search-key px-5 md:px-7 shrink-0">
+              SEARCH
+            </button>
+          </form>
+
+          <button
+            onClick={onShop}
+            className="ms-label bg-brand text-white px-6 md:px-8 py-4 hover:bg-brand-dark transition-colors shrink-0"
+          >
+            ENTER CATALOG ↓
+          </button>
+        </div>
       </div>
 
-      <div className="relative z-10 px-4 md:px-8 pt-8 md:pt-10 pb-8 md:pb-12">
-        <p key={sky} className="ms-label ms-fade-swap mb-4 md:mb-5 opacity-80 text-white">
-          {HERO_LABEL[sky]}
-        </p>
-        {/* kept for SEO/a11y only — not rendered visually */}
-        <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
-
-        {/* search — the storefront's primary entry point, machined as a
-            steel channel: cabinet face outside, dark milled well inside,
-            brand-orange key cap. Sinks 2px into its housing on focus. */}
-        <form
-          role="search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onShop();
-          }}
-          className="ms-search max-w-xl"
-        >
-          <span className="ms-search-mark" aria-hidden="true">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-              <circle cx="10.5" cy="10.5" r="6.5" />
-              <path d="M15.5 15.5 21 21" />
-            </svg>
-          </span>
-          <input
-            value={query}
-            onChange={(e) => onQuery(e.target.value)}
-            placeholder="Search maize flour, cement, iron sheets…"
-            aria-label="Search products"
-            className="ms-search-input"
+      {/* the display window — the photo hangs in the same steel frame the
+          catalog rack is built from (.ms-shopfront material): 2px machined
+          border, warm-grey frame steel, 10px mullion margin. The living sky
+          crosses it and the pane carries the same .ms-glass the goods sit
+          behind — including the day-part wash and the night display-case
+          glow, driven by data-sky exactly like the rack below. */}
+      <div className="ms-shopfront" data-sky={sky}>
+        <div className="relative h-[300px] md:h-[380px] lg:h-[440px] overflow-hidden rounded-[4px]">
+          {/* HD composite: maize field dissolving into a warehouse */}
+          <img
+            src="/products/__hero.png"
+            alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
+            className="ms-kenburns absolute inset-0 h-full w-full object-cover"
           />
-          <button type="submit" className="ms-label ms-search-key px-5 md:px-8 shrink-0">
-            SEARCH
-          </button>
-        </form>
-
-        <button
-          onClick={onShop}
-          className="ms-label mt-4 md:mt-5 bg-brand text-white px-8 py-4 hover:bg-brand-dark transition-colors"
-        >
-          ENTER CATALOG ↓
-        </button>
+          {/* drifting clouds — sit under the day-part tints so dawn/golden warm them */}
+          <div className="ms-cloud ms-cloud-a" aria-hidden="true" />
+          <div className="ms-cloud ms-cloud-b" aria-hidden="true" />
+          {/* living sky — day-part tints crossfade in after mount (SSR = day) */}
+          <div className={`ms-sky ms-sky-dawn ${sky === "dawn" ? "ms-sky-on" : ""}`} aria-hidden="true" />
+          <div className={`ms-sky ms-sky-golden ${sky === "golden" ? "ms-sky-on" : ""}`} aria-hidden="true" />
+          <div className={`ms-sky ms-sky-night ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
+          {/* stars — seen through the glass, above the tints so they stay crisp */}
+          <div className={`ms-stars ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
+          {/* the pane — one sheet of glass over the whole display */}
+          <span className="ms-glass" aria-hidden="true" />
+        </div>
       </div>
     </section>
   );
