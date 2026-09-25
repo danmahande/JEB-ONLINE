@@ -1,16 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { useSky, useRegion } from "@/lib/store";
+import { HousePlate } from "@/components/storefront/house-plates";
 
 const TABS = [
   { key: "ALL", label: "ALL" },
   { key: "GRAINS", label: "GRAINS" },
   { key: "HARDWARE", label: "HARDWARE" },
 ];
+
+/* Live column count of the catalog grid — mirrors the Tailwind breakpoints
+   used on the grid element below (2 / md:3 / lg:4 / xl:5 / 2xl:6; Tailwind
+   default screens, no custom override in tailwind.config). Starts at 0 so
+   SSR and the first client render agree (no plates -> no hydration miss),
+   then fills in on mount. */
+function useGridColumns() {
+  const [cols, setCols] = useState(0);
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth;
+      setCols(w >= 1536 ? 6 : w >= 1280 ? 5 : w >= 1024 ? 4 : w >= 768 ? 3 : 2);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  return cols;
+}
 
 export default function ProductGrid({
   products,
@@ -39,6 +59,7 @@ export default function ProductGrid({
   // the day-part light the whole page shares — the shopfront answers it
   const sky = useSky((s) => s.override ?? s.natural);
   const regionHasHydrated = useRegion((s) => s.hasHydrated);
+  const gridCols = useGridColumns();
 
   const q = query.trim().toLowerCase();
   const filtered = products.filter((p) => {
@@ -60,6 +81,15 @@ export default function ProductGrid({
     });
     return best;
   }
+
+  /* House plates fill the tail of the last row so the rack never shows a
+     hole. Skipped while a search is active — results should stay sparse and
+     literal — and while gridCols is still 0 (pre-mount). */
+  const housePlates =
+    !q && gridCols > 0 && filtered.length > 0
+      ? (gridCols - (filtered.length % gridCols)) % gridCols
+      : 0;
+  const plateDelay = Math.min(filtered.length * 40, 240) + 80;
 
   return (
     <section
@@ -345,6 +375,11 @@ export default function ProductGrid({
               </div>
             );
           })}
+
+          {/* house plates — welded fillers closing the last row (Task 51) */}
+          {Array.from({ length: housePlates }).map((_, i) => (
+            <HousePlate key={`plate-${i}`} index={i} delay={plateDelay} />
+          ))}
         </div>
       )}
       </div>
