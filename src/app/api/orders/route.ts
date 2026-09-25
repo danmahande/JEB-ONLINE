@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { db } from "@/lib/db";
+import { refreshFxRatesIfStale } from "@/lib/fx";
 
 type CartLine = { productId: string; variantLabel?: string; qty: number };
 
@@ -111,6 +112,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert with the freshest stored rate (refreshed upstream, TTL-gated).
+    await refreshFxRatesIfStale();
     const regionCfg = await db.regionConfig.findUnique({ where: { region: country } });
     if (!regionCfg) {
       return NextResponse.json(

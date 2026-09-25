@@ -149,6 +149,8 @@ model RegionConfig {
   currency      String
   symbol        String
   rateToUsd     Float
+  /// Last time a live FX API refreshed this rate (null = still the seeded default)
+  fxUpdatedAt   DateTime?
   /// Import duty rate for EAC-origin goods (0 within EAC per CET preference)
   dutyRate      Float
   vatRate       Float
