@@ -214,7 +214,32 @@ html {
 .ms-tile {
   border-radius: 6px;
   border-color: #a19f97;
-  /* matte painted steel: warm office grey, whisper of grain */
+  /* machined edges — light catches the bevels. No shadows, no walls,
+     no tilt: the depth lives in the socket + base geometry. */
+  /* raised at rest: standing 7px proud of the socket */
+  transform: translateY(-7px);
+  /* keep a stacking context so socket (-2), face (-1) and base (-1) slot
+     in painted order without slipping under the shopfront frame */
+  isolation: isolate;
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
+  will-change: transform;
+}
+
+/* The FACE — matte painted steel: warm office grey, whisper of grain.
+   Task 57 fix: this paint used to sit on the element's own background,
+   but inside a stacking context the negative-z children (the socket
+   ::before at -2) paint ABOVE the root background — the dark socket has
+   been covering the face and the cabinet read as one dark hole. The face
+   now lives on ::after at z-index:-1: above the socket (-2, so only the
+   5px overhang ring shows in the mullion gaps), tied with the base (-1)
+   but painted after it in tree order, and still below all content. */
+.ms-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
   background-image:
     repeating-linear-gradient(
       180deg,
@@ -222,20 +247,11 @@ html {
       rgba(255, 255, 255, 0) 1px 3px
     ),
     linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
-  /* machined edges — light catches the bevels. No shadows, no walls,
-     no tilt: the depth lives in the socket + base geometry. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     inset 0 -2px 0 rgba(40, 40, 30, 0.26),
     inset 1px 0 0 rgba(255, 255, 255, 0.45),
     inset -1px 0 0 rgba(40, 40, 30, 0.1);
-  /* raised at rest: standing 7px proud of the socket */
-  transform: translateY(-7px);
-  /* keep a stacking context so socket (-2) and base (-1) slot behind the
-     face without slipping under the shopfront frame */
-  isolation: isolate;
-  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
-  will-change: transform;
 }
 
 /* The socket — a well milled into the rack face around every card,
@@ -1135,6 +1151,13 @@ html {
   border-radius: 4px;
   color: #ffffff;
   background: var(--color-brand);
+  /* Alibaba CTA gauge (Task 57): 13px px-exact — the inherited 10px label
+     read as fine print on a buy button; line-height pinned so keys sit level
+     with the paper slips sharing their row, tracking tightened to keep the
+     wider face from ballooning the wider labels */
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     inset 0 -2px 0 rgba(0, 0, 0, 0.25);

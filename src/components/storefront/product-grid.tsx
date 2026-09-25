@@ -188,6 +188,8 @@ export default function ProductGrid({
             const low = !out && p.currentStock <= 50;
             // Alibaba-gauge price splits into a small raised currency mark
             // and a 20px bold amount ("USh 112,992" -> "USh" + "112,992")
+            // — all content sizes are px-exact so the app-wide 85% html dial
+            // can't shrink them off Alibaba's rendered gauges (Task 57)
             const priceStr = active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`;
             const priceSplit = /^([^\d]+)\s*(.+)$/.exec(priceStr);
             return (
@@ -277,13 +279,13 @@ export default function ProductGrid({
                       e.stopPropagation();
                       onSelect(p);
                     }}
-                    className="text-left text-sm leading-5 line-clamp-2 min-h-10 hover:text-brand transition-colors"
+                    className="text-left text-[16px] leading-[22px] font-semibold tracking-[-0.01em] line-clamp-2 min-h-[44px] hover:text-brand transition-colors"
                     title={p.productLabel}
                   >
                     {p.productLabel}
                   </button>
                   <p
-                    className={`text-xs font-normal ${
+                    className={`text-[12px] font-normal ${
                       out ? "text-red-500" : low ? "text-amber-500" : "text-emerald-600"
                     }`}
                   >
@@ -322,22 +324,28 @@ export default function ProductGrid({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between gap-2 pt-1.5">
-                    <div className="min-w-0">
+                  {/* price / action row — wraps below sm: mobile tiles are
+                      ~128px of content width, too narrow for a 20px amount
+                      plus a key, so the price takes its own line and the
+                      action right-aligns under it (Alibaba's mobile card
+                      pattern); sm+ stays one justify-between line */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5">
+                    <div className="w-full min-w-0 sm:w-auto">
                       {/* Alibaba-gauge price: small raised currency mark +
-                          20px bold amount, body grotesque (Task 56) —
+                          20px bold amount, body Inter — Alibaba's own first
+                          choice family; px-exact vs the 85% dial (Task 57) —
                           key={region} remounts on currency switch */}
                       <span
                         key={region}
                         className="ms-price-flash inline-flex items-start gap-0.5 whitespace-nowrap leading-none text-brand"
                       >
-                        <span className="text-xs font-bold mt-0.5">{priceSplit?.[1]}</span>
-                        <span className="text-xl font-bold tracking-tight">{priceSplit?.[2]}</span>
+                        <span className="text-[12px] font-bold mt-0.5">{priceSplit?.[1]}</span>
+                        <span className="text-[20px] font-bold tracking-tight">{priceSplit?.[2]}</span>
                       </span>
                     </div>
                     {out ? (
                       notifyDone.has(p.productId) ? (
-                        <span className="ms-label text-emerald-600 shrink-0">✓ ON THE LIST</span>
+                        <span className="ms-label text-emerald-600 shrink-0 ml-auto">✓ ON THE LIST</span>
                       ) : (
                         <button
                           onClick={(e) => {
@@ -345,7 +353,7 @@ export default function ProductGrid({
                             setNotifyOpen((o) => (o === p.productId ? null : p.productId));
                           }}
                           aria-expanded={notifyOpen === p.productId}
-                          className={`ms-label ms-slip shrink-0 px-3 py-2.5 border transition-colors ${
+                          className={`ms-label ms-slip shrink-0 ml-auto px-3 py-2.5 border transition-colors ${
                             notifyOpen === p.productId
                               ? "ms-slip-open border-ink text-white"
                               : "border-line hover:bg-ink hover:text-white"
@@ -360,7 +368,7 @@ export default function ProductGrid({
                           e.stopPropagation();
                           onSelect(p);
                         }}
-                        className="ms-label ms-key px-3 py-2.5 shrink-0"
+                        className="ms-label ms-key px-3 py-2.5 shrink-0 ml-auto"
                         aria-label={`Buy ${p.productLabel} — choose pack and quantity`}
                       >
                         BUY
