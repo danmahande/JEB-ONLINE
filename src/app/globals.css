@@ -181,6 +181,17 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Overlay portals (cart drawer, quick-view sheet, dialogs) mount on
+   document.body — outside .ms-root — so their plain text falls back to
+   the browser stack instead of Inter and reads off-tone against the
+   checkout they lead into. The portal content re-declares the body
+   font itself; ms-label / ms-display / ms-price still win inside it
+   because they carry their own font-family. */
+[data-slot="sheet-content"],
+[data-slot="dialog-content"] {
+  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
 .ms-root ::selection {
   background: var(--color-brand);
   color: #ffffff;
