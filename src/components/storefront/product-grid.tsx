@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
-import { useSky, useRegion } from "@/lib/store";
+import { useRegion } from "@/lib/store";
 import { HousePlate } from "@/components/storefront/house-plates";
 
 const TABS = [
@@ -56,8 +56,6 @@ export default function ProductGrid({
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
-  // the day-part light the whole page shares — the shopfront answers it
-  const sky = useSky((s) => s.override ?? s.natural);
   const regionHasHydrated = useRegion((s) => s.hasHydrated);
   const gridCols = useGridColumns();
 
@@ -103,7 +101,6 @@ export default function ProductGrid({
   return (
     <section
       id="catalog"
-      data-sky={sky}
       className="bg-mist px-4 md:px-8 py-10 md:py-14"
       aria-label="Catalog"
     >

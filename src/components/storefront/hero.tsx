@@ -1,13 +1,9 @@
 "use client";
 
-import { useSky, type DayPart } from "@/lib/store";
-
-const HERO_LABEL: Record<DayPart, string> = {
-  dawn: "GOOD MORNING — TODAY'S HARVEST JUST LANDED",
-  day: "UGANDA ORIGIN — EXPORTING ACROSS THE EAC & WORLDWIDE",
-  golden: "GOOD EVENING — FRESH QUOTES ACROSS THE EAC & WORLDWIDE",
-  night: "ORDER OVERNIGHT — WE PICK & PACK BY DAWN",
-};
+/* The storefront lives in permanent daylight (Task 58 — the day/night
+   machinery was removed with its footer control): one fixed greeting
+   line, no tint layers, no stars. */
+const HERO_LINE = "UGANDA ORIGIN — EXPORTING ACROSS THE EAC & WORLDWIDE";
 
 export default function Hero({
   onShop,
@@ -18,10 +14,6 @@ export default function Hero({
   query: string;
   onQuery: (q: string) => void;
 }) {
-  const natural = useSky((s) => s.natural);
-  const override = useSky((s) => s.override);
-  const sky = override ?? natural;
-
   return (
     <section className="px-4 md:px-8 pt-3 md:pt-5" aria-label="Hero">
       <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
@@ -31,7 +23,7 @@ export default function Hero({
           the original hero strip height (Task 54). The day-part line and
           the primary controls are bolted to the glass itself; a shaded top
           edge keeps them legible while the photo stays vivid below. */}
-      <div className="ms-shopfront" data-sky={sky}>
+      <div className="ms-shopfront">
         <div className="relative h-[240px] md:h-[280px] lg:h-[310px] overflow-hidden rounded-[4px]">
           {/* HD composite: maize field dissolving into a warehouse */}
           <img
@@ -39,15 +31,9 @@ export default function Hero({
             alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
             className="ms-kenburns absolute inset-0 h-full w-full object-cover"
           />
-          {/* drifting clouds — sit under the day-part tints so dawn/golden warm them */}
+          {/* drifting clouds — the window's only ambient weather, kept subtle */}
           <div className="ms-cloud ms-cloud-a" aria-hidden="true" />
           <div className="ms-cloud ms-cloud-b" aria-hidden="true" />
-          {/* living sky — day-part tints crossfade in after mount (SSR = day) */}
-          <div className={`ms-sky ms-sky-dawn ${sky === "dawn" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-          <div className={`ms-sky ms-sky-golden ${sky === "golden" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-          <div className={`ms-sky ms-sky-night ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
-          {/* stars — seen through the glass, above the tints so they stay crisp */}
-          <div className={`ms-stars ${sky === "night" ? "ms-sky-on" : ""}`} aria-hidden="true" />
           {/* shaded top edge — legibility for the mounted signage + controls */}
           <div
             className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/25 to-transparent"
@@ -56,9 +42,7 @@ export default function Hero({
 
           {/* signage + controls, mounted on the glass */}
           <div className="absolute inset-0 z-10 flex flex-col items-start gap-2.5 p-4 md:gap-3 md:p-6">
-            <p key={sky} className="ms-label ms-fade-swap text-white/85">
-              {HERO_LABEL[sky]}
-            </p>
+            <p className="ms-label text-white/85">{HERO_LINE}</p>
             <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center md:gap-3">
               {/* search — the same machined steel channel as the header
                   rail (Task 52); bolted to the window glass and sharing

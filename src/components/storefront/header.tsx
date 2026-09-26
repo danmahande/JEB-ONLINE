@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useCart, useRegion, useSky, type DayPart } from "@/lib/store";
+import { useCart, useRegion } from "@/lib/store";
 import type { RegionConfig } from "@/lib/types";
 import KampalaClock from "./kampala-clock";
 
@@ -12,14 +12,6 @@ const TICKER_ITEMS = [
   "BULK & WHOLESALE WELCOME",
   "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · USD",
 ];
-
-/* time-band announcement prepended to the marquee (day keeps the base line-up) */
-const BAND_LINE: Record<DayPart, string> = {
-  dawn: "GOOD MORNING — TODAY'S HARVEST JUST LANDED",
-  day: "",
-  golden: "GOLDEN HOUR — ORDER BY 6PM EAT FOR NEXT-DAY DISPATCH IN KAMPALA",
-  night: "OVERNIGHT ORDERS PICKED & PACKED BY DAWN",
-};
 
 export default function Header({
   regions,
@@ -68,12 +60,7 @@ export default function Header({
 
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const active = regions.find((r) => r.region === region);
-  const skyOverride = useSky((s) => s.override);
-  const skyNatural = useSky((s) => s.natural);
-  const band = skyOverride ?? skyNatural;
-  const base =
-    band !== "day" && BAND_LINE[band] ? [BAND_LINE[band], ...TICKER_ITEMS] : TICKER_ITEMS;
-  const ticker = [...base, ...base];
+  const ticker = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
     <header className="sticky top-0 z-40 bg-mist">

@@ -413,11 +413,7 @@ html {
   }
   .ms-fly-dot {
     display: none;
-  }
-  .ms-sky {
-    transition: none;
-  }
-  .ms-tile:hover .ms-spot::after {
+  }  .ms-tile:hover .ms-spot::after {
     animation: none;
   }
   .ms-glass {
@@ -487,64 +483,11 @@ html {
 
 /* recompile trigger: 2026-09-22 hydration fix + header shadow */
 
-/* ─── Living sky — time-of-day atmosphere (Task 21) ──────────────────────── */
-
-/* Day-part tint layers in the hero; .ms-sky-on crossfades them over ~2s */
-.ms-sky {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 1.8s ease;
-  pointer-events: none;
-}
-.ms-sky-on {
-  opacity: 1;
-}
-.ms-sky-dawn {
-  background: linear-gradient(
-    to top,
-    rgba(244, 166, 94, 0.44) 0%,
-    rgba(233, 132, 94, 0.24) 40%,
-    rgba(233, 132, 94, 0) 68%
-  );
-}
-.ms-sky-golden {
-  background: linear-gradient(
-    to top,
-    rgba(233, 116, 74, 0.5) 0%,
-    rgba(212, 90, 122, 0.26) 44%,
-    rgba(212, 90, 122, 0) 72%
-  );
-}
-.ms-sky-night {
-  background: linear-gradient(
-    to bottom,
-    rgba(9, 14, 28, 0.82) 0%,
-    rgba(19, 30, 56, 0.6) 52%,
-    rgba(27, 42, 74, 0.22) 100%
-  );
-}
-
-/* Starfield — sits ABOVE the navy veil so it stays crisp; tiles via bg-size */
-.ms-stars {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 1.8s ease;
-  pointer-events: none;
-  background-image:
-    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255, 255, 255, 0.9) 50%, transparent 51%),
-    radial-gradient(1px 1px at 34% 12%, rgba(255, 255, 255, 0.7) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 58% 28%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
-    radial-gradient(1px 1px at 74% 10%, rgba(255, 255, 255, 0.65) 50%, transparent 51%),
-    radial-gradient(1.2px 1.2px at 88% 20%, rgba(255, 255, 255, 0.75) 50%, transparent 51%),
-    radial-gradient(1px 1px at 46% 8%, rgba(255, 255, 255, 0.6) 50%, transparent 51%);
-  background-size: 640px 460px;
-}
-/* must out-rank .ms-stars' own opacity:0 (defined above) */
-.ms-stars.ms-sky-on {
-  opacity: 1;
-}
+/* ─── Living sky (removed, Task 58) ────────────────────────────────────────
+   The storefront lives in permanent daylight: the dawn/golden/night tint
+   layers, the starfield and the page-wide sun wash were removed together
+   with the footer's day/night selector. The clouds below are the display
+   window's only remaining ambient weather. */
 
 /* Drifting clouds — near-invisible, two layers at different speeds */
 .ms-cloud {
@@ -587,7 +530,8 @@ html {
   will-change: transform;
 }
 
-/* Hero greeting swap on day-part change */
+/* Greeting swap — still used by the catalog counter line
+   (replays on tab/query/count changes) */
 .ms-fade-swap {
   animation: ms-fade-swap 0.5s ease both;
 }
@@ -646,67 +590,6 @@ html {
   0%, 100% { opacity: 0.35; transform: scale(0.85); }
   50% { opacity: 1; transform: scale(1); }
 }
-
-/* ─── Page-wide sunlight (Task 34) ─────────────────────────────────
-   The hero keeps its own deep sky; this fixed wash carries the same
-   day-part light over EVERYTHING else as you scroll — catalog, trust
-   strip, footer, chrome. z-45: above the sticky header (z-40) so the
-   whole page warms together, below dialogs/sheets (z-50) so commerce
-   stays crisp. pointer-events: none — pure light, never blocks. */
-.ms-sun {
-  position: fixed;
-  inset: 0;
-  z-index: 45;
-  pointer-events: none;
-}
-/* light enters from the sky above and dissolves before the fold —
-   night keeps a full-body ink so the whole page sleeps */
-.ms-sun-dawn {
-  background: linear-gradient(
-    to bottom,
-    rgba(244, 166, 94, 0.3) 0%,
-    rgba(233, 132, 94, 0.14) 34%,
-    rgba(233, 132, 94, 0) 62%
-  );
-}
-.ms-sun-golden {
-  background: linear-gradient(
-    to bottom,
-    rgba(233, 116, 74, 0.32) 0%,
-    rgba(212, 90, 122, 0.15) 38%,
-    rgba(212, 90, 122, 0) 66%
-  );
-}
-.ms-sun-night {
-  background: linear-gradient(
-    to bottom,
-    rgba(9, 14, 28, 0.34) 0%,
-    rgba(19, 30, 56, 0.24) 44%,
-    rgba(27, 42, 74, 0.14) 100%
-  );
-}
-
-/* Reduced motion: freeze the sky system's ambient layers too */
-@media (prefers-reduced-motion: reduce) {
-  .ms-cloud-a,
-  .ms-cloud-b {
-    animation: none;
-  }
-  .ms-fade-swap {
-    animation: none;
-  }
-  .ms-fresh-dot {
-    animation: none;
-  }
-  .ms-fly-dot {
-    display: none;
-  }
-  .ms-sky {
-    transition: none;
-  }
-}
-
-/* recompile trigger: 2026-09-22 living sky */
 
 /* ─── Cabinet sheen — surface light only (Task 25) ────────────────────────── */
 
@@ -840,11 +723,9 @@ html {
    holding the panes). The grid's gaps show that material through as
    mullions. The white toolbar mounts flush on the frame as the fascia
    board. Every pane of goods sits behind a sheet of glass (.ms-glass)
-   that mirrors the living sky: the section carries
-   data-sky={dawn|day|golden|night} from the same useSky store that drives
-   the hero and the page-wide sun wash, so the day-part light crossing the
-   page is answered BY the window. Highlights and gradients only — nothing
-   floats. */
+   that mirrors the daylight (Task 58: the storefront lives in permanent
+   day — the dawn/golden/night machinery and its footer control were
+   removed). Highlights and gradients only — nothing floats. */
 .ms-shopfront {
   border: 2px solid #47463f;
   border-radius: 6px;
@@ -860,12 +741,12 @@ html {
    1. arrival rake — light rakes across the pane once as the tiles land
       (delay is set inline per tile, following the crane-drop stagger)
    2. fixed diagonal glare — same 105deg light as the cabinet sweep
-   3. mirrored-sky wash — day-part tint via --glass-wash (data-sky) */
+   3. mirrored-sky wash — permanent daylight via --glass-wash (Task 58) */
 .ms-glass {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  --glass-wash: rgba(214, 226, 240, 0.3); /* day — pale reflected sky */
+  --glass-wash: rgba(214, 226, 240, 0.3); /* permanent daylight — pale reflected sky */
   background-image:
     linear-gradient(
       105deg,
@@ -893,32 +774,6 @@ html {
 @keyframes ms-rake {
   from { background-position: 130% 0, 0 0, 0 0; }
   to { background-position: -30% 0, 0 0, 0 0; }
-}
-
-/* the glass mirrors the day-part sky — same tints as the hero */
-[data-sky="dawn"] .ms-glass {
-  --glass-wash: rgba(244, 166, 94, 0.34);
-}
-[data-sky="golden"] .ms-glass {
-  --glass-wash: rgba(233, 116, 74, 0.36);
-}
-[data-sky="night"] .ms-glass {
-  --glass-wash: rgba(27, 42, 74, 0.42);
-}
-
-/* night — the street goes dark but the shop keeps its lights on:
-   a warm display-case glow rises over the goods */
-[data-sky="night"] .ms-glass::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    120% 90% at 50% 62%,
-    rgba(255, 183, 107, 0.18),
-    rgba(255, 152, 64, 0.06) 55%,
-    transparent 78%
-  );
-  mix-blend-mode: screen;
 }
 
 /* Frosted pane — sold-out goods behind misted glass (Task 39, THE PROPS).
@@ -1188,6 +1043,20 @@ html {
 }
 .ms-key.ms-key-ink:hover {
   background: var(--color-ink-soft);
+}
+
+/* ============================================================
+   Footer (Task 58) — the back wall's steel head. Identical paint to
+   .ms-shopfront: the ink footer lands as another bolted-on piece of
+   the store's hardware instead of an unstyled end-cap.
+   ============================================================ */
+.ms-footer-rail {
+  height: 10px;
+  border-top: 2px solid #47463f;
+  background-image: linear-gradient(180deg, #828078 0%, #6e6d65 55%, #5a5951 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* ─── Tile pack rail + fascia tabs (Task 55) ─────────────────────────────

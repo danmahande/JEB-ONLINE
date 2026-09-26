@@ -78,26 +78,6 @@ export const useRegion = create<RegionState>()(
   )
 );
 
-/* ── Living sky ──────────────────────────────────────────────────────────── */
-
-export type DayPart = "dawn" | "day" | "golden" | "night";
-
-interface SkyState {
-  /** computed from the visitor's local clock (see use-daypart.ts) */
-  natural: DayPart;
-  /** footer "VIEW AT DUSK" style override — null = follow the real clock */
-  override: DayPart | null;
-  setNatural: (d: DayPart) => void;
-  setOverride: (d: DayPart | null) => void;
-}
-
-export const useSky = create<SkyState>()((set) => ({
-  natural: "day",
-  override: null,
-  setNatural: (natural) => set({ natural }),
-  setOverride: (override) => set({ override }),
-}));
-
 /* ── Fly-to-cart flight ──────────────────────────────────────────────────── */
 
 interface FlyState {

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useCart, useRegion, useSky } from "@/lib/store";
+import { useCart, useRegion } from "@/lib/store";
 import { useCatalog } from "@/hooks/use-catalog";
-import { useDaypartTicker } from "@/lib/use-daypart";
 import Header from "@/components/storefront/header";
 import Hero from "@/components/storefront/hero";
 import ProductGrid from "@/components/storefront/product-grid";
@@ -24,9 +23,6 @@ export default function Storefront() {
   const { products, regions, loading } = useCatalog();
   const cartLines = useCart((s) => s.lines);
   const region = useRegion((s) => s.region);
-  const natural = useSky((s) => s.natural);
-  const skyOverride = useSky((s) => s.override);
-  const sky = skyOverride ?? natural;
   const { toast } = useToast();
 
   // Mark both persisted stores as hydrated after React hydration completes.
@@ -38,9 +34,6 @@ export default function Storefront() {
     useCart.setState({ hasHydrated: true });
     useRegion.setState({ hasHydrated: true });
   }, []);
-
-  // drives the living sky — recomputes the day-part every minute
-  useDaypartTicker();
 
   const [view, setView] = useState<View>("shop");
   const [selected, setSelected] = useState<Product | null>(null);
@@ -100,7 +93,7 @@ export default function Storefront() {
                 ].map(([title, body]) => (
                   <div key={title}>
                     <p className="ms-label mb-2 border-l-2 border-brand pl-3">{title}</p>
-                    <p className="text-sm leading-relaxed text-hush">{body}</p>
+                    <p className="text-[13px] leading-[21px] text-hush">{body}</p>
                   </div>
                 ))}
               </Reveal>
@@ -134,17 +127,6 @@ export default function Storefront() {
       </main>
 
       <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />
-
-      {/* page-wide sunlight — the day-part wash flows over everything as you
-          scroll (catalog, trust strip, footer, chrome), not just the hero.
-          z-45: above the sticky header so the whole page warms together,
-          below dialogs/sheets (z-50) so commerce stays crisp. Same useSky
-          state as the hero, so the footer sky override drives it too. */}
-      <div className="ms-sun" aria-hidden="true">
-        <div className={`ms-sky ms-sun-dawn ${sky === "dawn" ? "ms-sky-on" : ""}`} />
-        <div className={`ms-sky ms-sun-golden ${sky === "golden" ? "ms-sky-on" : ""}`} />
-        <div className={`ms-sky ms-sun-night ${sky === "night" ? "ms-sky-on" : ""}`} />
-      </div>
 
       {/* fly-to-cart dot — page-level so it can reach the header badge */}
       <FlyDot />
