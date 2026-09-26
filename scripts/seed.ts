@@ -316,6 +316,22 @@ const regions = [
     isEac: true,
   },
   {
+    // DR Congo — EAC member on a transitional customs-integration roadmap
+    // (not yet inside the free-trade-area mechanics). Corridor duty is
+    // estimated, never zero, and quoted transparently at checkout.
+    region: "CD",
+    countryName: "DR CONGO",
+    currency: "CDF",
+    symbol: "FC",
+    rateToUsd: 2850,
+    dutyRate: 0.05,
+    vatRate: 0.16,
+    shippingBase: 28,
+    shippingPerKg: 0.12,
+    etaDays: "4-7 DAYS",
+    isEac: true,
+  },
+  {
     region: "INTL",
     countryName: "INTERNATIONAL",
     currency: "USD",

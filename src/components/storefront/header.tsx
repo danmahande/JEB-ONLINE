@@ -6,11 +6,13 @@ import type { RegionConfig } from "@/lib/types";
 import KampalaClock from "./kampala-clock";
 
 const TICKER_ITEMS = [
-  "EAC ORIGIN — 0% IMPORT DUTY WITHIN EAST AFRICA",
+  // duty-free lane scoped to the corridors that actually quote 0% — the DRC
+  // corridor is transitional and carries an estimated duty (Task 61)
+  "EAC ORIGIN — 0% IMPORT DUTY ACROSS KE · TZ · RW",
   "GRAINS MILLED & SORTED IN UGANDA",
   "CROSS-BORDER FREIGHT QUOTED AT CHECKOUT",
   "BULK & WHOLESALE WELCOME",
-  "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · USD",
+  "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · CDF · USD",
 ];
 
 export default function Header({

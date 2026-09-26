@@ -71,7 +71,7 @@ export default function Footer({ onNavigate }: { onNavigate: (v: "shop" | "track
               {(
                 [
                   ["ORIGIN", "KAMPALA, UGANDA"],
-                  ["MARKETS", "UG · KE · TZ · RW · GLOBAL"],
+                  ["MARKETS", "UG · KE · TZ · RW · DRC · GLOBAL"],
                   ["INCOTERMS", "DAP / FOB KAMPALA"],
                   ["SUPPORT", "SALES@MERIDIANSUPPLY.CO"],
                 ] as const

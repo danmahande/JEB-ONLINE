@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       email,
       address,
       city,
-      country, // region code: UG | KE | TZ | RW | INTL
+      country, // region code: UG | KE | TZ | RW | CD | INTL
       paymentMethod,
       notes,
       cart, // CartLine[]

@@ -250,7 +250,9 @@ export default function ProductGrid({
                   <span className="ms-label ms-sticker bg-white px-2 py-1 text-ink">
                     {p.category}
                   </span>
-                  {active?.isEac && (
+                  {/* duty-free claim only where the quote engine actually
+                      charges 0% — the DRC corridor is transitional (Task 61) */}
+                  {active?.isEac && active.dutyRate === 0 && (
                     <span className="ms-label ms-sticker bg-emerald-500 text-white px-2 py-1">
                       0% DUTY
                     </span>

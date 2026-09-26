@@ -181,9 +181,11 @@ export default function QuickView({
             </div>
 
             <p className="ms-label mt-4 text-hush">
-              {active?.isEac
+              {active?.isEac && active.dutyRate === 0
                 ? "EAC ORIGIN — NO IMPORT DUTY. VAT APPLIES AT CHECKOUT."
-                : "INTERNATIONAL ORDERS — DUTY ESTIMATED AT CHECKOUT."}
+                : active?.isEac
+                  ? "EAC CORRIDOR — TRANSITIONAL DUTY & VAT ESTIMATED AT CHECKOUT."
+                  : "INTERNATIONAL ORDERS — DUTY ESTIMATED AT CHECKOUT."}
             </p>
           </div>
         </div>
