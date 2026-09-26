@@ -340,6 +340,35 @@ html {
   animation: ms-badge-pop 0.45s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
 
+/* Cart beacon — while the keycap holds goods it announces itself (the
+   header gates .ms-cart-live on hydrated && count > 0). Two loops run on
+   a shared 2.4s cadence: a square pulse-ring machined out from the button
+   edge (straight faces — a radar ping in steel, not a soft circle), and
+   a faint lit-lamp breathing on the face so the orange reads as powered
+   even between pings. The ring rests invisible for the back half of each
+   cycle; everything stops dead under prefers-reduced-motion. */
+@keyframes ms-cart-ping {
+  0%   { opacity: 0.85; transform: scale(1); }
+  55%  { opacity: 0; transform: scale(1.32); }
+  100% { opacity: 0; transform: scale(1.32); }
+}
+@keyframes ms-cart-lamp {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0); }
+  50%      { box-shadow: 0 0 16px 2px rgba(255, 107, 53, 0.5); }
+}
+.ms-cart-live {
+  position: relative;
+  animation: ms-cart-lamp 2.4s ease-in-out infinite;
+}
+.ms-cart-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--color-brand);
+  pointer-events: none;
+  animation: ms-cart-ping 2.4s cubic-bezier(0.2, 0.6, 0.2, 1) infinite;
+}
+
 /* Tile entrance — crane-lowered into its socket: heavy drop from above,
    hard compress on landing, micro-rebound, settle onto the raised rest
    state (straight faces throughout — slab and base drop as one rigid
@@ -385,6 +414,15 @@ html {
   .ms-price-flash,
   .ms-view-in {
     animation: none;
+  }
+  /* the cart beacon: lamp and ping both stop, and the ring pseudo-element
+     is withdrawn entirely — a frozen outline would read as a border bug */
+  .ms-cart-live,
+  .ms-cart-live::after {
+    animation: none;
+  }
+  .ms-cart-live::after {
+    display: none;
   }
   .ms-tile,
   .ms-tile img,

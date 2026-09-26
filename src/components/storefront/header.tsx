@@ -205,11 +205,15 @@ export default function Header({
             )}
           </div>
 
-          {/* cart */}
+          {/* cart — while it holds goods the keycap runs a beacon loop
+              (ms-cart-live): a square ping ring + lit-lamp breathing so the
+              cart's location and its contents read from anywhere on the page */}
           <button
             onClick={onOpenCart}
             data-cart-badge
-            className="ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors"
+            className={`ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors ${
+              cartHasHydrated && count > 0 ? "ms-cart-live" : ""
+            }`}
             aria-label={`Open cart, ${count} ${count === 1 ? "item" : "items"}`}
           >
             CART [<span key={count} className="ms-badge-pop inline-block">{cartHasHydrated ? count : 0}</span>]
