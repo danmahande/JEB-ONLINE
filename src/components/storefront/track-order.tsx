@@ -182,7 +182,7 @@ export default function TrackOrder() {
                 <p className="ms-label text-hush mb-3">HISTORY</p>
                 <ul className="space-y-2">
                   {events.map((ev) => (
-                    <li key={ev.id} className="text-xs tracking-wide">
+                    <li key={ev.id} className="text-[12px] tracking-wide">
                       <span className="text-hush">
                         {new Date(ev.createdAt).toLocaleString()} —{" "}
                       </span>

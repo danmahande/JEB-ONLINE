@@ -48,7 +48,10 @@ export function HousePlate({ index, delay }: { index: number; delay: number }) {
         <span className="ms-label text-[#c9c7ba]">{plate.kicker}</span>
       </span>
       <p className="ms-display text-[15px] leading-tight text-[#f4f3ea]">{plate.headline}</p>
-      <p className="text-xs leading-relaxed text-[#ecebe2]/70">{plate.body}</p>
+      {/* px-exact content floor (Task 57 gauge): text-xs renders 10.2px at
+          the 85% dial — the smallest body copy in the system, on the darkest
+          face. 12px matches the engraved-content floor used everywhere else. */}
+      <p className="text-[12px] leading-relaxed text-[#ecebe2]/70">{plate.body}</p>
     </div>
   );
 }
