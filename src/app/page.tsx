@@ -89,7 +89,7 @@ export default function Storefront() {
                 dark-framed label card as the title, a milled die with the
                 stamped mark, an orange ink index stamp, and the rack's
                 cursor sheen crossing the face on hover. */}
-            <section className="border-t border-line bg-mist px-4 md:px-8 py-10 md:py-12" aria-label="Trade assurances">
+            <section className="border-t border-line bg-mist py-10 md:py-12" aria-label="Trade assurances">
               <Reveal className="grid gap-6 sm:grid-cols-3">
                 {[
                   {

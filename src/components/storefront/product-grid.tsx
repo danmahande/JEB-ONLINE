@@ -101,7 +101,7 @@ export default function ProductGrid({
   return (
     <section
       id="catalog"
-      className="bg-mist px-4 md:px-8 py-10 md:py-14"
+      className="bg-mist py-10 md:py-14"
       aria-label="Catalog"
     >
       {/* fascia board — the toolbar mounts flush on the shopfront frame below */}

@@ -15,7 +15,9 @@ export default function Hero({
   onQuery: (q: string) => void;
 }) {
   return (
-    <section className="px-4 md:px-8 pt-3 md:pt-5" aria-label="Hero">
+    /* full-bleed — the display window runs wall to wall (no side gutters),
+       matching the footer and the rack below */
+    <section className="pt-3 md:pt-5" aria-label="Hero">
       <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
 
       {/* the display window — the photo hangs in the same steel frame the
