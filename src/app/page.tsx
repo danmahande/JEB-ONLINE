@@ -94,8 +94,12 @@ export default function Storefront() {
                 {[
                   {
                     index: "01",
-                    title: "EAC PREFERENTIAL TARIFFS",
-                    body: "Goods originating in Uganda move duty-free across Kenya, Tanzania and Rwanda under the EAC Common External Tariff.",
+                    title: "EAC DUTY-FREE MOVEMENT",
+                    // Fact-checked (Task 60): intra-EAC zero-duty comes from
+                    // the Customs Union free trade area + EAC Rules of Origin.
+                    // The Common External Tariff only governs goods entering
+                    // the bloc from outside — never intra-EAC trade.
+                    body: "Goods originating in Uganda clear duty-free into Kenya, Tanzania and Rwanda under the EAC Customs Union free trade area — certified against the EAC Rules of Origin. The Common External Tariff applies only to goods entering the bloc from outside.",
                     icon: (
                       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z" />
