@@ -149,6 +149,25 @@
   --color-paper-deep: #f1efe7; /* prop paper, pressed/hover shade */
 }
 
+/* Steel-face paint tokens (Task 59) — one mix, every painted face.
+   The cabinet faces (.ms-tile), the search channels (.ms-search) and the
+   counter plaques (.ms-plaque) all dip the same sheet: warm office grey
+   with a hairline grain and machined bevels. Single source so the whole
+   rack can never drift out of tone again. */
+:root {
+  --ms-steel-grain: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.2) 0 1px,
+    rgba(255, 255, 255, 0) 1px 3px
+  );
+  --ms-steel-face: linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
+  --ms-steel-bevels:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 0 rgba(40, 40, 30, 0.26),
+    inset 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset -1px 0 0 rgba(40, 40, 30, 0.1);
+}
+
 /* Page-wide scale: root font-size dial. Everything rem-based (Tailwind spacing,
    text sizes, card layout) renders proportionally — 85% ≈ ~two browser zoom-out notches. */
 html {
@@ -251,18 +270,8 @@ html {
   z-index: -1;
   border-radius: inherit;
   pointer-events: none;
-  background-image:
-    repeating-linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.2) 0 1px,
-      rgba(255, 255, 255, 0) 1px 3px
-    ),
-    linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 0 rgba(40, 40, 30, 0.26),
-    inset 1px 0 0 rgba(255, 255, 255, 0.45),
-    inset -1px 0 0 rgba(40, 40, 30, 0.1);
+  background-image: var(--ms-steel-grain), var(--ms-steel-face);
+  box-shadow: var(--ms-steel-bevels);
 }
 
 /* The socket — a well milled into the rack face around every card,
@@ -380,6 +389,7 @@ html {
   .ms-tile,
   .ms-tile img,
   .ms-base,
+  .ms-plaque,
   .ms-reveal {
     transition: none;
   }
@@ -554,7 +564,8 @@ html {
     transparent 65%
   );
 }
-.ms-tile:hover .ms-spot {
+.ms-tile:hover .ms-spot,
+.ms-plaque:hover .ms-spot {
   opacity: 1;
 }
 @media (hover: none) {
@@ -611,7 +622,8 @@ html {
   background-position: 120% 0;
   pointer-events: none;
 }
-.ms-tile:hover .ms-spot::after {
+.ms-tile:hover .ms-spot::after,
+.ms-plaque:hover .ms-spot::after {
   animation: ms-sweep 0.75s ease-out both;
 }
 @keyframes ms-sweep {
@@ -621,7 +633,8 @@ html {
 
 /* Reduced motion: freeze the sweep (entrance handled above) */
 @media (prefers-reduced-motion: reduce) {
-  .ms-tile:hover .ms-spot::after {
+  .ms-tile:hover .ms-spot::after,
+  .ms-plaque:hover .ms-spot::after {
     animation: none;
   }
 }
@@ -950,18 +963,8 @@ html {
   border-radius: 6px;
   border: 1px solid #47463f;
   /* cabinet face — identical paint to .ms-tile */
-  background-image:
-    repeating-linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.2) 0 1px,
-      rgba(255, 255, 255, 0) 1px 3px
-    ),
-    linear-gradient(180deg, #dcdcd6 0%, #d3d2cc 42%, #cbcac4 72%, #c3c2bc 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 0 rgba(40, 40, 30, 0.26),
-    inset 1px 0 0 rgba(255, 255, 255, 0.45),
-    inset -1px 0 0 rgba(40, 40, 30, 0.1);
+  background-image: var(--ms-steel-grain), var(--ms-steel-face);
+  box-shadow: var(--ms-steel-bevels);
   transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1), box-shadow 0.25s;
 }
 /* focused: the channel presses flush into its housing */
@@ -1057,6 +1060,78 @@ html {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
     inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
+   Counter plaques (Task 59) — the trust strip becomes the shop
+   counter: three painted-steel service plaques between the rack
+   and the back wall. Same face paint as the cabinets (shared
+   tokens), the dark-framed label card holder (.ms-file-label)
+   for a title, a milled die with a stamped icon, an orange ink
+   index stamp, and the rack's cursor sheen crossing the face.
+   ============================================================ */
+.ms-plaque {
+  position: relative;
+  border-radius: 6px;
+  border: 1px solid #a19f97;
+  background-image: var(--ms-steel-grain), var(--ms-steel-face);
+  box-shadow: var(--ms-steel-bevels);
+  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ms-plaque:hover {
+    transform: translateY(-3px);
+  }
+}
+
+/* the title as filing-drawer hardware — the same dark-framed paper
+   card the cabinet drawers wear, retyped to label gauge */
+.ms-plaque .ms-file-label {
+  align-self: center;
+  max-width: 92%;
+  margin-bottom: 12px; /* clearance for the recessed pull below the card */
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #45443f;
+}
+
+/* milled die — a coin recessed into the face, icon stamped inside */
+.ms-plaque-die {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #c7c6c0 0%, #b3b2ab 100%);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.3),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.55);
+  color: #47463f;
+}
+
+/* index stamp — orange ink, slightly hand-rotated like the stickers */
+.ms-plaque-index {
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--color-brand);
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  padding: 3px 8px;
+  transform: rotate(-3deg);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  opacity: 0.92;
+}
+
+/* engraved body copy on the face */
+.ms-plaque-body {
+  font-size: 13px;
+  line-height: 21px;
+  color: #45443f;
 }
 
 /* ─── Tile pack rail + fascia tabs (Task 55) ─────────────────────────────
