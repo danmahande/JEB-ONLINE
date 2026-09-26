@@ -2,20 +2,34 @@
 // The server re-computes authoritative totals on checkout.
 
 import type { CartLine, RegionConfig, Quote } from "./types";
+import { leviesFor } from "./levies";
 
 export function quoteCart(lines: CartLine[], region: RegionConfig): Quote {
   const subtotal = lines.reduce((s, l) => s + l.unitPriceUsd * l.qty, 0);
   const totalWeightKg = lines.reduce((s, l) => s + l.weightKg * l.qty, 0);
   const duty = subtotal * region.dutyRate;
-  const vat = (subtotal + duty) * region.vatRate;
+  const levyLines = leviesFor(region.region).map((l) => ({
+    code: l.code,
+    rate: l.rate,
+    amount: subtotal * l.rate,
+  }));
+  const leviesTotal = levyLines.reduce((s, l) => s + l.amount, 0);
+  // Only duty-like charges join the VAT taxable value (Kenya/DRC practice);
+  // e.g. Rwanda's 5% withholding tax is an income-tax prepayment, not a levy.
+  const leviesInVatBase = leviesFor(region.region)
+    .filter((l) => l.inVatBase)
+    .reduce((s, l) => s + subtotal * l.rate, 0);
+  const vat = (subtotal + duty + leviesInVatBase) * region.vatRate;
   const shipping = region.shippingBase + totalWeightKg * region.shippingPerKg;
   const round2 = (n: number) => Math.round(n * 100) / 100;
   return {
     subtotal: round2(subtotal),
     duty: round2(duty),
+    levies: levyLines.map((l) => ({ ...l, amount: round2(l.amount) })),
+    leviesTotal: round2(leviesTotal),
     vat: round2(vat),
     shipping: round2(shipping),
-    total: round2(subtotal + duty + vat + shipping),
+    total: round2(subtotal + duty + leviesTotal + vat + shipping),
     totalWeightKg: round2(totalWeightKg),
   };
 }

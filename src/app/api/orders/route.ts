@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
+import { leviesFor } from "@/lib/levies";
 
 type CartLine = { productId: string; variantLabel?: string; qty: number };
 
@@ -192,11 +193,24 @@ export async function POST(req: NextRequest) {
 
     const subtotal = resolved.reduce((s, l) => s + l.lineTotal, 0);
     const totalWeightKg = resolved.reduce((s, l) => s + l.weightKg, 0);
+    // National border levies still charged on top of (zero) duty — mirrors
+    // quoteCart() in src/lib/format.ts. Response-only: not persisted to the
+    // OrderProcessing table (no levies column); the totalAmount includes them.
+    const levyCfg = leviesFor(regionCfg.region);
+    const levyLines = levyCfg.map((l) => ({
+      code: l.code,
+      rate: l.rate,
+      amount: subtotal * l.rate,
+    }));
+    const leviesAmount = levyLines.reduce((s, l) => s + l.amount, 0);
+    const leviesInVatBase = levyCfg
+      .filter((l) => l.inVatBase)
+      .reduce((s, l) => s + subtotal * l.rate, 0);
     const dutyAmount = subtotal * regionCfg.dutyRate;
-    const vatAmount = (subtotal + dutyAmount) * regionCfg.vatRate;
+    const vatAmount = (subtotal + dutyAmount + leviesInVatBase) * regionCfg.vatRate;
     const shippingAmount =
       regionCfg.shippingBase + totalWeightKg * regionCfg.shippingPerKg;
-    const totalAmount = subtotal + dutyAmount + vatAmount + shippingAmount;
+    const totalAmount = subtotal + dutyAmount + leviesAmount + vatAmount + shippingAmount;
 
     const customerNameValue = customerName.trim();
     const contactValue = contact.trim();
@@ -359,6 +373,11 @@ export async function POST(req: NextRequest) {
           destination: created.destination,
           subtotal: Math.round(subtotal * 100) / 100,
           dutyAmount: created.dutyAmount,
+          leviesAmount: Math.round(leviesAmount * 100) / 100,
+          levyLines: levyLines.map((l) => ({
+            ...l,
+            amount: Math.round(l.amount * 100) / 100,
+          })),
           vatAmount: created.vatAmount,
           shippingAmount: created.shippingAmount,
           totalWeightKg: created.totalWeightKg,

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { fmt, quoteCart } from "@/lib/format";
+import { leviesFor, levyTag } from "@/lib/levies";
 import type { PlacedOrder, RegionConfig } from "@/lib/types";
 
 const PAYMENT_METHODS = [
@@ -115,7 +116,7 @@ export default function Checkout({
       {/* toolbar module — same control rail as the catalog, not a magazine headline */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
         <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CHECKOUT</h2>
-        <p className="ms-label text-hush">DUTY · VAT · FREIGHT QUOTED UPFRONT</p>
+        <p className="ms-label text-hush">DUTY · LEVIES · VAT · FREIGHT QUOTED UPFRONT</p>
       </div>
 
       <div className="grid lg:grid-cols-5 gap-8">
@@ -141,7 +142,9 @@ export default function Checkout({
             {active && (
               <p className="ms-label mt-3 text-hush">
                 ETA {active.etaDays} · DUTY {Math.round(active.dutyRate * 100)}% · VAT{" "}
-                {Math.round(active.vatRate * 100)}% · {active.currency}
+                {Math.round(active.vatRate * 100)}%
+                {leviesFor(active.region).length > 0 &&
+                  ` · LEVIES ${levyTag(active.region)}`} · {active.currency}
               </p>
             )}
           </div>
@@ -250,6 +253,12 @@ export default function Checkout({
                   <span className="text-hush">DUTY ({Math.round(active.dutyRate * 100)}%)</span>
                   <span className="font-bold">{totalFmt(q.duty)}</span>
                 </div>
+                {q.levies.length > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-hush">LEVIES ({levyTag(active.region)})</span>
+                    <span className="font-bold">{totalFmt(q.leviesTotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
                   <span className="font-bold">{totalFmt(q.vat)}</span>

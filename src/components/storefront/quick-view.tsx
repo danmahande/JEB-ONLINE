@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCart, useFly, useRegion } from "@/lib/store";
 import { fmt } from "@/lib/format";
+import { leviesFor } from "@/lib/levies";
 import type { Product, RegionConfig } from "@/lib/types";
 
 export default function QuickView({
@@ -182,9 +183,11 @@ export default function QuickView({
 
             <p className="ms-label mt-4 text-hush">
               {active?.isEac && active.dutyRate === 0
-                ? "EAC ORIGIN — NO IMPORT DUTY. VAT APPLIES AT CHECKOUT."
+                ? leviesFor(active.region).length > 0
+                  ? "EAC ORIGIN — NO IMPORT DUTY. BORDER LEVIES & VAT APPLY AT CHECKOUT."
+                  : "EAC ORIGIN — NO IMPORT DUTY. VAT APPLIES AT CHECKOUT."
                 : active?.isEac
-                  ? "EAC CORRIDOR — TRANSITIONAL DUTY & VAT ESTIMATED AT CHECKOUT."
+                  ? "EAC CORRIDOR — TRANSITIONAL DUTY, LEVIES & VAT ESTIMATED AT CHECKOUT."
                   : "INTERNATIONAL ORDERS — DUTY ESTIMATED AT CHECKOUT."}
             </p>
           </div>

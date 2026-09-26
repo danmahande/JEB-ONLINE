@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { useCart, useRegion } from "@/lib/store";
 import { fmt, quoteCart, fmtWeight } from "@/lib/format";
+import { levyTag } from "@/lib/levies";
 import { useCountUp } from "@/lib/use-count-up";
 import type { RegionConfig } from "@/lib/types";
 
@@ -120,6 +121,12 @@ export default function CartDrawer({
                   </span>
                   <span className="font-bold">{totalFmt(q.duty)}</span>
                 </div>
+                {q.levies.length > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-hush">LEVIES ({levyTag(active.region)})</span>
+                    <span className="font-bold">{totalFmt(q.leviesTotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
                   <span className="font-bold">{totalFmt(q.vat)}</span>

@@ -53,6 +53,14 @@ export default function Confirmation({
             <p className="ms-label text-hush mb-2">COST BREAKDOWN (USD)</p>
             <div className="flex justify-between"><span className="text-hush">SUBTOTAL</span><span>${order.subtotal.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-hush">IMPORT DUTY</span><span>${order.dutyAmount.toFixed(2)}</span></div>
+            {!!order.leviesAmount && order.leviesAmount > 0 && (
+              <div className="flex justify-between">
+                <span className="text-hush">
+                  BORDER LEVIES{order.levyLines?.length ? ` (${order.levyLines.map((l) => l.code).join(" + ")})` : ""}
+                </span>
+                <span>${order.leviesAmount.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between"><span className="text-hush">VAT</span><span>${order.vatAmount.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-hush">FREIGHT</span><span>${order.shippingAmount.toFixed(2)}</span></div>
             <div className="flex justify-between border-t border-line pt-2 items-baseline">

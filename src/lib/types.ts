@@ -57,9 +57,18 @@ export interface CartLine {
   maxStock: number;
 }
 
+export interface QuoteLevy {
+  code: string;
+  rate: number;
+  amount: number; // USD
+}
+
 export interface Quote {
   subtotal: number;
   duty: number;
+  /** national border levies that still apply on top of (zero) duty */
+  levies: QuoteLevy[];
+  leviesTotal: number;
   vat: number;
   shipping: number;
   total: number;
@@ -78,6 +87,9 @@ export interface PlacedOrder {
   destination: string;
   subtotal: number;
   dutyAmount: number;
+  /** national border levies charged at the border (response-only, not persisted) */
+  leviesAmount?: number;
+  levyLines?: QuoteLevy[];
   vatAmount: number;
   shippingAmount: number;
   totalWeightKg: number;
