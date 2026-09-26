@@ -181,14 +181,13 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Overlay portals (cart drawer, quick-view sheet, dialogs) mount on
-   document.body — outside .ms-root — so their plain text falls back to
-   the browser stack instead of Inter and reads off-tone against the
-   checkout they lead into. The portal content re-declares the body
-   font itself; ms-label / ms-display / ms-price still win inside it
-   because they carry their own font-family. */
-[data-slot="sheet-content"],
-[data-slot="dialog-content"] {
+/* One type system for the whole storefront: Inter body from <body> down.
+   Radix portals (cart drawer, quick-view, toasts, dialogs…) mount on
+   document.body — outside .ms-root — so the root-level declaration is
+   what guarantees every surface speaks the same family, present and
+   future. Space Grotesk still takes over wherever the design system
+   asks (.ms-label / .ms-display / .ms-price carry their own family). */
+body {
   font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
