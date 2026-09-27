@@ -20,7 +20,7 @@ import type { PlacedOrder, Product } from "@/lib/types";
 type View = "shop" | "checkout" | "confirmation" | "track";
 
 export default function Storefront() {
-  const { products, regions, loading } = useCatalog();
+  const { products, regions, loading, error, retry } = useCatalog();
   const cartLines = useCart((s) => s.lines);
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
@@ -87,6 +87,8 @@ export default function Storefront() {
               region={region}
               onSelect={setSelected}
               loading={loading}
+              error={error}
+              onRetry={retry}
               query={query}
               onClearQuery={() => setQuery("")}
             />

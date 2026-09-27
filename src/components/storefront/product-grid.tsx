@@ -39,6 +39,8 @@ export default function ProductGrid({
   region,
   onSelect,
   loading,
+  error,
+  onRetry,
   query,
   onClearQuery,
 }: {
@@ -47,6 +49,10 @@ export default function ProductGrid({
   region: string;
   onSelect: (p: Product) => void;
   loading: boolean;
+  /** catalog feed failure — renders the warehouse-unreachable state, never
+      the "no products match" search-empty panel */
+  error?: string | null;
+  onRetry?: () => void;
   query: string;
   onClearQuery: () => void;
 }) {
@@ -113,10 +119,12 @@ export default function ProductGrid({
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-t-lg border border-b-0 border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
         <div className="min-w-0">
           {/* the rack counter — replays the greeting swap whenever the count moves */}
-          <p key={loading ? "loading" : `${tab}|${q}|${filtered.length}`} className="ms-label ms-fade-swap mb-1.5 text-hush">
+          <p key={loading ? "loading" : error ? "error" : `${tab}|${q}|${filtered.length}`} className="ms-label ms-fade-swap mb-1.5 text-hush">
             {loading
               ? "CHECKING THE RACK…"
-              : `${filtered.length} ${filtered.length === 1 ? "LINE" : "LINES"} ON THE RACK`}
+              : error
+                ? "RACK OFFLINE — FEED FAILED"
+                : `${filtered.length} ${filtered.length === 1 ? "LINE" : "LINES"} ON THE RACK`}
           </p>
           <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">
             CATALOG
@@ -162,6 +170,25 @@ export default function ProductGrid({
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="aspect-square bg-line animate-pulse rounded-lg" />
           ))}
+        </div>
+      ) : error ? (
+        /* server feed failed — a distinct alarm, worlds apart from an
+           empty search result */
+        <div className="rounded-lg border border-line bg-white px-6 py-16 text-center">
+          <p className="ms-display text-2xl md:text-3xl tracking-tight mb-3">
+            CAN&apos;T REACH THE WAREHOUSE
+            <span className="ml-2 inline-block h-2 w-2 bg-red-500 align-middle" aria-hidden="true" />
+          </p>
+          <p className="text-sm text-hush mb-2">
+            The catalog feed failed to load{error ? ` — ${error}` : ""}.
+          </p>
+          <p className="text-sm text-hush mb-6">
+            Nothing on the rack is lost — check the connection and pull the
+            feed again.
+          </p>
+          <button onClick={onRetry} className="ms-label ms-key px-6 py-3">
+            RETRY THE FEED
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-line bg-white px-6 py-16 text-center">
