@@ -54,6 +54,10 @@ export default function ProductGrid({
   const [notifyOpen, setNotifyOpen] = useState<string | null>(null);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifyDone, setNotifyDone] = useState<Set<string>>(new Set());
+  // product currently POSTing its restock alert + the last inline failure,
+  // so a rejected signup stays open with the reason instead of silently dying
+  const [notifyBusy, setNotifyBusy] = useState<string | null>(null);
+  const [notifyError, setNotifyError] = useState<string | null>(null);
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region);
   const regionHasHydrated = useRegion((s) => s.hasHydrated);
@@ -378,34 +382,62 @@ export default function ProductGrid({
                   {/* restock notify form — sold-out tiles only */}
                   {out && notifyOpen === p.productId && !notifyDone.has(p.productId) && (
                     <form
-                      className="flex gap-1.5"
+                      className="flex flex-col gap-1.5"
                       onClick={(e) => e.stopPropagation()}
-                      onSubmit={(e) => {
+                      onSubmit={async (e) => {
                         e.preventDefault();
-                        setNotifyDone((s) => new Set(s).add(p.productId));
-                        setNotifyOpen(null);
-                        toast({
-                          title: "WE'LL NOTIFY YOU",
-                          description: `${p.productLabel} — restock alert set for ${notifyEmail}.`,
-                        });
-                        setNotifyEmail("");
+                        setNotifyError(null);
+                        setNotifyBusy(p.productId);
+                        try {
+                          const res = await fetch("/api/restock-notify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ productId: p.productId, email: notifyEmail }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok || !data.success) {
+                            throw new Error(data.error || "Could not save the alert");
+                          }
+                          setNotifyDone((s) => new Set(s).add(p.productId));
+                          setNotifyOpen(null);
+                          toast({
+                            title: data.already ? "ALREADY ON THE LIST" : "WE'LL NOTIFY YOU",
+                            description: `${p.productLabel} — restock alert set for ${notifyEmail.trim()}.`,
+                          });
+                          setNotifyEmail("");
+                        } catch (err) {
+                          setNotifyError(
+                            err instanceof Error ? err.message : "Could not save the alert"
+                          );
+                        } finally {
+                          setNotifyBusy(null);
+                        }
                       }}
                     >
-                      <input
-                        type="email"
-                        required
-                        value={notifyEmail}
-                        onChange={(e) => setNotifyEmail(e.target.value)}
-                        placeholder="you@company.com"
-                        aria-label={`Email for ${p.productLabel} restock alert`}
-                        className="ms-field ms-notify-field flex-1 min-w-0"
-                      />
-                      <button
-                        type="submit"
-                        className="ms-label ms-key ms-key-ink px-3 shrink-0"
-                      >
-                        →
-                      </button>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="email"
+                          required
+                          value={notifyEmail}
+                          onChange={(e) => setNotifyEmail(e.target.value)}
+                          placeholder="you@company.com"
+                          aria-label={`Email for ${p.productLabel} restock alert`}
+                          aria-invalid={notifyOpen === p.productId && notifyError ? true : undefined}
+                          className="ms-field ms-notify-field flex-1 min-w-0"
+                        />
+                        <button
+                          type="submit"
+                          disabled={notifyBusy === p.productId}
+                          className="ms-label ms-key ms-key-ink px-3 shrink-0 disabled:opacity-40"
+                        >
+                          {notifyBusy === p.productId ? "…" : "→"}
+                        </button>
+                      </div>
+                      {notifyOpen === p.productId && notifyError && (
+                        <p className="text-[12px] text-red-500" role="alert">
+                          {notifyError}
+                        </p>
+                      )}
                     </form>
                   )}
                 </div>

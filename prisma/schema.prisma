@@ -174,6 +174,21 @@ model OrderEvent {
   @@index([orderNumber])
 }
 
+/// Restock alerts raised by the storefront — the sold-out tiles' "NOTIFY ME"
+/// form posts here, deduplicated per product + email.
+model RestockNotify {
+  id        String   @id @default(cuid())
+  productId String
+  email     String
+  /// pending | notified | expired — advanced by the ERP when stock returns
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  @@unique([productId, email])
+  @@index([productId])
+  @@index([status])
+}
+
 /// Counter model for generating atomic sequences
 model Counter {
   id    String @id @default(cuid())
