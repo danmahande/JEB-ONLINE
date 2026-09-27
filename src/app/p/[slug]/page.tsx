@@ -2,15 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
+import { SITE_URL } from "@/lib/site";
 import type { Product, ProductVariant, RegionConfig } from "@/lib/types";
 import ProductView from "./product-view";
 
 // Live stock, live FX — every render is a fresh quote. Prices are never
 // cached at the edge: a stale "in stock" page would take orders we can't fill.
 export const dynamic = "force-dynamic";
-
-/** Absolute URL base for OG images / JSON-LD / canonicals. */
-export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 function parseVariants(raw: string): ProductVariant[] {
   try {
@@ -97,7 +95,7 @@ export default async function ProductPage({
     "@type": "Product",
     name: product.productLabel,
     description: product.description || undefined,
-    image: product.image ? new URL(product.image, siteUrl).href : undefined,
+    image: product.image ? new URL(product.image, SITE_URL).href : undefined,
     sku: product.productId,
     category: product.category,
     brand: {
@@ -106,7 +104,7 @@ export default async function ProductPage({
     },
     offers: {
       "@type": "Offer",
-      url: new URL(`/p/${product.slug}`, siteUrl).href,
+      url: new URL(`/p/${product.slug}`, SITE_URL).href,
       priceCurrency: "USD",
       price: product.unitSellingPrice.toFixed(2),
       itemCondition: "https://schema.org/NewCondition",
