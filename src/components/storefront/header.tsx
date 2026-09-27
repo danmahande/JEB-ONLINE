@@ -107,7 +107,6 @@ export default function Header({
           </span>
           SUPPLY<span className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
         </button>
-
         <nav
           className={`hidden md:flex items-center gap-8 whitespace-nowrap overflow-hidden transition-all duration-300 ${
             searchOpen ? "md:max-w-0 md:opacity-0" : "md:max-w-[260px] md:opacity-100"
@@ -177,11 +176,18 @@ export default function Header({
           <div className="relative">
             <button
               onClick={() => setRegionOpen((o) => !o)}
-              className="ms-label border border-line px-3 py-2 hover:bg-ink hover:text-white transition-colors"
+              className="ms-label border border-line px-2.5 sm:px-3 py-2 hover:bg-ink hover:text-white transition-colors whitespace-nowrap shrink-0"
               aria-haspopup="listbox"
               aria-expanded={regionOpen}
             >
-              {active ? `${active.region} · ${active.currency}` : hasHydrated ? "REGION" : "UG · UGX"}
+              {active
+                ? `${active.region}`
+                : hasHydrated
+                  ? "REGION"
+                  : "UG"}
+              {active && (
+                <span className="hidden sm:inline"> · {active.currency}</span>
+              )}
               <span className="ml-2">▾</span>
             </button>
             {regionOpen && (
@@ -217,7 +223,7 @@ export default function Header({
           <button
             onClick={onOpenCart}
             data-cart-badge
-            className={`ms-label bg-brand text-white px-4 py-2 hover:bg-brand-dark transition-colors ${
+            className={`ms-label bg-brand text-white px-3 sm:px-4 py-2.5 hover:bg-brand-dark transition-colors whitespace-nowrap shrink-0 ${
               cartHasHydrated && count > 0 ? "ms-cart-live" : ""
             }`}
             aria-label={`Open cart, ${count} ${count === 1 ? "item" : "items"}`}
