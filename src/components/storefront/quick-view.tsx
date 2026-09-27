@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type MouseEvent } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -190,6 +191,16 @@ export default function QuickView({
                   ? "EAC CORRIDOR — TRANSITIONAL DUTY, LEVIES & VAT ESTIMATED AT CHECKOUT."
                   : "INTERNATIONAL ORDERS — DUTY ESTIMATED AT CHECKOUT."}
             </p>
+
+            {/* the product's own address — full spec sheet, shareable, crawlable */}
+            <Link
+              href={`/p/${product.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ms-label mt-4 text-brand underline underline-offset-4 decoration-line hover:decoration-brand transition-colors self-start"
+            >
+              FULL PRODUCT PAGE →
+            </Link>
           </div>
         </div>
       </DialogContent>

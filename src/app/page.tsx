@@ -25,6 +25,12 @@ export default function Storefront() {
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
 
+  const [view, setView] = useState<View>("shop");
+  const [selected, setSelected] = useState<Product | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  const [query, setQuery] = useState("");
+
   // Mark both persisted stores as hydrated after React hydration completes.
   // zustand v5's persist never fires onRehydrateStorage's callback here, so
   // the hasHydrated flag could stay false forever and pin every price to the
@@ -33,13 +39,14 @@ export default function Storefront() {
   useEffect(() => {
     useCart.setState({ hasHydrated: true });
     useRegion.setState({ hasHydrated: true });
+    // deep links handed over by the product pages and the header search:
+    // /?view=track|checkout open their view, /?q=… seeds the search box.
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    if (v === "track" || v === "checkout") setView(v);
+    const q = params.get("q");
+    if (q) setQuery(q);
   }, []);
-
-  const [view, setView] = useState<View>("shop");
-  const [selected, setSelected] = useState<Product | null>(null);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [placed, setPlaced] = useState<PlacedOrder | null>(null);
-  const [query, setQuery] = useState("");
 
   function goShop() {
     setView("shop");

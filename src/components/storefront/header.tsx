@@ -21,12 +21,17 @@ export default function Header({
   onOpenCart,
   query,
   onQuery,
+  onSearchSubmit,
 }: {
   regions: RegionConfig[];
   onNavigate: (view: "shop" | "track") => void;
   onOpenCart: () => void;
   query: string;
   onQuery: (q: string) => void;
+  /** optional: where a submitted search should go — defaults to scrolling
+      down to the on-page catalog (home). Pages without a catalog (product
+      pages) hand the query to the home view instead. */
+  onSearchSubmit?: () => void;
 }) {
   const lines = useCart((s) => s.lines);
   const cartHasHydrated = useCart((s) => s.hasHydrated);
@@ -134,7 +139,8 @@ export default function Header({
           }}
           onSubmit={(e) => {
             e.preventDefault();
-            document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
+            if (onSearchSubmit) onSearchSubmit();
+            else document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
           }}
         >
           <button
