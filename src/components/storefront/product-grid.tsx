@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
@@ -230,10 +231,15 @@ export default function ProductGrid({
                   aria-label={`View ${p.productLabel} details`}
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
-                    <img
+                    {/* through the optimizer — AVIF/WebP + responsive srcset
+                        off the same /products files; fill matches the pane,
+                        sizes mirrors the grid's 2/3/4/5/6 column rhythm */}
+                    <Image
                       src={p.image || "/products/placeholder.png"}
                       alt={p.productLabel}
+                      fill
                       loading="lazy"
+                      sizes="(min-width: 1536px) 16vw, (min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                       className="w-full h-full object-cover"
                     />
                     {/* the pane — goods displayed behind glass; the rake delay

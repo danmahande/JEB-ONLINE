@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -59,11 +60,12 @@ export default function CartDrawer({
             <div className="flex-1 overflow-y-auto ms-scroll divide-y divide-line">
               {lines.map((l) => (
                 <div key={`${l.productId}-${l.variantLabel}`} className="flex gap-3 p-4">
-                  <div className="w-20 h-20 shrink-0 border border-line overflow-hidden">
-                    { }
-                    <img
+                  <div className="relative w-20 h-20 shrink-0 border border-line overflow-hidden">
+                    <Image
                       src={l.image || "/products/placeholder.png"}
                       alt={l.productLabel}
+                      fill
+                      sizes="80px"
                       className="w-full h-full object-cover"
                     />
                   </div>

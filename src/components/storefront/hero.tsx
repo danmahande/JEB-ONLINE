@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 /* The storefront lives in permanent daylight (Task 58 — the day/night
    machinery was removed with its footer control): one fixed greeting
    line, no tint layers, no stars. */
@@ -27,11 +29,15 @@ export default function Hero({
           edge keeps them legible while the photo stays vivid below. */}
       <div className="ms-shopfront">
         <div className="relative h-[240px] md:h-[280px] lg:h-[310px] overflow-hidden rounded-[4px]">
-          {/* HD composite: maize field dissolving into a warehouse */}
-          <img
+          {/* HD composite: maize field dissolving into a warehouse — the LCP
+              element, so it preloads through the optimizer */}
+          <Image
             src="/products/__hero.png"
             alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
-            className="ms-kenburns absolute inset-0 h-full w-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="ms-kenburns object-cover"
           />
           {/* drifting clouds — the window's only ambient weather, kept subtle */}
           <div className="ms-cloud ms-cloud-a" aria-hidden="true" />

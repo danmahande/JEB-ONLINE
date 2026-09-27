@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type MouseEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Dialog,
@@ -86,10 +87,11 @@ export default function QuickView({
         <div className="grid md:grid-cols-2">
           {/* image */}
           <div className="relative aspect-square bg-muted border-b md:border-b-0 md:border-r border-line">
-            { }
-            <img
+            <Image
               src={product.image || "/products/placeholder.png"}
               alt={product.productLabel}
+              fill
+              sizes="(min-width: 768px) 448px, 100vw"
               className="w-full h-full object-cover"
             />
             <span className="ms-label absolute top-3 left-3 bg-white border border-line px-2 py-1 text-ink">
