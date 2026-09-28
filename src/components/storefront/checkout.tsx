@@ -1,9 +1,20 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useCart, useRegion } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
-import { fmt } from "@/lib/format";
-import { leviesFor } from "@/lib/levies";
+import { fmt, quoteCart } from "@/lib/format";
+import { levyTag, pct } from "@/lib/levies";
 import type { RegionConfig, PlacedOrder } from "@/lib/types";
+
+/* Same methods the order API persists (prisma `paymentMethod String`) —
+   keys copied verbatim from the verified checkout (06ff76e). */
+const PAYMENT_METHODS = [
+  { key: "MTN MoMo", label: "MTN MOMO", hint: "UG · RW" },
+  { key: "M-Pesa", label: "M-PESA", hint: "KE · TZ" },
+  { key: "Airtel Money", label: "AIRTEL MONEY", hint: "REGIONAL" },
+  { key: "Bank Transfer", label: "BANK TRANSFER / TT", hint: "CROSS-BORDER" },
+  { key: "Cash on Delivery", label: "CASH ON DELIVERY", hint: "EAC ONLY" },
+];
 
 export default function Checkout({
   regions,
@@ -15,16 +26,18 @@ export default function Checkout({
   onBack: () => void;
 }) {
   const lines = useCart((s) => s.lines);
+  const clear = useCart((s) => s.clear);
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
-  const active = regions.find((r) => r.region === region);
 
-  // Check if active region exists, if not use the first available region
-  const displayRegion = active || regions[0];
+  /* Single guarded lookup. `regions` is empty while the catalog fetch is in
+     flight — never touch `regions[0].x` bare (round-3 Blocker 1 crash). */
+  const displayRegion = regions.find((r) => r.region === region) ?? regions[0];
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [placing, setPlacing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [customer, setCustomer] = useState({
     name: "",
     email: "",
@@ -33,32 +46,20 @@ export default function Checkout({
     address: "",
     city: "",
     postalCode: "",
-    country: "", // Will be derived from active region
   });
 
-  const subtotal = lines.reduce(
-    (sum, l) => sum + l.qty * l.unitPriceUsd,
-    0
+  /* One quote for every display number — identical math to the order API,
+     which re-prices server-side from the catalog (client totals are display
+     only). Never hand-roll duty/VAT sums again. */
+  const q = useMemo(
+    () => (displayRegion ? quoteCart(lines, displayRegion) : null),
+    [lines, displayRegion]
   );
-
-  // Calculate levies using the existing function
-  const leviesList = leviesFor(region);
-  const duty = leviesList.reduce((sum, levy) => {
-    return sum + (levy.rate * subtotal);
-  }, 0);
-  const vat = leviesList.reduce((sum, levy) => {
-    // If levy is part of VAT base, add to VAT calculation
-    const levyAmount = levy.inVatBase ? subtotal + duty : subtotal;
-    return sum + (levy.rate * levyAmount);
-  }, 0);
-  const freight = displayRegion ? displayRegion.shippingBase + (lines.reduce((sum, l) => sum + l.weightKg * l.qty, 0) * displayRegion.shippingPerKg) : 0;
-  const total = subtotal + duty + vat + freight;
 
   async function placeOrder() {
     setPlacing(true);
     setErrors({});
-    
-    // Basic validation
+
     const newErrors: Record<string, string> = {};
     if (!customer.name.trim()) newErrors.name = "Required";
     if (!customer.email.trim()) newErrors.email = "Required";
@@ -66,8 +67,8 @@ export default function Checkout({
     if (!customer.phone.trim()) newErrors.phone = "Required";
     if (!customer.address.trim()) newErrors.address = "Required";
     if (!customer.city.trim()) newErrors.city = "Required";
-    // Making postal code optional as per issue description
-    
+    if (!paymentMethod) newErrors.paymentMethod = "Select a payment method";
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setPlacing(false);
@@ -75,28 +76,36 @@ export default function Checkout({
     }
 
     try {
+      /* Flat body — the exact contract /api/orders destructures:
+         customerName/contact/email/address/city/country/paymentMethod/cart.
+         `country` is the REGION CODE (UG|KE|TZ|RW|CD|INTL), used for the
+         regionConfig lookup. The API re-prices; no money fields are sent. */
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer: {
-            ...customer,
-            country: active?.countryName || regions[0].countryName // Use the current region's country name
-          },
-          lines: lines,
-          region,
-          // Only send essential data, let server calculate totals
-          subtotal,
+          customerName: customer.name,
+          contact: customer.phone,
+          email: customer.email,
+          address: customer.address,
+          city: customer.city,
+          country: displayRegion.region,
+          paymentMethod,
+          cart: lines.map((l) => ({
+            productId: l.productId,
+            variantLabel: l.variantLabel,
+            qty: l.qty,
+          })),
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to place order");
       }
 
-      const placed = await res.json();
-      onPlaced(placed);
+      clear();
+      onPlaced(data.order);
     } catch (err) {
       toast({
         title: "ORDER FAILED",
@@ -110,7 +119,6 @@ export default function Checkout({
 
   function goNext() {
     if (step === 1) {
-      // Validate customer details
       const newErrors: Record<string, string> = {};
       if (!customer.name.trim()) newErrors.name = "Required";
       if (!customer.email.trim()) newErrors.email = "Required";
@@ -118,7 +126,7 @@ export default function Checkout({
       if (!customer.phone.trim()) newErrors.phone = "Required";
       if (!customer.address.trim()) newErrors.address = "Required";
       if (!customer.city.trim()) newErrors.city = "Required";
-      
+
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
         return;
@@ -134,6 +142,31 @@ export default function Checkout({
       setStep(step === 3 ? 2 : 1);
     }
   }
+
+  /* ---- guards (after hooks, before any region/quote access) ---- */
+
+  if (lines.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center md:px-6">
+        <h2 className="ms-display mb-6 text-4xl opacity-30">CART EMPTY</h2>
+        <button onClick={onBack} className="ms-label ms-key px-8 py-4">
+          ← BACK TO CATALOG
+        </button>
+      </div>
+    );
+  }
+
+  if (!displayRegion || !q) {
+    // regions still loading — show a panel, never crash
+    return (
+      <div className="container mx-auto flex items-center justify-center gap-3 px-4 py-24 md:px-6">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        <span className="ms-label text-hush">LOADING REGIONS…</span>
+      </div>
+    );
+  }
+
+  const money = (usd: number) => fmt(usd, displayRegion);
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6">
@@ -170,7 +203,7 @@ export default function Checkout({
         {step === 1 && (
           <div className="rounded-lg border border-line bg-white p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">DELIVERY DETAILS</h2>
-            
+
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
                 <label htmlFor="customer-name" className="ms-label mb-2 block text-hush">FULL NAME *</label>
@@ -279,13 +312,16 @@ export default function Checkout({
                 />
               </div>
               <div>
-                <label className="ms-label mb-2 block text-hush">COUNTRY</label>
+                <label htmlFor="customer-country" className="ms-label mb-2 block text-hush">COUNTRY</label>
                 <input
+                  id="customer-country"
                   type="text"
-                  value={active?.countryName || regions[0].countryName}
+                  value={displayRegion.countryName}
                   readOnly
                   className="ms-field w-full bg-muted"
                 />
+                {/* country follows the header region select — derived, never
+                    stored in state (no stale capture) */}
               </div>
             </div>
           </div>
@@ -295,7 +331,7 @@ export default function Checkout({
         {step === 2 && (
           <div className="rounded-lg border border-line bg-white p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">REVIEW ORDER</h2>
-            
+
             <div className="mb-8">
               <h3 className="ms-label mb-4 text-hush">DELIVERY ADDRESS</h3>
               <div className="rounded-lg border border-line bg-mist p-4">
@@ -303,7 +339,7 @@ export default function Checkout({
                 <p>{customer.company || "Individual"}</p>
                 <p>{customer.address}</p>
                 <p>{customer.city}, {customer.postalCode || 'N/A'}</p>
-                <p>{active?.countryName || regions[0].countryName}</p>
+                <p>{displayRegion.countryName}</p>
                 <p className="mt-2">{customer.email} · {customer.phone}</p>
               </div>
             </div>
@@ -312,12 +348,14 @@ export default function Checkout({
               <h3 className="ms-label mb-4 text-hush">ORDER ITEMS</h3>
               <div className="rounded-lg border border-line divide-y">
                 {lines.map((l, i) => (
-                  <div key={i} className="flex items-center justify-between p-4">
+                  <div key={`${l.productId}-${l.variantLabel}`} className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-4">
                       <div className="relative size-16 overflow-hidden rounded bg-muted">
-                        <img
+                        <Image
                           src={l.image || "/products/placeholder.png"}
                           alt={l.productLabel}
+                          width={64}
+                          height={64}
                           className="size-full object-cover"
                         />
                       </div>
@@ -328,7 +366,7 @@ export default function Checkout({
                         </p>
                       </div>
                     </div>
-                    <p className="font-medium">{displayRegion ? fmt(l.unitPriceUsd, displayRegion) : `$${l.unitPriceUsd.toFixed(2)}`}</p>
+                    <p className="font-medium">{money(l.unitPriceUsd)}</p>
                   </div>
                 ))}
               </div>
@@ -338,23 +376,29 @@ export default function Checkout({
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span>SUBTOTAL</span>
-                  <span>{displayRegion ? fmt(subtotal, displayRegion) : `$${subtotal.toFixed(2)}`}</span>
+                  <span>{money(q.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>DUTY ({(duty/subtotal)*100 || (displayRegion ? displayRegion.dutyRate * 100 : 0)}%)</span>
-                  <span>{displayRegion ? fmt(duty, displayRegion) : `$${duty.toFixed(2)}`}</span>
+                  <span>DUTY ({pct(displayRegion.dutyRate)})</span>
+                  <span>{money(q.duty)}</span>
                 </div>
+                {q.levies.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>LEVIES ({levyTag(displayRegion.region)})</span>
+                    <span>{money(q.leviesTotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <span>VAT ({(vat/subtotal)*100 || (displayRegion ? displayRegion.vatRate * 100 : 0)}%)</span>
-                  <span>{displayRegion ? fmt(vat, displayRegion) : `$${vat.toFixed(2)}`}</span>
+                  <span>VAT ({pct(displayRegion.vatRate)})</span>
+                  <span>{money(q.vat)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>FREIGHT</span>
-                  <span>{displayRegion ? fmt(freight, displayRegion) : `$${freight.toFixed(2)}`}</span>
+                  <span>{money(q.shipping)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 font-bold">
                   <span>TOTAL</span>
-                  <span className="text-brand">{displayRegion ? fmt(total, displayRegion) : `$${total.toFixed(2)}`}</span>
+                  <span className="text-brand">{money(q.total)}</span>
                 </div>
               </div>
             </div>
@@ -365,45 +409,68 @@ export default function Checkout({
         {step === 3 && (
           <div className="rounded-lg border border-line bg-white p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">COMPLETE PAYMENT</h2>
-            
-            <div className="rounded-lg border border-line bg-mist p-6 text-center">
-              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-ink text-white">
-                {displayRegion?.currency || 'USD'}
+
+            <div className="rounded-lg border border-line bg-mist p-6">
+              <div className="mb-6 flex items-center gap-4">
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                  {displayRegion.currency}
+                </div>
+                <div>
+                  <h3 className="mb-1 font-bold">Amount to pay</h3>
+                  <p className="text-brand font-bold">{money(q.total)}</p>
+                  <p className="text-sm text-hush">
+                    Processed securely through our partner gateway.
+                  </p>
+                </div>
               </div>
-              <h3 className="mb-2 font-bold">Payment Processing</h3>
-              <p className="text-sm text-hush mb-6">
-                Your payment will be processed securely through our partner gateway.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between text-left border-b pb-2">
-                  <span>Amount to pay:</span>
-                  <span className="font-bold text-brand">{displayRegion ? fmt(total, displayRegion) : `$${total.toFixed(2)}`}</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3 mt-6">
+
+              <h3 className="ms-label mb-3 text-hush">PAYMENT METHOD *</h3>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {PAYMENT_METHODS.map((m) => (
                   <button
-                    onClick={goBack}
-                    className="ms-label ms-key ms-key-ink px-4 py-3"
-                    disabled={placing}
+                    key={m.key}
+                    type="button"
+                    onClick={() => setPaymentMethod(m.key)}
+                    aria-pressed={paymentMethod === m.key}
+                    className={`border px-4 py-3 text-left transition-colors ${
+                      paymentMethod === m.key
+                        ? "border-ink bg-ink text-white"
+                        : "border-line bg-white hover:border-ink"
+                    }`}
                   >
-                    BACK
+                    <span className="ms-label block">{m.label}</span>
+                    <span className={`text-xs ${paymentMethod === m.key ? "text-white/70" : "text-hush"}`}>
+                      {m.hint}
+                    </span>
                   </button>
-                  <button
-                    onClick={placeOrder}
-                    disabled={placing}
-                    className="ms-label ms-key px-4 py-3 flex items-center justify-center gap-2"
-                  >
-                    {placing ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                        PROCESSING...
-                      </>
-                    ) : (
-                      `PAY ${displayRegion ? fmt(total, displayRegion) : `$${total.toFixed(2)}`}`
-                    )}
-                  </button>
-                </div>
+                ))}
+              </div>
+              {errors.paymentMethod && (
+                <p className="mt-2 text-sm text-red-500" role="alert">{errors.paymentMethod}</p>
+              )}
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  onClick={goBack}
+                  className="ms-label ms-key ms-key-ink px-4 py-3"
+                  disabled={placing}
+                >
+                  BACK
+                </button>
+                <button
+                  onClick={placeOrder}
+                  disabled={placing}
+                  className="ms-label ms-key px-4 py-3 flex items-center justify-center gap-2"
+                >
+                  {placing ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      PROCESSING...
+                    </>
+                  ) : (
+                    `PAY ${money(q.total)}`
+                  )}
+                </button>
               </div>
             </div>
           </div>

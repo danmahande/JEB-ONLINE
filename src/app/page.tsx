@@ -112,6 +112,12 @@ export default function Storefront() {
     });
   }, [toast]);
 
+  // Header search submit: the header has no seat over the catalog — scroll
+  // down to the rack so the query's effect is visible (same as the hero).
+  const scrollToCatalog = useCallback(() => {
+    document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   // Error boundary fallback component
   if (error) {
     return (
@@ -122,6 +128,7 @@ export default function Storefront() {
           onOpenCart={() => setCartOpen(true)}
           query={query}
           onQuery={setQuery}
+          onSearchSubmit={scrollToCatalog}
         />
         <main className="flex-1 flex flex-col items-center justify-center p-8">
           <div className="text-center">
@@ -148,6 +155,7 @@ export default function Storefront() {
         onOpenCart={() => setCartOpen(true)}
         query={query}
         onQuery={setQuery}
+        onSearchSubmit={scrollToCatalog}
       />
 
       <main className="flex-1 flex flex-col">

@@ -29,7 +29,8 @@ export default function Header({
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const regionRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLFormElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close the search when clicking outside
   useEffect(() => {
@@ -42,16 +43,22 @@ export default function Header({
     return () => document.removeEventListener("click", listener);
   }, []);
 
-  // Handle Escape key to close search
+  // Handle Escape key to close search (and hand focus back to the page)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && focused) {
         setFocused(false);
+        searchInputRef.current?.blur();
       }
     };
     
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [focused]);
+
+  // Opening the channel hands focus straight to the well
+  useEffect(() => {
+    if (focused) searchInputRef.current?.focus();
   }, [focused]);
 
   // Show loading indicator when changing regions
@@ -146,11 +153,16 @@ export default function Header({
               </span>
             </div>
 
-            {/* Search */}
-            <div
+            {/* Search — a real search form: Enter submits, the grip is a
+                labelled toggle button, opening hands focus to the well */}
+            <form
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleGoClick();
+              }}
               className={`ms-hsearch ${focused ? "is-open" : ""}`}
               ref={searchContainerRef}
-              onClick={() => !focused && setFocused(true)} // Allow click to open
             >
               <input
                 type="text"
@@ -159,14 +171,15 @@ export default function Header({
                 placeholder="SEARCH…"
                 className="ms-search-input ms-field"
                 aria-label="Search products"
+                ref={searchInputRef}
                 tabIndex={focused ? 0 : -1} // Manage tab focus
               />
-              <div 
-                className="ms-hsearch-grip cursor-pointer" 
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent search container click
-                  setFocused(!focused);
-                }}
+              <button
+                type="button"
+                className="ms-hsearch-grip cursor-pointer"
+                onClick={() => setFocused(!focused)}
+                aria-label={focused ? "Close search" : "Open search"}
+                aria-expanded={focused}
               >
                 <svg
                   width="16"
@@ -195,14 +208,15 @@ export default function Header({
                 >
                   <line x1="18" y1="6" x2="6" y2="18" />
                 </svg>
-              </div>
+              </button>
               <button
-                onClick={handleGoClick}
+                type="submit"
+                tabIndex={focused ? 0 : -1}
                 className="ms-hsearch-key ms-key"
               >
                 GO
               </button>
-            </div>
+            </form>
 
             {/* Cart */}
             <button

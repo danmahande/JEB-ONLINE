@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo } from "react";
+import Image from "next/image";
 import { Drawer } from "vaul";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { useCart, useRegion } from "@/lib/store";
-import { fmt } from "@/lib/format";
-import { leviesFor } from "@/lib/levies";
+import { fmt, quoteCart } from "@/lib/format";
+import { levyTag, pct } from "@/lib/levies";
 import { Button } from "@/components/ui/button";
 import type { RegionConfig } from "@/lib/types";
 
@@ -24,40 +25,20 @@ export function CartDrawer({
   const removeFromCart = useCart((s) => s.removeLine);
   const setQuantity = useCart((s) => s.setQty);
   const clear = useCart((s) => s.clear);
-  const active = regions.find((r) => r.region === region);
-
   // Check if active region exists, if not use the first available region
-  const displayRegion = active || regions[0];
+  const displayRegion = regions.find((r) => r.region === region) ?? regions[0];
 
-  const subtotal = lines.reduce(
-    (sum, l) => sum + l.qty * l.unitPriceUsd,
-    0
+  /* One quote for every displayed number — the same quoteCart the order API
+     mirrors server-side. Never hand-roll duty/VAT sums here: the levies are
+     line items of their own (IDF/RDL…), duty comes from region.dutyRate and
+     VAT applies on subtotal + duty + levies-in-base. */
+  const q = useMemo(
+    () => (displayRegion ? quoteCart(lines, displayRegion) : null),
+    [lines, displayRegion]
   );
 
-  // Calculate levies using the existing function
-  const leviesList = leviesFor(region);
-  const duty = leviesList.reduce((sum, levy) => {
-    return sum + (levy.rate * subtotal);
-  }, 0);
-  const vat = leviesList.reduce((sum, levy) => {
-    // If levy is part of VAT base, add to VAT calculation
-    const levyAmount = levy.inVatBase ? subtotal + duty : subtotal;
-    return sum + (levy.rate * levyAmount);
-  }, 0);
-  const freight = displayRegion ? displayRegion.shippingBase + (lines.reduce((sum, l) => sum + l.weightKg * l.qty, 0) * displayRegion.shippingPerKg) : 0;
-  const total = subtotal + duty + vat + freight;
-  
-  // Loading state for checkout process
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
-
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    // Simulate a brief loading state before transitioning
-    setTimeout(() => {
-      onCheckout();
-      setIsCheckingOut(false);
-    }, 500);
-  };
+  const totalFmt = (usd: number) =>
+    displayRegion ? fmt(usd, displayRegion) : `$${usd.toFixed(2)}`;
 
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
@@ -102,15 +83,17 @@ export function CartDrawer({
               <>
                 <div className="flex-1 overflow-y-auto pb-6">
                   <ul className="space-y-4">
-                    {lines.map((l, i) => (
+                    {lines.map((l) => (
                       <li
-                        key={i}
+                        key={`${l.productId}-${l.variantLabel}`}
                         className="flex items-center gap-4 border-b border-line pb-4"
                       >
                         <div className="relative size-20 flex-shrink-0 overflow-hidden rounded border border-line bg-muted">
-                          <img
+                          <Image
                             src={l.image || "/products/placeholder.png"}
                             alt={l.productLabel}
+                            width={80}
+                            height={80}
                             className="size-full object-cover"
                           />
                         </div>
@@ -158,7 +141,7 @@ export function CartDrawer({
                               +
                             </button>
                             <span className="ms-label ml-auto">
-                              {displayRegion ? fmt(l.unitPriceUsd * l.qty, displayRegion) : `$${(l.unitPriceUsd * l.qty).toFixed(2)}`}
+                              {totalFmt(l.unitPriceUsd * l.qty)}
                             </span>
                           </div>
                         </div>
@@ -168,28 +151,36 @@ export function CartDrawer({
                 </div>
 
                 <div className="sticky bottom-0 border-t border-line bg-white p-4">
-                  <div className="space-y-3 pb-4">
-                    <div className="flex justify-between text-sm">
-                      <span>SUBTOTAL</span>
-                      <span>{displayRegion ? fmt(subtotal, displayRegion) : `$${subtotal.toFixed(2)}`}</span>
+                  {q && (
+                    <div className="space-y-3 pb-4">
+                      <div className="flex justify-between text-sm">
+                        <span>SUBTOTAL</span>
+                        <span>{totalFmt(q.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>DUTY ({pct(displayRegion!.dutyRate)})</span>
+                        <span>{totalFmt(q.duty)}</span>
+                      </div>
+                      {q.levies.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>LEVIES ({levyTag(displayRegion!.region)})</span>
+                          <span>{totalFmt(q.leviesTotal)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
+                        <span>VAT ({pct(displayRegion!.vatRate)})</span>
+                        <span>{totalFmt(q.vat)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>FREIGHT</span>
+                        <span>{totalFmt(q.shipping)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-line pt-3 font-bold">
+                        <span>TOTAL</span>
+                        <span className="text-brand">{totalFmt(q.total)}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span>DUTY ({(duty/subtotal)*100 || (displayRegion ? displayRegion.dutyRate * 100 : 0)}%)</span>
-                      <span>{displayRegion ? fmt(duty, displayRegion) : `$${duty.toFixed(2)}`}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>VAT ({(vat/subtotal)*100 || (displayRegion ? displayRegion.vatRate * 100 : 0)}%)</span>
-                      <span>{displayRegion ? fmt(vat, displayRegion) : `$${vat.toFixed(2)}`}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>FREIGHT</span>
-                      <span>{displayRegion ? fmt(freight, displayRegion) : `$${freight.toFixed(2)}`}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-line pt-3 font-bold">
-                      <span>TOTAL</span>
-                      <span className="text-brand">{displayRegion ? fmt(total, displayRegion) : `$${total.toFixed(2)}`}</span>
-                    </div>
-                  </div>
+                  )}
                   
                   <div className="grid grid-cols-2 gap-3">
                     <Button
@@ -201,17 +192,9 @@ export function CartDrawer({
                     </Button>
                     <Button
                       className="ms-label ms-key bg-primary hover:bg-primary/90 px-4 py-3 flex items-center justify-center gap-2"
-                      onClick={handleCheckout}
-                      disabled={isCheckingOut}
+                      onClick={onCheckout}
                     >
-                      {isCheckingOut ? (
-                        <>
-                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                          PROCESSING...
-                        </>
-                      ) : (
-                        `CHECKOUT (${displayRegion ? fmt(total, displayRegion) : `$${total.toFixed(2)}`})`
-                      )}
+                      {`CHECKOUT (${q ? totalFmt(q.total) : "—"})`}
                     </Button>
                   </div>
                 </div>
