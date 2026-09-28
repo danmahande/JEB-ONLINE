@@ -23,7 +23,7 @@ export default function Header({
 }) {
   const pathname = usePathname();
   const cartCount = useCart((s) => s.lines.reduce((sum, l) => sum + l.qty, 0));
-  const region = useRegion((s) => s.region);
+  const region = useRegion((s) => s.region || '');
   const setRegion = useRegion((s) => s.setRegion);
   const hydrated = useRegion((s) => s.hasHydrated);
   const [open, setOpen] = useState(false);

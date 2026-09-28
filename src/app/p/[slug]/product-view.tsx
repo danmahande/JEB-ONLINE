@@ -61,10 +61,11 @@ export default function ProductView({
 
   const v = useMemo(() => product.variants[variantIdx], [product.variants, variantIdx]);
   const active = regions.find((r) => r.region === region);
+  const displayRegion = active || regions[0]; // Use first region as fallback
   const priceUsd = product.unitSellingPrice + (v?.priceDelta || 0);
   const out = product.currentStock <= 0;
   const totalFmt = (usd: number) =>
-    active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
+    displayRegion && regionHasHydrated ? fmt(usd, displayRegion) : `$${usd.toFixed(2)}`;
 
   function handleAdd() {
     if (out || !v) return;
