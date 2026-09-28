@@ -595,3 +595,55 @@ real flow in the browser (add → checkout → place order), not just tsc.
 - [ ] Cart drawer (KE): DUTY uses region.dutyRate, LEVIES row present, VAT = 16%-style rate, total matches server quote
 - [ ] Header search opens by mouse AND keyboard; Escape closes; GO scrolls to #catalog
 - [ ] `npx tsc --noEmit` = 0 and `npx next build` passes
+
+---
+
+## ROUND 4 ADDENDUM — hero search verified live (desktop 1440 + mobile 390)
+
+Ran the page in the workspace and put the hero search through a full
+functional test. The wiring WORKS — the styling makes it unusable.
+
+### What works (verified, char-by-char with real key events)
+
+- Typing syncs: `?q=r → ri → ric → rice`, URL updates, live grid filter runs
+  (rack 14 → 1 line), CLEAR chip appears
+- **Enter submits** — form onSubmit fires, page scrolls exactly to
+  `#catalog` (y=406 = catalogTop)
+- SEARCH key click submits the same way
+- Shared query state with the header search works
+
+### What is broken (verified with computed styles + elementFromPoint)
+
+**V1 — The query field is invisible.** `.ms-search-input` computes to
+`opacity: 0; width: 24px`. The shopper sees no field, no caret, and no text
+while typing — the search "works blind". Cause (round-3 Blocker 3, still
+open): header-collapse CSS added to the hero family; `.is-open` never fires
+on the hero form.
+
+**V2 — The magnifier square is a dead click.** The visible 34px white square
+is the most natural target, but `elementFromPoint` at its center returns the
+decorative mark SVG. The restored `.ms-search-mark` has `pointer-events:
+auto` and no handler — the ORIGINAL had `pointer-events: none` so clicks fell
+through to the input, and the input filled the channel. Mouse users
+effectively cannot search from the hero.
+
+**V3 — SEARCH key overlaps ENTER CATALOG on desktop.** Key occupies x 91–193;
+ENTER CATALOG spans x 77–236 at the same y (±4px) — two buttons stacked, the
+pill reads "SEARCH ↓". The 34px form (`width: 34px` beats the Tailwind
+`w-full sm:w-80 lg:w-96`) collapses the flex row so both controls land on the
+same spot. Mobile escapes only because `flex-col` stacks them.
+
+### Fix (unchanged from round 2/3 — now with the missing detail)
+
+Copy the hero family verbatim from
+`git show f67b810:src/app/globals.css` (~lines 1119–1205):
+- `.ms-search` — steel-grain channel, `padding: 4px`, border `#47463f`,
+  **no width property** (Tailwind sizes it)
+- `.ms-search-input` — `flex: 1; min-width: 0` dark milled socket, bone text,
+  brand caret (visible!)
+- `.ms-search-mark` — with **`pointer-events: none`** (fixes V2)
+- `::placeholder` + press-flush `:focus-within`
+Then delete the added collapse rules (`.ms-search-input { width: 0; opacity:
+0 }` and `.ms-search.is-open .ms-search-input`). Verify: channel ≥ 320px,
+input visible and typeable, magnifier click focuses the input, no overlap
+with ENTER CATALOG.
