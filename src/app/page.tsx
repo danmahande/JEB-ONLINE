@@ -39,6 +39,10 @@ export default function Storefront() {
     useRegion.setState({ hasHydrated: true });
   }, []);
 
+  // Deep-link guard: ?view=confirmation without a placed order (fresh tab,
+  // shared link) would render a blank main — fall back to the shop view.
+  const activeView = view === "confirmation" && !placed ? "shop" : view;
+
   // Scroll to top utility function
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -78,7 +82,7 @@ export default function Storefront() {
             <p className="mb-4">{typeof error === 'string' ? error : 'An error occurred'}</p>
             <button 
               onClick={retry}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              className="bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded transition-colors"
             >
               Try Again
             </button>
@@ -101,8 +105,8 @@ export default function Storefront() {
 
       <main className="flex-1 flex flex-col">
         {/* keyed by view — remounts replay the soft fade-rise on every switch */}
-        <div key={view} className="ms-view-in flex-1 flex flex-col">
-          {view === "shop" && (
+        <div key={activeView} className="ms-view-in flex-1 flex flex-col">
+          {activeView === "shop" && (
             <>
               <Hero
                 onShop={() => {
@@ -191,7 +195,7 @@ export default function Storefront() {
             </>
           )}
 
-          {view === "checkout" && (
+          {activeView === "checkout" && (
             <Checkout
               regions={regions}
               onPlaced={(o) => {
@@ -203,7 +207,7 @@ export default function Storefront() {
             />
           )}
 
-          {view === "confirmation" && placed && (
+          {activeView === "confirmation" && placed && (
             <Confirmation
               order={placed}
               regions={regions}
@@ -212,7 +216,7 @@ export default function Storefront() {
             />
           )}
 
-          {view === "track" && <TrackOrder />}
+          {activeView === "track" && <TrackOrder />}
         </div>
       </main>
 
