@@ -7,7 +7,6 @@ import type { RegionConfig } from "@/lib/types";
 import { clsx } from "clsx";
 import KampalaClock from "./kampala-clock";
 import Link from "next/link";
-import { CartDrawer } from "@/components/storefront/cart-drawer";
 
 const TICKER_ITEMS = [
   // duty-free lane scoped to the corridors that actually quote 0% — the DRC
