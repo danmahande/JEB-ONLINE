@@ -20,13 +20,13 @@ export function CartDrawer({
   region: string;
   onCheckout: () => void;
 }) {
-  const cart = useCart((s) => ({ ...s }));
+  const lines = useCart((s) => s.lines);
   const removeFromCart = useCart((s) => s.remove);
   const setQuantity = useCart((s) => s.setQuantity);
   const clear = useCart((s) => s.clear);
   const active = regions.find((r) => r.region === region)!;
 
-  const subtotal = cart.lines.reduce(
+  const subtotal = lines.reduce(
     (sum, l) => sum + l.qty * l.unitPriceUsd,
     0
   );
@@ -74,7 +74,7 @@ export function CartDrawer({
                 <button
                   onClick={clear}
                   className="ms-label text-hush hover:text-ink disabled:opacity-40"
-                  disabled={cart.lines.length === 0}
+                  disabled={lines.length === 0}
                 >
                   CLEAR
                 </button>
@@ -86,7 +86,7 @@ export function CartDrawer({
               </div>
             </div>
 
-            {cart.lines.length === 0 ? (
+            {lines.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
                 <p className="ms-display mb-6 text-hush">EMPTY</p>
                 <p className="mb-6 text-hush">ADD GRAINS OR HARDWARE TO CONTINUE</p>
@@ -102,7 +102,7 @@ export function CartDrawer({
               <>
                 <div className="flex-1 overflow-y-auto pb-6">
                   <ul className="space-y-4">
-                    {cart.lines.map((l, i) => (
+                    {lines.map((l, i) => (
                       <li
                         key={i}
                         className="flex items-center gap-4 border-b border-line pb-4"

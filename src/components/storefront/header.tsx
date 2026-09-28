@@ -1,22 +1,10 @@
-"use client";
-
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
-import type { RegionConfig } from "@/lib/types";
 import { clsx } from "clsx";
-import KampalaClock from "./kampala-clock";
-import Link from "next/link";
-
-const TICKER_ITEMS = [
-  // duty-free lane scoped to the corridors that actually quote 0% — the DRC
-  // corridor is transitional and carries an estimated duty (Task 61)
-  "EAC ORIGIN — 0% IMPORT DUTY ACROSS KE · TZ · RW",
-  "GRAINS MILLED & SORTED IN UGANDA",
-  "CROSS-BORDER FREIGHT QUOTED AT CHECKOUT",
-  "BULK & WHOLESALE WELCOME",
-  "MULTI-CURRENCY PRICING — UGX · KES · TZS · RWF · CDF · USD",
-];
+import KampalaClock from "@/components/storefront/kampala-clock";
+import type { RegionConfig } from "@/lib/types";
 
 export default function Header({
   regions,
@@ -32,36 +20,28 @@ export default function Header({
   onQuery: (q: string) => void;
 }) {
   const pathname = usePathname();
-  const lines = useCart((s) => s.lines);
-  const cartHasHydrated = useCart((s) => s.hasHydrated);
+  const cartCount = useCart((s) => s.lines.reduce((sum, l) => sum + l.qty, 0));
   const region = useRegion((s) => s.region);
   const setRegion = useRegion((s) => s.setRegion);
-  const [regionOpen, setRegionOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchSeated, setSearchSeated] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const hasHydrated = useRegion((s) => s.hasHydrated);
-  const [isChangingRegion, setIsChangingRegion] = useState(false);
+  const hydrated = useRegion((s) => s.hasHydrated);
+  const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const cartCount = lines.reduce((sum, l) => sum + l.qty, 0);
-
-  // opening the channel hands focus straight to the well
-  useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
 
   // Close the search when clicking outside
   useEffect(() => {
     const listener = (e: MouseEvent) => {
       if (!ref.current?.contains(e.target as Node)) {
-        setSearchOpen(false);
+        setFocused(false);
       }
     };
     document.addEventListener("click", listener);
     return () => document.removeEventListener("click", listener);
   }, []);
 
+  // Show loading indicator when changing regions
+  const [isChangingRegion, setIsChangingRegion] = useState(false);
+  
   const handleRegionChange = (newRegion: string) => {
     setIsChangingRegion(true);
     setRegion(newRegion);
@@ -69,44 +49,8 @@ export default function Header({
     setTimeout(() => setIsChangingRegion(false), 500);
   };
 
-  // header compresses on scroll: ticker collapses, main bar gains a shadow
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setScrolled(y > 24);
-      setSearchSeated(y > 200);
-      if (y <= 200) setSearchOpen(false); // channel can't stay open while retracted
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const active = regions.find((r) => r.region === region);
-  const ticker = [...TICKER_ITEMS, ...TICKER_ITEMS];
-
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-white">
-      {/* ticker — collapses when the page scrolls */}
-      <div
-        className={`relative overflow-hidden bg-ink text-white transition-all duration-300 ${
-          scrolled ? "max-h-0 py-0 opacity-0" : "max-h-12 py-1.5 opacity-100"
-        }`}
-      >
-        <div className="ms-marquee-track" aria-hidden="true">
-          {ticker.map((t, i) => (
-            <span key={i} className="ms-label mx-8 inline-block">
-              {t} <span className="ml-8 text-brand">●</span>
-            </span>
-          ))}
-        </div>
-        {/* live HQ clock — masked into the right edge of the marquee */}
-        <div className="absolute inset-y-0 right-0 flex items-center pl-10 pr-4 md:pr-8 bg-gradient-to-r from-transparent via-ink to-ink">
-          <KampalaClock />
-        </div>
-      </div>
-
-      {/* main bar */}
       <div className="container mx-auto px-4 py-3 md:px-6">
         <div className="flex items-center justify-between gap-4">
           {/* Brand */}
@@ -128,7 +72,7 @@ export default function Header({
               <button
                 onClick={() => onNavigate("track")}
                 className={clsx("ms-label", {
-                  "text-brand": pathname.includes("track"),
+                  "text-brand": typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'track',
                 })}
               >
                 TRACK ORDER
@@ -177,13 +121,10 @@ export default function Header({
               </span>
             </div>
 
-        {/* search — a machined square on the rail that slides open into
-            a steel channel; the nav hands over its space while it does.
-            No permanent seat: retracted until the page scrolls (Task 54). */}
             {/* Search */}
             <div
-              className={`ms-hsearch ${searchOpen ? "is-open" : ""}`}
-              onFocus={() => setSearchOpen(true)}
+              className={`ms-hsearch ${focused ? "is-open" : ""}`}
+              onFocus={() => setFocused(true)}
             >
               <input
                 type="text"
@@ -220,7 +161,6 @@ export default function Header({
                   className="icon-close"
                 >
                   <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </div>
               <button
@@ -264,7 +204,7 @@ export default function Header({
               )}
               
               {/* Cart live indicator when hydrated and has items */}
-              {hasHydrated && cartCount > 0 && (
+              {hydrated && cartCount > 0 && (
                 <span className="ms-cart-live absolute -top-1 -right-1 w-7 h-7 rounded-full opacity-0" />
               )}
             </button>
@@ -275,21 +215,5 @@ export default function Header({
         </div>
       </div>
     </header>
-    
-    <CartDrawer
-      open={searchOpen}
-      onOpenChange={setSearchOpen}
-      regions={regions}
-      region={region}
-      onCheckout={() => {
-        setSearchOpen(false);
-        onNavigate("shop");
-        // Navigate to checkout
-        if (typeof window !== 'undefined') {
-          window.location.hash = '#checkout';
-        }
-      }}
-    />
-  </div>
   );
 }
