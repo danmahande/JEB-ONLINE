@@ -59,21 +59,11 @@ export default function RootLayout({
   suppressHydrationWarning
   className={`${spaceGrotesk.variable} ${inter.variable}`}
 >
-      <body 
-        className="antialiased bg-background text-foreground"
-        // Adding keyboard navigation enhancement
-        onKeyDown={(e) => {
-          // Skip to main content for screen readers
-          if (e.key === 'Tab' && e.shiftKey && e.target === document.body) {
-            const skipLink = document.getElementById('skip-main');
-            if (skipLink) {
-              skipLink.focus();
-              e.preventDefault();
-            }
-          }
-        }}
-      >
-        {/* Skip link for accessibility */}
+      <body className="antialiased bg-background text-foreground">
+        {/* Skip link for accessibility — first element in the DOM, so the
+            first Tab press lands on it and Tailwind's focus:not-sr-only
+            reveals it. No JS needed here: this file is a server component
+            and event handlers cannot cross the server/client line. */}
         <a 
           id="skip-main" 
           href="#main-content" 
