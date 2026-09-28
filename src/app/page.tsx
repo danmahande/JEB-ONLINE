@@ -4,12 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useCart, useRegion } from "@/lib/store";
 import { useCatalog } from "@/hooks/use-catalog";
-import { useUrlState } from "@/hooks/use-url-state";
 import Header from "@/components/storefront/header";
 import Hero from "@/components/storefront/hero";
 import ProductGrid from "@/components/storefront/product-grid";
 import QuickView from "@/components/storefront/quick-view";
-import CartDrawer from "@/components/storefront/cart-drawer";
+import { CartDrawer } from "@/components/storefront/cart-drawer";
 import Checkout from "@/components/storefront/checkout";
 import Confirmation from "@/components/storefront/confirmation";
 import TrackOrder from "@/components/storefront/track-order";
@@ -20,14 +19,66 @@ import type { PlacedOrder, Product } from "@/lib/types";
 
 type View = "shop" | "checkout" | "confirmation" | "track";
 
+// Custom hook for managing view state with URL sync
+function useViewState() {
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const v = params.get("view");
+      if (v === "track" || v === "checkout" || v === "confirmation") {
+        return v as View;
+      }
+    }
+    return "shop";
+  });
+
+  const updateView = useCallback((newView: View) => {
+    setView(newView);
+    
+    // Update URL without page refresh
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", newView);
+    window.history.replaceState({}, "", `?${params.toString()}`);
+  }, []);
+
+  return [view, updateView] as const;
+}
+
+// Custom hook for search query management
+function useSearchQuery() {
+  const [query, setQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      if (q) return q;
+    }
+    return "";
+  });
+
+  const updateQuery = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+    
+    // Update URL without page refresh
+    const params = new URLSearchParams(window.location.search);
+    if (newQuery) {
+      params.set("q", newQuery);
+    } else {
+      params.delete("q");
+    }
+    window.history.replaceState({}, "", `?${params.toString()}`);
+  }, []);
+
+  return [query, updateQuery] as const;
+}
+
 export default function Storefront() {
   const { products, regions, loading, error, retry } = useCatalog();
   const cartLines = useCart((s) => s.lines);
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
 
-  const [view, setView] = useUrlState<View>("view", "shop");
-  const [query, setQuery] = useUrlState<string>("q", "");
+  const [view, setView] = useViewState();
+  const [query, setQuery] = useSearchQuery();
   
   const [selected, setSelected] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -38,10 +89,6 @@ export default function Storefront() {
     useCart.setState({ hasHydrated: true });
     useRegion.setState({ hasHydrated: true });
   }, []);
-
-  // Deep-link guard: ?view=confirmation without a placed order (fresh tab,
-  // shared link) would render a blank main — fall back to the shop view.
-  const activeView = view === "confirmation" && !placed ? "shop" : view;
 
   // Scroll to top utility function
   const scrollToTop = useCallback(() => {
@@ -82,7 +129,7 @@ export default function Storefront() {
             <p className="mb-4">{typeof error === 'string' ? error : 'An error occurred'}</p>
             <button 
               onClick={retry}
-              className="bg-brand hover:bg-brand-dark text-white px-4 py-2 rounded transition-colors"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
             >
               Try Again
             </button>
@@ -105,8 +152,8 @@ export default function Storefront() {
 
       <main className="flex-1 flex flex-col">
         {/* keyed by view — remounts replay the soft fade-rise on every switch */}
-        <div key={activeView} className="ms-view-in flex-1 flex flex-col">
-          {activeView === "shop" && (
+        <div key={view} className="ms-view-in flex-1 flex flex-col">
+          {view === "shop" && (
             <>
               <Hero
                 onShop={() => {
@@ -195,7 +242,7 @@ export default function Storefront() {
             </>
           )}
 
-          {activeView === "checkout" && (
+          {view === "checkout" && (
             <Checkout
               regions={regions}
               onPlaced={(o) => {
@@ -207,7 +254,7 @@ export default function Storefront() {
             />
           )}
 
-          {activeView === "confirmation" && placed && (
+          {view === "confirmation" && placed && (
             <Confirmation
               order={placed}
               regions={regions}
@@ -216,7 +263,7 @@ export default function Storefront() {
             />
           )}
 
-          {activeView === "track" && <TrackOrder />}
+          {view === "track" && <TrackOrder />}
         </div>
       </main>
 

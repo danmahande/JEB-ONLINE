@@ -59,11 +59,10 @@ export default function RootLayout({
   suppressHydrationWarning
   className={`${spaceGrotesk.variable} ${inter.variable}`}
 >
-      <body className="antialiased bg-background text-foreground">
-        {/* Skip link for accessibility — first element in the DOM, so the
-            first Tab press lands on it and Tailwind's focus:not-sr-only
-            reveals it. No JS needed here: this file is a server component
-            and event handlers cannot cross the server/client line. */}
+      <body 
+        className="antialiased bg-background text-foreground"
+      >
+        {/* Skip link for accessibility */}
         <a 
           id="skip-main" 
           href="#main-content" 

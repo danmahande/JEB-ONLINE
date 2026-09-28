@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { fmt } from "@/lib/format";
-import { LEVIES } from "@/lib/levies";
+import { leviesFor } from "@/lib/levies";
 import type { RegionConfig, PlacedOrder } from "@/lib/types";
 
 export default function Checkout({
@@ -14,7 +14,7 @@ export default function Checkout({
   onPlaced: (o: PlacedOrder) => void;
   onBack: () => void;
 }) {
-  const cart = useCart((s) => ({ ...s }));
+  const lines = useCart((s) => s.lines);
   const region = useRegion((s) => s.region);
   const { toast } = useToast();
   const active = regions.find((r) => r.region === region)!;
@@ -30,15 +30,29 @@ export default function Checkout({
     address: "",
     city: "",
     postalCode: "",
-    country: active.country,
+    country: "", // Will be derived from active region
   });
 
-  const subtotal = cart.lines.reduce(
-    (sum, l) => sum + l.quantity * l.unitPrice,
+  const subtotal = lines.reduce(
+    (sum, l) => sum + l.qty * l.unitPriceUsd,
     0
   );
 
-  const { duty, vat, freight, total } = LEVIES(subtotal, active);
+  // Calculate levies using the existing function
+  const leviesList = leviesFor(region);
+  const duty = leviesList.reduce((sum, levy) => {
+    if (levy.tag === 'DUTY') return sum + (levy.rate * subtotal);
+    return sum;
+  }, 0);
+  const vat = leviesList.reduce((sum, levy) => {
+    if (levy.tag === 'VAT') return sum + (levy.rate * subtotal);
+    return sum;
+  }, 0);
+  const freight = leviesList.reduce((sum, levy) => {
+    if (levy.tag === 'FREIGHT') return sum + (levy.rate * subtotal);
+    return sum;
+  }, 0);
+  const total = subtotal + duty + vat + freight;
 
   async function placeOrder() {
     setPlacing(true);
@@ -65,14 +79,14 @@ export default function Checkout({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer,
-          lines: cart.lines,
+          customer: {
+            ...customer,
+            country: active.country // Use the current region's country
+          },
+          lines: lines,
           region,
+          // Only send essential data, let server calculate totals
           subtotal,
-          duty,
-          vat,
-          freight,
-          total,
         }),
       });
 
@@ -253,17 +267,15 @@ export default function Checkout({
               <div>
                 <label className="ms-label mb-2 block text-hush">POSTAL CODE *</label>
                 <input
+                  id="customer-postal"
                   type="text"
                   value={customer.postalCode}
                   onChange={(e) =>
                     setCustomer({ ...customer, postalCode: e.target.value })
                   }
-                  className={`ms-field w-full ${errors.postalCode ? "border-red-500" : ""}`}
-                  placeholder="12345"
+                  className="ms-field w-full"
+                  placeholder="Optional"
                 />
-                {errors.postalCode && (
-                  <p className="mt-1 text-sm text-red-500">{errors.postalCode}</p>
-                )}
               </div>
               <div>
                 <label className="ms-label mb-2 block text-hush">COUNTRY</label>
@@ -296,8 +308,8 @@ export default function Checkout({
                 <p className="font-medium">{customer.name}</p>
                 <p>{customer.company || "Individual"}</p>
                 <p>{customer.address}</p>
-                <p>{customer.city}, {customer.postalCode}</p>
-                <p>{customer.country}</p>
+                <p>{customer.city}, {customer.postalCode || 'N/A'}</p>
+                <p>{active.country}</p>
                 <p className="mt-2">{customer.email} · {customer.phone}</p>
               </div>
             </div>
@@ -318,11 +330,11 @@ export default function Checkout({
                       <div>
                         <p className="font-medium">{l.productLabel}</p>
                         <p className="text-sm text-hush">
-                          {l.variantLabel} · Qty: {l.quantity}
+                          {l.variantLabel} · Qty: {l.qty}
                         </p>
                       </div>
                     </div>
-                    <p className="font-medium">{fmt(l.unitPrice, active)}</p>
+                    <p className="font-medium">{fmt(l.unitPriceUsd, active)}</p>
                   </div>
                 ))}
               </div>
@@ -335,11 +347,11 @@ export default function Checkout({
                   <span>{fmt(subtotal, active)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>DUTY ({active.dutyRate * 100}%)</span>
+                  <span>DUTY ({(duty/subtotal)*100 || active.dutyRate * 100}%)</span>
                   <span>{fmt(duty, active)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>VAT ({active.vatRate * 100}%)</span>
+                  <span>VAT ({(vat/subtotal)*100 || active.vatRate * 100}%)</span>
                   <span>{fmt(vat, active)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -369,7 +381,7 @@ export default function Checkout({
             
             <div className="rounded-lg border border-line bg-mist p-6 text-center">
               <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-ink text-white">
-                $
+                {active.currency}
               </div>
               <h3 className="mb-2 font-bold">Payment Processing</h3>
               <p className="text-sm text-hush mb-6">

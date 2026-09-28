@@ -276,7 +276,7 @@ export default function Header({
         </div>
       </div>
     </header>
-
+    
     <CartDrawer
       open={searchOpen}
       onOpenChange={setSearchOpen}
@@ -291,5 +291,6 @@ export default function Header({
         }
       }}
     />
+  </div>
   );
 }

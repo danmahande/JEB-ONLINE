@@ -1134,17 +1134,6 @@ body {
   border: 0;
 }
 
-.sr-only.focus:not-sr-only {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: 0;
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
 /* Enhanced button/key styles with improved visual feedback */
 .ms-key,
 .ms-search-key {
@@ -1230,35 +1219,122 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Enhanced loading states and skeleton styles */
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Restore missing CSS rules */
+
+/* Steel search channel (was .ms-search) */
+.ms-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #ffffff;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), min-width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.2s;
+}
+.ms-search:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: 
+    inset 0 0 0 1px var(--color-brand),
+    0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+/* Search mark */
+.ms-search-mark {
+  flex: 0 0 34px;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #47463f;
+  transition: color 0.2s, transform 0.3s;
 }
 
-/* Enhanced spin animation for loading indicators */
-.animate-spin {
-  animation: spin 1s linear infinite;
+/* Footer rail */
+.ms-footer-rail {
+  border-top: 1px solid var(--color-line);
+  background: var(--color-ink);
+  color: white;
+  padding: 16px 0;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Plaque styles */
+.ms-plaque {
+  border-radius: 6px;
+  border: 1px solid var(--color-line);
+  background: white;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.ms-plaque:hover {
+  transform: translateY(-2px);
+}
+.ms-plaque-die {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background: var(--color-brand);
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  line-height: 24px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.ms-plaque-index {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--color-hush);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.ms-plaque-body {
+  color: var(--color-hush);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-/* Enhanced progress bar styles */
-.progress-bar {
-  transition: width 0.3s ease;
+/* Pack rail */
+.ms-pack-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+/* Tab styles */
+.ms-tab {
+  padding: 8px 16px;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+  border: none;
+  color: var(--color-hush);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ms-tab[aria-selected="true"] {
+  color: var(--color-brand);
+  background: white;
+  border-bottom: 2px solid white;
+  position: relative;
+}
+.ms-tab[aria-selected="true"]:after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: white;
+}
+.ms-tab:hover {
+  color: var(--color-ink);
 }
