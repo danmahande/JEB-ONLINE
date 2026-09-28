@@ -59,12 +59,36 @@ export default function RootLayout({
   suppressHydrationWarning
   className={`${spaceGrotesk.variable} ${inter.variable}`}
 >
-      <body className="antialiased bg-background text-foreground">
+      <body 
+        className="antialiased bg-background text-foreground"
+        // Adding keyboard navigation enhancement
+        onKeyDown={(e) => {
+          // Skip to main content for screen readers
+          if (e.key === 'Tab' && e.shiftKey && e.target === document.body) {
+            const skipLink = document.getElementById('skip-main');
+            if (skipLink) {
+              skipLink.focus();
+              e.preventDefault();
+            }
+          }
+        }}
+      >
+        {/* Skip link for accessibility */}
+        <a 
+          id="skip-main" 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground focus:rounded-md"
+        >
+          Skip to main content
+        </a>
+        
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
-        {children}
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
         <Toaster />
       </body>
     </html>

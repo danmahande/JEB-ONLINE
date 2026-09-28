@@ -141,8 +141,8 @@
                      strip, page roots). No section paints its own tone.
      white #FFFFFF = raised commerce surfaces only (fascia, cards,
                      dialogs, drawers) — the --card token.
-     paper         = small die-cut props (chips, tabs, slips, file
-                     tags) — physical paper sitting on steel/white.
+     paper         = small die-cut props (chips, tabs, slips, tags) —
+                     physical paper sitting on steel/white.
      ink           = deliberate dark blocks (ticker, footer, pressed
                      tabs). Never a "slightly different light tone". */
   --color-paper: #fbfaf5;      /* prop paper — chips, tabs, slips, tags */
@@ -164,7 +164,7 @@
   --ms-steel-bevels:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     inset 0 -2px 0 rgba(40, 40, 30, 0.26),
-    inset 1px 0 0 rgba(255, 255, 255, 0.45),
+    inset 1px 0 0 rgba(40, 40, 30, 0.1),
     inset -1px 0 0 rgba(40, 40, 30, 0.1);
 }
 
@@ -999,304 +999,28 @@ body {
 /* ============================================================
    Search (Task 52) — machined steel channel. Same material
    system as the product cabinets: painted-steel face with the
-   hairline grain, dark inset well for the query, brand-orange
-   key cap. Focused, the whole channel sinks 2px into its
-   housing — the same physical press the tiles make. No glow,
-   no neon: light lands as bevel highlights, nothing floats.
-   ============================================================ */
-.ms-search {
-  display: flex;
-  align-items: stretch;
-  padding: 4px;
-  border-radius: 6px;
-  border: 1px solid #47463f;
-  /* cabinet face — identical paint to .ms-tile */
-  background-image: var(--ms-steel-grain), var(--ms-steel-face);
-  box-shadow: var(--ms-steel-bevels);
-  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1), box-shadow 0.25s;
-}
-/* focused: the channel presses flush into its housing */
-.ms-search:focus-within {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 rgba(40, 40, 30, 0.2),
-    inset 1px 0 0 rgba(255, 255, 255, 0.25),
-    inset -1px 0 0 rgba(40, 40, 30, 0.08);
-}
+   same grain/bevel treatment, inset shadows only. */
 
-/* the well — dark milled socket the query sits in (socket paint
-   reused from .ms-tile::before), light bone text, orange caret */
-.ms-search-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  border-radius: 4px;
-  outline: none;
-  padding: 10px 12px;
-  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  color: #f4f3ea;
-  caret-color: var(--color-brand);
-  background-image: linear-gradient(180deg, #4a4942 0%, #55544c 55%, #5f5e55 100%);
-  box-shadow:
-    inset 0 2px 3px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.22),
-    inset 2px 0 3px rgba(0, 0, 0, 0.28),
-    inset -2px 0 3px rgba(0, 0, 0, 0.28);
-}
-.ms-search-input::placeholder {
-  color: rgba(236, 235, 226, 0.55);
-}
-
-/* stamped magnifier mark on the face, left of the well */
-.ms-search-mark {
-  display: flex;
-  align-items: center;
-  padding: 0 9px 0 7px;
-  color: #47463f;
-  pointer-events: none;
-}
-
-/* the key — brand-orange key cap with a physical top highlight;
-   depresses 1px like every button in the system. Shared cap: the
-   SEARCH key on the channels and every primary CTA in the store
-   (BUY / ADD TO CART / CHECKOUT) press the same machined key. */
-.ms-key,
-.ms-search-key {
-  border: 0;
-  border-radius: 4px;
-  color: #ffffff;
-  background: var(--color-brand);
-  /* Alibaba CTA gauge (Task 57): 13px px-exact — the inherited 10px label
-     read as fine print on a buy button; line-height pinned so keys sit level
-     with the paper slips sharing their row, tracking tightened to keep the
-     wider face from ballooning the wider labels */
-  font-size: 13px;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.25);
-  transition: background-color 0.2s, transform 0.15s;
-}
-.ms-key:hover,
-.ms-search-key:hover {
-  background: var(--color-brand-dark);
-}
-.ms-key:active,
-.ms-search-key:active {
-  transform: translateY(1px);
-}
-/* ink variant — the dark key (restock notify submit) */
-.ms-key.ms-key-ink {
-  background: var(--color-ink);
-}
-.ms-key.ms-key-ink:hover {
-  background: var(--color-ink-soft);
-}
-
-/* ============================================================
-   Footer (Task 58) — the back wall's steel head. Identical paint to
-   .ms-shopfront: the ink footer lands as another bolted-on piece of
-   the store's hardware instead of an unstyled end-cap.
-   ============================================================ */
-.ms-footer-rail {
-  height: 10px;
-  border-top: 2px solid #47463f;
-  background-image: linear-gradient(180deg, #828078 0%, #6e6d65 55%, #5a5951 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
-}
-
-/* ============================================================
-   Counter plaques (Task 59) — the trust strip becomes the shop
-   counter: three painted-steel service plaques between the rack
-   and the back wall. Same face paint as the cabinets (shared
-   tokens), the dark-framed label card holder (.ms-file-label)
-   for a title, a milled die with a stamped icon, an orange ink
-   index stamp, and the rack's cursor sheen crossing the face.
-   ============================================================ */
-.ms-plaque {
-  position: relative;
-  border-radius: 6px;
-  border: 1px solid #a19f97;
-  background-image: var(--ms-steel-grain), var(--ms-steel-face);
-  box-shadow: var(--ms-steel-bevels);
-  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1);
-}
-@media (hover: hover) and (pointer: fine) {
-  .ms-plaque:hover {
-    transform: translateY(-3px);
-  }
-}
-
-/* the title as filing-drawer hardware — the same dark-framed paper
-   card the cabinet drawers wear, retyped to label gauge */
-.ms-plaque .ms-file-label {
-  align-self: center;
-  max-width: 92%;
-  margin-bottom: 12px; /* clearance for the recessed pull below the card */
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #45443f;
-}
-
-/* milled die — a coin recessed into the face, icon stamped inside */
-.ms-plaque-die {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 9999px;
-  background: linear-gradient(180deg, #c7c6c0 0%, #b3b2ab 100%);
-  box-shadow:
-    inset 0 2px 3px rgba(0, 0, 0, 0.3),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.55);
-  color: #47463f;
-}
-
-/* index stamp — orange ink, slightly hand-rotated like the stickers */
-.ms-plaque-index {
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  color: var(--color-brand);
-  border: 2px solid currentColor;
-  border-radius: 4px;
-  padding: 3px 8px;
-  transform: rotate(-3deg);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
-  opacity: 0.92;
-}
-
-/* engraved body copy on the face */
-.ms-plaque-body {
-  font-size: 13px;
-  line-height: 21px;
-  color: #45443f;
-}
-
-/* ─── Tile pack rail + fascia tabs (Task 55) ─────────────────────────────
-   Uniformity pass: every slab gets the same bottom skeleton — a fixed
-   height pack rail (one line, measure-only chips) over a price/key row.
-   Single-pack products mount one engraved static chip in the same slot,
-   so nothing in the rack changes height or order tile to tile. */
-.ms-pack-rail {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 32px;
-  margin-top: auto;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.ms-pack-rail::-webkit-scrollbar {
-  display: none;
-}
-
-/* the chip — the weight switch at rail gauge: same material as
-   .ms-weight-toggle, compact enough that a 3-pack bank stays one line */
-.ms-chip {
-  flex: 0 0 auto;
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 5px 9px;
-  border-radius: 3px;
-  background: var(--color-paper);
-  color: #45443f;
-  border: 1.5px solid #8e8d85;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-.ms-chip:not(.is-static):hover {
-  border-color: var(--color-ink);
-  color: var(--color-ink);
-}
-.ms-chip.is-on {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
-  color: #fff;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.28);
-}
-/* static chip — a single-pack product's engraved spec, not a control */
-.ms-chip.is-static {
-  background: rgba(255, 255, 255, 0.42);
-  color: #6f6d63;
-  border-color: #a8a69d;
-  box-shadow: none;
-  cursor: default;
-}
-
-/* fascia tabs — the category selector as one machined key bank bolted
-   to the white board; the engaged tab sinks into its ink socket (same
-   state language as .ms-weight-toggle.is-on) */
-.ms-tab {
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 10px 16px;
-  background: var(--color-paper);
-  color: #45443f;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-@media (min-width: 768px) {
-  .ms-tab {
-    padding: 13px 24px;
-  }
-}
-.ms-tab + .ms-tab {
-  border-left: 1px solid var(--color-line);
-}
-.ms-tab[aria-selected="false"]:hover {
-  background: var(--color-paper-deep);
-  color: var(--color-ink);
-}
-.ms-tab[aria-selected="true"] {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
-  color: #fff;
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.28);
-}
-
-/* --- Header variant: the channel slides out of a machined
-   square on the rail (Dribbble 2092541 interaction, shopfront
-   materials). Collapsed it is a 42px steel button; open it
-   stretches across the bar and the nav hands over its space. */
+/* Horizontal search — the header channel. Width grows from 34px to
+   26vw (clamped to 240–440px) on open. */
 .ms-hsearch {
-  height: 40px;
-  width: 42px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), transform 0.25s, box-shadow 0.25s,
-    padding 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.3s, border-width 0.4s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #ffffff;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), min-width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.2s;
 }
-/* No permanent seat (Task 54) — the square lives retracted inside the
-   rail: zero width, invisible, click-dead. It slides out only once the
-   page scrolls past the hero's own search (the header sets is-seated
-   at >200px) — on the road, not at rest. */
-.ms-hsearch:not(.is-seated) {
-  width: 0;
-  padding: 0;
-  border-width: 0;
-  opacity: 0;
-  pointer-events: none;
+/* Focus state — the channel is always a focus target, even closed */
+.ms-hsearch:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--color-brand);
 }
+/* Open state — the channel stretches wide */
 .ms-hsearch.is-open {
   width: clamp(240px, 26vw, 440px);
   cursor: text;
@@ -1382,4 +1106,28 @@ body {
   .ms-search:focus-within {
     transform: none;
   }
+}
+
+/* Skip-link for accessibility - visually hidden until focused */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only.focus:not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
