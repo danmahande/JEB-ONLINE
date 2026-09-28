@@ -1,18 +1,9 @@
-"use client";
-
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
-import { fmt, quoteCart } from "@/lib/format";
-import { leviesFor, levyTag } from "@/lib/levies";
-import type { PlacedOrder, RegionConfig } from "@/lib/types";
-
-const PAYMENT_METHODS = [
-  { key: "MTN MoMo", label: "MTN MOMO", hint: "UG · RW" },
-  { key: "M-Pesa", label: "M-PESA", hint: "KE · TZ" },
-  { key: "Airtel Money", label: "AIRTEL MONEY", hint: "REGIONAL" },
-  { key: "Bank Transfer", label: "BANK TRANSFER / TT", hint: "CROSS-BORDER" },
-  { key: "Cash on Delivery", label: "CASH ON DELIVERY", hint: "EAC ONLY" },
-];
+import { useToast } from "@/hooks/use-toast";
+import { fmt } from "@/lib/format";
+import { LEVIES } from "@/lib/levies";
+import type { RegionConfig, PlacedOrder } from "@/lib/types";
 
 export default function Checkout({
   regions,
@@ -20,286 +11,425 @@ export default function Checkout({
   onBack,
 }: {
   regions: RegionConfig[];
-  onPlaced: (order: PlacedOrder) => void;
+  onPlaced: (o: PlacedOrder) => void;
   onBack: () => void;
 }) {
-  const lines = useCart((s) => s.lines);
-  const clear = useCart((s) => s.clear);
+  const cart = useCart((s) => ({ ...s }));
   const region = useRegion((s) => s.region);
-  const setRegion = useRegion((s) => s.setRegion);
-  const regionHasHydrated = useRegion((s) => s.hasHydrated);
-  const active = regions.find((r) => r.region === region);
+  const { toast } = useToast();
+  const active = regions.find((r) => r.region === region)!;
 
-  const [form, setForm] = useState({
-    customerName: "",
-    contact: "",
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [placing, setPlacing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customer, setCustomer] = useState({
+    name: "",
     email: "",
-    city: "",
+    phone: "",
+    company: "",
     address: "",
-    paymentMethod: "",
-    notes: "",
+    city: "",
+    postalCode: "",
+    country: active.country,
   });
-  const [submitting, setSubmitting] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const q = useMemo(
-    () => (active ? quoteCart(lines, active) : null),
-    [lines, active]
+  const subtotal = cart.lines.reduce(
+    (sum, l) => sum + l.quantity * l.unitPrice,
+    0
   );
 
-  const totalFmt = (usd: number) =>
-    active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
-
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((f) => ({ ...f, [k]: e.target.value }));
+  const { duty, vat, freight, total } = LEVIES(subtotal, active);
 
   async function placeOrder() {
-    setValidationError(null);
-    if (!form.customerName.trim()) {
-      setValidationError("CUSTOMER NAME IS REQUIRED.");
+    setPlacing(true);
+    setErrors({});
+    
+    // Basic validation
+    const newErrors: Record<string, string> = {};
+    if (!customer.name.trim()) newErrors.name = "Required";
+    if (!customer.email.trim()) newErrors.email = "Required";
+    else if (!/\S+@\S+\.\S+/.test(customer.email)) newErrors.email = "Invalid email";
+    if (!customer.phone.trim()) newErrors.phone = "Required";
+    if (!customer.address.trim()) newErrors.address = "Required";
+    if (!customer.city.trim()) newErrors.city = "Required";
+    if (!customer.postalCode.trim()) newErrors.postalCode = "Required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setPlacing(false);
       return;
     }
-    if (!form.contact.trim()) {
-      setValidationError("CONTACT INFORMATION IS REQUIRED.");
-      return;
-    }
-    if (!form.paymentMethod) {
-      setValidationError("SELECT A PAYMENT METHOD.");
-      return;
-    }
-    if (active && !regionHasHydrated) {
-      setValidationError("LOADING…");
-      return;
-    }
-    setSubmitting(true);
+
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
-          country: active?.region,
-          cart: lines.map((l) => ({
-            productId: l.productId,
-            variantLabel: l.variantLabel,
-            qty: l.qty,
-          })),
+          customer,
+          lines: cart.lines,
+          region,
+          subtotal,
+          duty,
+          vat,
+          freight,
+          total,
         }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Order failed");
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to place order");
       }
-      clear();
-      onPlaced(data.order);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "ORDER FAILED";
-      setValidationError(msg.toUpperCase());
+
+      const placed = await res.json();
+      onPlaced(placed);
+    } catch (err) {
+      toast({
+        title: "ORDER FAILED",
+        description: err instanceof Error ? err.message : "Could not place the order — try again.",
+        variant: "destructive",
+      });
     } finally {
-      setSubmitting(false);
+      setPlacing(false);
     }
   }
 
-  if (lines.length === 0) {
-    return (
-      <section className="px-4 md:px-8 py-20 text-center">
-        <h2 className="ms-display text-4xl opacity-30 mb-6">CART EMPTY</h2>
-        <button onClick={onBack} className="ms-label ms-key px-8 py-4">
-          ← BACK TO CATALOG
-        </button>
-      </section>
-    );
+  function goNext() {
+    if (step === 1) {
+      // Validate customer details
+      const newErrors: Record<string, string> = {};
+      if (!customer.name.trim()) newErrors.name = "Required";
+      if (!customer.email.trim()) newErrors.email = "Required";
+      else if (!/\S+@\S+\.\S+/.test(customer.email)) newErrors.email = "Invalid email";
+      if (!customer.phone.trim()) newErrors.phone = "Required";
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+    }
+    setStep(step === 1 ? 2 : 3);
+  }
+
+  function goBack() {
+    if (step === 1) {
+      onBack();
+    } else {
+      setStep(step === 3 ? 2 : 1);
+    }
   }
 
   return (
-    <section className="px-4 md:px-8 py-10 md:py-14" aria-label="Checkout">
-      {/* toolbar module — same control rail as the catalog, not a magazine headline */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 md:mb-8 rounded-lg border border-line bg-white px-4 py-3 md:px-5 md:py-3.5">
-        <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">CHECKOUT</h2>
-        <p className="ms-label text-hush">DUTY · LEVIES · VAT · FREIGHT QUOTED UPFRONT</p>
-      </div>
-
-      <div className="grid lg:grid-cols-5 gap-8">
-        {/* form */}
-        <div className="lg:col-span-3 space-y-6">
-          <div>
-            <p className="ms-label mb-3 text-hush">01 — DESTINATION</p>
-            <div className="flex flex-wrap gap-2">
-              {regions.map((r) => (
-                <button
-                  key={r.region}
-                  onClick={() => setRegion(r.region)}
-                  className={`ms-label border px-4 py-3 transition-colors ${
-                    r.region === region
-                      ? "bg-ink text-white border-ink"
-                      : "border-line bg-white hover:border-ink hover:text-ink"
+    <div className="container mx-auto px-4 py-8 md:px-6">
+      <div className="mx-auto max-w-4xl">
+        {/* Progress */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex flex-col items-center gap-2">
+                <div
+                  className={`flex size-8 items-center justify-center rounded-full ${
+                    step >= s
+                      ? "bg-ink text-white"
+                      : "border border-line bg-white text-ink"
                   }`}
                 >
-                  {r.countryName}
-                </button>
-              ))}
-            </div>
-            {active && (
-              <p className="ms-label mt-3 text-hush">
-                ETA {active.etaDays} · DUTY {Math.round(active.dutyRate * 100)}% · VAT{" "}
-                {Math.round(active.vatRate * 100)}%
-                {leviesFor(active.region).length > 0 &&
-                  ` · LEVIES ${levyTag(active.region)}`} · {active.currency}
-              </p>
-            )}
+                  {s}
+                </div>
+                <span className="ms-label text-xs">
+                  {s === 1 ? "CUSTOMER" : s === 2 ? "REVIEW" : "PAY"}
+                </span>
+              </div>
+            ))}
           </div>
-
-          <div>
-            <p className="ms-label mb-3 text-hush">02 — DELIVERY DETAILS</p>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <input
-                className="ms-field"
-                placeholder="FULL NAME *"
-                value={form.customerName}
-                onChange={set("customerName")}
-                aria-label="Full name"
-              />
-              <input
-                className="ms-field"
-                placeholder="PHONE (E.G. +2567…) *"
-                value={form.contact}
-                onChange={set("contact")}
-                aria-label="Phone contact"
-              />
-              <input
-                className="ms-field"
-                placeholder="EMAIL"
-                type="email"
-                value={form.email}
-                onChange={set("email")}
-                aria-label="Email"
-              />
-              <input
-                className="ms-field"
-                placeholder="CITY / TOWN"
-                value={form.city}
-                onChange={set("city")}
-                aria-label="City"
-              />
-              <input
-                className="ms-field sm:col-span-2"
-                placeholder="DELIVERY ADDRESS / COLLECTION POINT"
-                value={form.address}
-                onChange={set("address")}
-                aria-label="Delivery address"
-              />
-              <textarea
-                className="ms-field sm:col-span-2"
-                placeholder="NOTES (CUSTOMS PREFERENCE, TIMING…)"
-                rows={2}
-                value={form.notes}
-                onChange={set("notes")}
-                aria-label="Order notes"
-              />
-            </div>
-          </div>
-
-          <div>
-            <p className="ms-label mb-3 text-hush">03 — PAYMENT</p>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {PAYMENT_METHODS.map((m) => (
-                <button
-                  key={m.key}
-                  onClick={() => setForm((f) => ({ ...f, paymentMethod: m.key }))}
-                  className={`border px-4 py-3 text-left transition-colors ${
-                    form.paymentMethod === m.key
-                      ? "bg-ink text-white border-ink"
-                      : "bg-white border-line hover:border-ink hover:text-ink"
-                  }`}
-                >
-                  <span className="ms-label block">{m.label}</span>
-                  <span className={`text-[10px] tracking-widest ${
-                    form.paymentMethod === m.key ? "opacity-70" : "text-hush"
-                  }`}>{m.hint}</span>
-                </button>
-              ))}
-            </div>
+          <div className="mt-3 flex h-1 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full bg-ink transition-all duration-300 ease-out"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
           </div>
         </div>
 
-        {/* summary */}
-        <div className="lg:col-span-2">
-          <div className="rounded-lg border border-line bg-white p-5 lg:sticky lg:top-24">
-            <p className="ms-label mb-4">ORDER SUMMARY</p>
-            <div className="max-h-56 overflow-y-auto ms-scroll divide-y divide-line mb-4">
-              {lines.map((l) => (
-                <div
-                  key={`${l.productId}-${l.variantLabel}`}
-                  className="flex justify-between gap-3 py-2.5 text-sm"
-                >
-                  <span className="truncate">
-                    <b className="uppercase">{l.productLabel}</b>
-                    <span className="text-hush"> · {l.variantLabel} × {l.qty}</span>
-                  </span>
-                  <span className="font-bold whitespace-nowrap">
-                    {active ? fmt(l.unitPriceUsd * l.qty, active) : `$${(l.unitPriceUsd * l.qty).toFixed(2)}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {active && q && (
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-hush">SUBTOTAL</span>
-                  <span className="font-bold">{totalFmt(q.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-hush">DUTY ({Math.round(active.dutyRate * 100)}%)</span>
-                  <span className="font-bold">{totalFmt(q.duty)}</span>
-                </div>
-                {q.levies.length > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-hush">LEVIES ({levyTag(active.region)})</span>
-                    <span className="font-bold">{totalFmt(q.leviesTotal)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-hush">VAT ({Math.round(active.vatRate * 100)}%)</span>
-                  <span className="font-bold">{totalFmt(q.vat)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-hush">FREIGHT</span>
-                  <span className="font-bold">{totalFmt(q.shipping)}</span>
-                </div>
-                <div className="flex justify-between border-t border-line pt-3 mt-3">
-                  <span className="ms-label">TOTAL DUE</span>
-                  <span className="ms-price text-2xl text-brand">{totalFmt(q.total)}</span>
-                </div>
+        {/* Step 1: Customer details */}
+        {step === 1 && (
+          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+            <h2 className="ms-display mb-6 text-2xl">DELIVERY DETAILS</h2>
+            
+            {placing && (
+              <div className="mb-6 p-4 bg-muted rounded-md flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
+                <span>Processing your order...</span>
               </div>
             )}
-
-            {validationError && (
-              <p className="ms-label mt-4 bg-red-500 text-white px-3 py-2" role="alert">
-                ⚠ {validationError}
-              </p>
-            )}
-
-            <button
-              onClick={placeOrder}
-              disabled={submitting}
-              className="ms-label ms-key w-full py-4 mt-5 disabled:opacity-40"
-            >
-              {submitting ? "PLACING ORDER…" : "PLACE ORDER →"}
-            </button>
-            <button
-              onClick={onBack}
-              className="ms-label w-full border border-line py-3 mt-2 hover:bg-ink hover:text-white transition-colors"
-            >
-              ← CONTINUE SHOPPING
-            </button>
-            <p className="text-[10px] tracking-widest text-hush mt-3 leading-relaxed">
-              FINAL DUTIES SUBJECT TO CUSTOMS ASSESSMENT. ORDERS ROUTE TO OUR
-              WAREHOUSE FOR PICKING AND DISPATCH AS SOON AS PAYMENT IS CONFIRMED.
-            </p>
+            
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div>
+                <label className="ms-label mb-2 block text-hush">FULL NAME *</label>
+                <input
+                  type="text"
+                  value={customer.name}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, name: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.name ? "border-red-500" : ""}`}
+                  placeholder="John Doe"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">EMAIL *</label>
+                <input
+                  type="email"
+                  value={customer.email}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, email: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.email ? "border-red-500" : ""}`}
+                  placeholder="john@example.com"
+                />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">PHONE *</label>
+                <input
+                  type="tel"
+                  value={customer.phone}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, phone: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.phone ? "border-red-500" : ""}`}
+                  placeholder="+256..."
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">COMPANY</label>
+                <input
+                  type="text"
+                  value={customer.company}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, company: e.target.value })
+                  }
+                  className="ms-field w-full"
+                  placeholder="Acme Ltd"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="ms-label mb-2 block text-hush">ADDRESS *</label>
+                <input
+                  type="text"
+                  value={customer.address}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, address: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.address ? "border-red-500" : ""}`}
+                  placeholder="Street address"
+                />
+                {errors.address && (
+                  <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">CITY *</label>
+                <input
+                  type="text"
+                  value={customer.city}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, city: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.city ? "border-red-500" : ""}`}
+                  placeholder="Kampala"
+                />
+                {errors.city && (
+                  <p className="mt-1 text-sm text-red-500">{errors.city}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">POSTAL CODE *</label>
+                <input
+                  type="text"
+                  value={customer.postalCode}
+                  onChange={(e) =>
+                    setCustomer({ ...customer, postalCode: e.target.value })
+                  }
+                  className={`ms-field w-full ${errors.postalCode ? "border-red-500" : ""}`}
+                  placeholder="12345"
+                />
+                {errors.postalCode && (
+                  <p className="mt-1 text-sm text-red-500">{errors.postalCode}</p>
+                )}
+              </div>
+              <div>
+                <label className="ms-label mb-2 block text-hush">COUNTRY</label>
+                <input
+                  type="text"
+                  value={customer.country}
+                  readOnly
+                  className="ms-field w-full bg-muted"
+                />
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Step 2: Review */}
+        {step === 2 && (
+          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+            <h2 className="ms-display mb-6 text-2xl">REVIEW ORDER</h2>
+            
+            {placing && (
+              <div className="mb-6 p-4 bg-muted rounded-md flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
+                <span>Confirming your order details...</span>
+              </div>
+            )}
+            
+            <div className="mb-8">
+              <h3 className="ms-label mb-4 text-hush">DELIVERY ADDRESS</h3>
+              <div className="rounded-lg border border-line bg-mist p-4">
+                <p className="font-medium">{customer.name}</p>
+                <p>{customer.company || "Individual"}</p>
+                <p>{customer.address}</p>
+                <p>{customer.city}, {customer.postalCode}</p>
+                <p>{customer.country}</p>
+                <p className="mt-2">{customer.email} · {customer.phone}</p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="ms-label mb-4 text-hush">ORDER ITEMS</h3>
+              <div className="rounded-lg border border-line divide-y">
+                {cart.lines.map((l, i) => (
+                  <div key={i} className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative size-16 overflow-hidden rounded bg-muted">
+                        <img
+                          src={l.image || "/products/placeholder.png"}
+                          alt={l.productLabel}
+                          className="size-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium">{l.productLabel}</p>
+                        <p className="text-sm text-hush">
+                          {l.variantLabel} · Qty: {l.quantity}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="font-medium">{fmt(l.unitPrice, active)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-line bg-mist p-4 md:p-6">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span>SUBTOTAL</span>
+                  <span>{fmt(subtotal, active)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>DUTY ({active.dutyRate * 100}%)</span>
+                  <span>{fmt(duty, active)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>VAT ({active.vatRate * 100}%)</span>
+                  <span>{fmt(vat, active)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>FREIGHT</span>
+                  <span>{fmt(freight, active)}</span>
+                </div>
+                <div className="flex justify-between border-t border-line pt-3 font-bold">
+                  <span>TOTAL</span>
+                  <span className="text-brand">{fmt(total, active)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Pay */}
+        {step === 3 && (
+          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+            <h2 className="ms-display mb-6 text-2xl">COMPLETE PAYMENT</h2>
+            
+            {placing && (
+              <div className="mb-6 p-4 bg-muted rounded-md flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
+                <span>Processing payment...</span>
+              </div>
+            )}
+            
+            <div className="rounded-lg border border-line bg-mist p-6 text-center">
+              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-ink text-white">
+                $
+              </div>
+              <h3 className="mb-2 font-bold">Payment Processing</h3>
+              <p className="text-sm text-hush mb-6">
+                Your payment will be processed securely through our partner gateway.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between text-left border-b pb-2">
+                  <span>Amount to pay:</span>
+                  <span className="font-bold text-brand">{fmt(total, active)}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                  <button
+                    onClick={goBack}
+                    className="ms-label ms-key ms-key-ink px-4 py-3"
+                    disabled={placing}
+                  >
+                    BACK
+                  </button>
+                  <button
+                    onClick={placeOrder}
+                    disabled={placing}
+                    className="ms-label ms-key px-4 py-3 flex items-center justify-center gap-2"
+                  >
+                    {placing ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        PROCESSING...
+                      </>
+                    ) : (
+                      `PAY ${fmt(total, active)}`
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="mt-8 flex justify-between">
+          <button
+            onClick={goBack}
+            className="ms-label ms-key ms-key-ink px-6 py-3"
+            disabled={placing}
+          >
+            {step === 1 ? "← CANCEL" : "← BACK"}
+          </button>
+          {step < 3 && (
+            <button
+              onClick={goNext}
+              className="ms-label ms-key px-6 py-3"
+              disabled={placing}
+            >
+              {step === 2 ? "CONTINUE TO PAY →" : "CONTINUE →"}
+            </button>
+          )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

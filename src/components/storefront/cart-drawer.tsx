@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -11,6 +12,7 @@ import { useCart, useRegion } from "@/lib/store";
 import { fmt, quoteCart, fmtWeight } from "@/lib/format";
 import { levyTag } from "@/lib/levies";
 import { useCountUp } from "@/lib/use-count-up";
+import { Button } from "@/components/ui/button";
 import type { RegionConfig } from "@/lib/types";
 
 export default function CartDrawer({
@@ -26,6 +28,7 @@ export default function CartDrawer({
   onOpenChange: (o: boolean) => void;
   onCheckout: () => void;
 }) {
+  const cart = useCart((s) => s);
   const lines = useCart((s) => s.lines);
   const setQty = useCart((s) => s.setQty);
   const removeLine = useCart((s) => s.removeLine);
@@ -34,9 +37,15 @@ export default function CartDrawer({
   const subtotal = useCountUp(q ? q.subtotal : 0);
   const total = useCountUp(q ? q.total : 0);
   const regionHasHydrated = useRegion((s) => s.hasHydrated);
+  
+  // Add loading state for checkout
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const totalFmt = (usd: number) =>
     active && regionHasHydrated ? fmt(usd, active) : `$${usd.toFixed(2)}`;
+  
+  // Calculate levies for empty cart check
+  const hasItems = lines.length > 0;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -51,15 +60,21 @@ export default function CartDrawer({
         </SheetHeader>
 
         {lines.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center">
-            <p className="ms-display text-2xl opacity-30">EMPTY</p>
-            <p className="ms-label text-hush">ADD GRAINS OR HARDWARE TO CONTINUE</p>
+          <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
+            <p className="mb-6 text-hush">Your cart is empty</p>
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="ms-label px-6 py-3"
+            >
+              CONTINUE SHOPPING
+            </Button>
           </div>
         ) : (
           <>
             <div className="flex-1 overflow-y-auto ms-scroll divide-y divide-line">
               {lines.map((l) => (
-                <div key={`${l.productId}-${l.variantLabel}`} className="flex gap-3 p-4">
+                <div key={`${l.productId}-${l.variantLabel}`} className="flex gap-4 p-4 border-b border-line">
                   <div className="relative w-20 h-20 shrink-0 border border-line overflow-hidden">
                     <Image
                       src={l.image || "/products/placeholder.png"}
@@ -70,40 +85,40 @@ export default function CartDrawer({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm leading-tight truncate">
-                      {l.productLabel}
-                    </p>
-                    <p className="ms-label text-hush mt-0.5">{l.variantLabel}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex border border-line">
-                        <button
-                          onClick={() => setQty(l.productId, l.variantLabel, l.qty - 1)}
-                          className="ms-label px-2.5 py-1 hover:bg-ink hover:text-white"
-                          aria-label="Decrease"
-                        >
-                          −
-                        </button>
-                        <span className="ms-label px-2.5 py-1 border-x border-line">{l.qty}</span>
-                        <button
-                          onClick={() => setQty(l.productId, l.variantLabel, l.qty + 1)}
-                          className="ms-label px-2.5 py-1 hover:bg-ink hover:text-white"
-                          aria-label="Increase"
-                        >
-                          +
-                        </button>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium text-sm">{l.productLabel}</p>
+                        <p className="ms-label text-hush text-sm mt-0.5">{l.variantLabel}</p>
                       </div>
-                      <span className="ms-price text-sm">
+                      <button
+                        onClick={() => removeLine(l.productId, l.variantLabel)}
+                        className="ms-label text-hush hover:text-red-500 opacity-60 hover:opacity-100"
+                        aria-label={`Remove ${l.productLabel}`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={() => setQty(l.productId, l.variantLabel, Math.max(1, l.qty - 1))}
+                        className="ms-label size-8 flex-shrink-0 rounded border border-line"
+                        aria-label="Decrease quantity"
+                      >
+                        −
+                      </button>
+                      <span className="ms-label w-8 text-center">{l.qty}</span>
+                      <button
+                        onClick={() => setQty(l.productId, l.variantLabel, l.qty + 1)}
+                        className="ms-label size-8 flex-shrink-0 rounded border border-line"
+                        aria-label="Increase quantity"
+                      >
+                        +
+                      </button>
+                      <span className="ms-price text-sm ml-auto">
                         {totalFmt(l.unitPriceUsd * l.qty)}
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeLine(l.productId, l.variantLabel)}
-                    className="ms-label self-start opacity-40 hover:opacity-100 hover:text-red-500"
-                    aria-label={`Remove ${l.productLabel}`}
-                  >
-                    ✕
-                  </button>
                 </div>
               ))}
             </div>
@@ -123,7 +138,7 @@ export default function CartDrawer({
                   </span>
                   <span className="font-bold">{totalFmt(q.duty)}</span>
                 </div>
-                {q.levies.length > 0 && (
+                {q && q.levies.length > 0 && active && (
                   <div className="flex justify-between text-sm">
                     <span className="text-hush">LEVIES ({levyTag(active.region)})</span>
                     <span className="font-bold">{totalFmt(q.leviesTotal)}</span>
@@ -137,16 +152,39 @@ export default function CartDrawer({
                   <span className="text-hush">FREIGHT</span>
                   <span className="font-bold">{totalFmt(q.shipping)}</span>
                 </div>
-                <div className="flex justify-between border-t border-line pt-3 mt-3">
-                  <span className="ms-label">TOTAL</span>
-                  <span className="ms-price text-xl">{totalFmt(total)}</span>
+                <div className="flex justify-between border-t border-line pt-3 mt-3 font-bold">
+                  <span>TOTAL</span>
+                  <span className="ms-price text-xl text-brand">{totalFmt(total)}</span>
                 </div>
-                <button
-                  onClick={onCheckout}
-                  className="ms-label ms-key w-full py-4 mt-2"
-                >
-                  CHECKOUT →
-                </button>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="ms-label px-4 py-3"
+                  >
+                    CONTINUE SHOPPING
+                  </Button>
+                  <Button
+                    className="ms-label ms-key px-4 py-3 flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setIsProcessing(true);
+                      // Simulate processing delay
+                      setTimeout(() => {
+                        onCheckout();
+                      }, 500);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        PROCESSING...
+                      </>
+                    ) : (
+                      `CHECKOUT (${totalFmt(total)})`
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </>

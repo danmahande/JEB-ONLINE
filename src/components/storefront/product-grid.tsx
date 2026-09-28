@@ -33,6 +33,33 @@ function useGridColumns() {
   return cols;
 }
 
+// Enhanced skeleton loader component for better loading UX
+function ProductSkeleton({ index }: { index: number }) {
+  return (
+    <div 
+      className="ms-tile group relative flex flex-col border border-line animate-pulse"
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <span className="ms-base" aria-hidden="true" />
+      <div className="relative aspect-square bg-muted/50" />
+      <div className="flex flex-col gap-1.5 flex-1 p-3">
+        <div className="h-3 bg-muted rounded w-1/3 mb-2"></div>
+        <div className="h-4 bg-muted rounded w-4/5 mb-2"></div>
+        <div className="h-3 bg-muted rounded w-2/3 mb-3"></div>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="h-5 w-12 bg-muted rounded-sm"></div>
+          <div className="h-5 w-12 bg-muted rounded-sm"></div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 mt-auto">
+          <div className="h-6 bg-muted rounded w-16"></div>
+          <div className="h-8 w-16 bg-muted rounded-md"></div>
+        </div>
+      </div>
+      <div className="ms-spot" aria-hidden="true" />
+    </div>
+  );
+}
+
 export default function ProductGrid({
   products,
   regions,
@@ -167,8 +194,8 @@ export default function ProductGrid({
       <div className="ms-shopfront">
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 md:gap-3">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-line animate-pulse rounded-lg" />
+          {Array.from({ length: 12 }).map((_, i) => (
+            <ProductSkeleton key={i} index={i} />
           ))}
         </div>
       ) : error ? (
@@ -365,7 +392,7 @@ export default function ProductGrid({
                       plus a key, so the price takes its own line and the
                       action right-aligns under it (Alibaba's mobile card
                       pattern); sm+ stays one justify-between line */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 mt-auto">
                     <div className="w-full min-w-0 sm:w-auto">
                       {/* Alibaba-gauge price: small raised currency mark +
                           20px bold amount, body Inter — Alibaba's own first
@@ -415,7 +442,7 @@ export default function ProductGrid({
                   {/* restock notify form — sold-out tiles only */}
                   {out && notifyOpen === p.productId && !notifyDone.has(p.productId) && (
                     <form
-                      className="flex flex-col gap-1.5"
+                      className="flex flex-col gap-1.5 mt-2"
                       onClick={(e) => e.stopPropagation()}
                       onSubmit={async (e) => {
                         e.preventDefault();
