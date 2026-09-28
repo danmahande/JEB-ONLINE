@@ -314,3 +314,132 @@ Fix strategy that preserves all of the above: repair in place (imports, field
 names, fragment wrapper, delete the fatal CSS block, restore missing `.ms-*`
 families from `git show f67b810:src/app/globals.css`). Do not rewrite the
 components back to their pre-`1927edc` shape.
+
+---
+
+## ROUND 2 — `b76bbbe` + `121fb1e` + `8477ce5` audit: BOTH SEARCH BARS BROKEN
+
+State after your three fix commits: `tsc` still fails (4 new errors, different
+ones), every route still 500. The blocker-level wiring moved but new breaks
+were introduced. Search bars are the worst hit — one has broken interaction
+wiring, the other has the wrong CSS family restored.
+
+### HEADER SEARCH — `src/components/storefront/header.tsx` (`.ms-hsearch`)
+
+**H1 — Mouse users can never open it (interaction dead).**
+The grip that should open the channel is a plain `<div>` with two decorative
+SVGs — **no `onClick`, not a `<button>`**. The input is `width: 0; padding: 0;
+opacity: 0` while closed (globals.css 1041-1047) → zero clickable area. The
+channel only opens via `onFocus` bubbling to the container, so **only a
+keyboard Tab can open it**. The verified original (f67b810) had:
+`<button type="button" className="ms-hsearch-grip" aria-label={searchOpen ?
+"Close search" : "Open search"} aria-expanded={searchOpen}>` that toggled
+`searchOpen`, plus `useEffect` handing focus to `searchInputRef.current`.
+**Fix:** restore the button-grip toggle + focus handoff.
+
+**H2 — Enter does nothing.** No `<form role="search">`, no `onSubmit`, no
+`onKeyDown`. The original was a form: Enter submitted to `onSearchSubmit`.
+Typing + Enter in the header search is a dead end now.
+
+**H3 — GO scrolls the WRONG way.** `onClick={if (query.trim())
+onNavigate("shop")}` → `goShop()` → `scrollToTop()`. On the shop view (where
+you already are) GO **yanks the shopper up to the hero, away from the filtered
+results**. The original submit scrolled DOWN to `#catalog`. Fix: scroll to
+`#catalog` like the hero's `onShop`, and no-op cleanly when already there.
+
+**H4 — Click-outside is wired to the wrong element.** `ref` is attached to the
+**region-selector** div, but the listener closes the **search** (`setFocused(false)`).
+Result: any mousedown outside the region select — including on the search
+channel itself — slams it shut, then focus re-opens it (flicker); clicking the
+region select does NOT close search. Leftover from the old custom dropdown.
+
+**H5 — No Escape, no onBlur.** Original: `onKeyDown` Escape closed the
+channel. Now nothing closes it via keyboard once open (click-outside H4 is
+unreliable), and tabbing away leaves it open.
+
+**H6 — Invisible-but-focusable input.** Original managed
+`tabIndex={searchOpen ? 0 : -1}` on input + submit key. Now the 0-width
+invisible input is permanently in the tab order — screen-reader and keyboard
+users land on an invisible field with no affordance.
+
+**H7 — The ✕ close icon is decorative.** It sits in the grip `<div>` with no
+handler — no mouse way to close or clear. Restore toggle behavior on the grip.
+
+**H8 — `onSearchSubmit` prop deleted → /p/[slug] fails to compile.**
+`product-view.tsx:131` still passes `onSearchSubmit` → TS2322. The original
+Header had `onSearchSubmit?: () => void` precisely so product pages (no
+catalog on-page) could hand the query to the home view. **Fix:** re-add the
+optional prop and call it on submit (falling back to scrolling to `#catalog`
+when absent).
+
+**H9 — Task-54 seating choreography deleted.** The original kept the header
+channel retracted while the hero search was on screen (`searchSeated`,
+`is-seated`, slide-out after y > 200) — one search visible at a time. Now the
+header channel has a permanent seat: **both search bars render simultaneously
+on the homepage** (duplicate search UI). Restore the seated logic or accept +
+document the design change.
+
+### HERO SEARCH — `src/app/globals.css` (`.ms-search` family)
+
+**S1 — WRONG CSS FAMILY RESTORED (the big one).** The restored `.ms-search`
+(globals.css 1225-1236) is a copy of the **header's collapsed channel** —
+`width: 34px; min-width: 34px; height: 34px; background: #ffffff` — not the
+hero's machined steel channel. The hero form carries Tailwind
+`w-full sm:w-80 lg:w-96`, but unlayered custom CSS beats layered utilities, so
+**the hero search renders as a ~34px white square** with its contents
+overflowing. The verified original (f67b810, lines 1119-1140) is:
+`display:flex; align-items:stretch; padding:4px; border:1px solid #47463f;
+background-image: var(--ms-steel-grain), var(--ms-steel-face);
+box-shadow: var(--ms-steel-bevels); transition: transform .25s…`. **Fix:** copy
+the `.ms-search`, `.ms-search-input`, `.ms-search-input::placeholder`,
+`.ms-search-mark` blocks verbatim from `git show f67b810:src/app/globals.css`.
+The comment "(was .ms-search)" shows the block was copied-and-renamed from the
+header instead of restored from history.
+
+**S2 — Base `.ms-search-input` rule does not exist.** Only
+`.ms-hsearch .ms-search-input` exists (scoped to the header). The hero query
+well renders as an **unstyled native input**: no dark milled socket gradient,
+no bone `#f4f3ea` text, no brand caret, no inset shadows, no `min-width: 0`.
+
+**S3 — `.ms-search-input::placeholder` rule missing** (original: bone text at
+55% opacity).
+
+**S4 — `.ms-search-mark` restored as the header-grip variant** (`flex: 0 0
+34px`), original hero mark: `padding: 0 9px 0 7px; pointer-events: none`.
+
+**S5 — `:focus-within` wrong effect** — brand ring pasted from the header;
+original was the press-flush `translateY(2px)` + inset shadow (the key
+"depresses" into the housing).
+
+**S6 — Hero functionality is intact** — form `role="search"`, submit scrolls
+to `#catalog`, shared query state works. Only the styling was destroyed. Do
+not rewrite hero.tsx while fixing; fix the CSS.
+
+### NEW COMPILE BLOCKERS INTRODUCED BY `8477ce5` (site still 500)
+
+**C1 — `cart-drawer.tsx:24` `useCart((s) => s.remove)`** — CartState
+(src/lib/store.ts:11) exposes **`removeLine`**, not `remove`. TS2339.
+
+**C2 — `cart-drawer.tsx:25` `useCart((s) => s.setQuantity)`** — the store
+action is **`setQty`** (store.ts:12). TS2339.
+
+**C3 — `cart-drawer.tsx:27,37` `levy.tag === 'DUTY'`** — `BorderLevy`
+(src/lib/levies.ts:14) has `{ code, label, rate, inVatBase }` — **no `tag`
+field**. TS2339. Worse: this hand-rolls duty/VAT math in the drawer again,
+violating Pattern 4 (one source of money — `quoteCart` already does exactly
+this). Revert the drawer totals to `quoteCart(lines, region)`.
+
+**C4 — `product-view.tsx:9` imports CartDrawer as default** — cart-drawer no
+longer has a default export after `8477ce5`. TS2613. Either keep a default
+export or update the import to named.
+
+**C5 — `cart-drawer.tsx:28` `regions.find(...)!`** — non-null assertion; if
+`regions` is empty or the persisted region string doesn't match, `active` is
+undefined and `.countryName` crashes at runtime. Guard it.
+
+**Pattern to learn (round 2):** when restoring "deleted" CSS, copy the rules
+from git history (`git show <commit>:src/app/globals.css`) — do not
+reconstruct them from a sibling component's similar-looking rules. The hero
+channel and the header channel are two different machines that share a
+vocabulary. Same lesson for store APIs: open `src/lib/store.ts` and copy the
+exact action names (`removeLine`, `setQty`) before writing selectors.
