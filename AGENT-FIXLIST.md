@@ -443,3 +443,155 @@ reconstruct them from a sibling component's similar-looking rules. The hero
 channel and the header channel are two different machines that share a
 vocabulary. Same lesson for store APIs: open `src/lib/store.ts` and copy the
 exact action names (`removeLine`, `setQty`) before writing selectors.
+
+---
+
+## ROUND 3 — `61d7c4d` + `3e7ff05` + `5aaebd5` audit (verified live in browser)
+
+Score: **tsc clean, site loads, 12+ round-1/2 issues fixed.** But the browser
+test caught **one live crash, one order-blocking contract mismatch, and the
+hero search input is now invisible**. Details, verified evidence first.
+
+### VERIFIED FIXED (do not regress)
+
+- tsc = 0 errors; `/`, `/?view=checkout`, `/?view=track`, `/p/[slug]` compile
+- `removeLine` / `setQty` store names + `variantLabel` args in cart-drawer
+- Named `CartDrawer` import in product-view (C4)
+- `onSearchSubmit` prop restored on Header + product-view passes it (H8)
+- Click-outside bound to `searchContainerRef` (H4), Escape closes (H5),
+  grip click opens, input `tabIndex` managed (H6)
+- Checkout a11y: `htmlFor`/`id` pairs + `role="alert"` on all errors (MAJOR 4)
+- Postal code optional (MAJOR 3), step-1 validates address+city (MAJOR 5.3),
+  dead `placing` banners removed (MAJOR 5.1)
+- `displayRegion` fallbacks replace `!` assertions in drawer/product-view (C5)
+- Machined cart-empty copy ("EMPTY / ADD GRAINS OR HARDWARE…") is back
+
+### BLOCKER 1 — checkout crashes live: `regions[0].countryName` unguarded
+
+**Evidence (browser):** `/?view=checkout` renders the error page.
+`TypeError: Cannot read properties of undefined (reading 'countryName') in
+<Checkout>`.
+`5aaebd5` replaced `active!.countryName` with `active?.countryName ||
+regions[0].countryName` — but `regions[0]` is undefined while the regions
+list is still loading (empty array on first render). The fix moved the crash,
+it didn't fix it. Three unguarded sites: checkout.tsx **84, 285, 306**.
+
+**Fix:** `const fallback = regions.find(r => r.region === region) ??
+regions[0];` then guard every render path on `displayRegion &&` (the drawer
+already does this correctly with `displayRegion ? … : …`). Never access
+`regions[0].x` bare.
+
+### BLOCKER 2 — order POST contract mismatch: checkout can never succeed
+
+**File:** `src/components/storefront/checkout.tsx:80-90` vs
+`src/app/api/orders/route.ts:63-78`.
+Checkout sends: `{ customer: {name, email, phone, address, city, postalCode,
+country}, lines, region, subtotal, duty, vat, freight, total }`.
+The API destructures a FLAT body: `customerName, contact, email, address,
+city, country (region CODE UG|KE|TZ|RW|CD|INTL), paymentMethod, notes, cart`.
+None of the names match → **every order POST returns 400 "Customer name and
+phone contact are required"** even after Blocker 1 is fixed. The verified
+original (`git show 06ff76e:src/components/storefront/checkout.tsx`, lines
+76-90) sent the correct flat shape: `{...form, country: active?.region,
+cart: lines.map(...)}`.
+Also `country: active?.countryName` sends "Kenya" — the API looks up
+`db.regionConfig.findUnique({ where: { region: country } })`, which needs the
+CODE `KE`. **Fix:** restore the flat POST shape from 06ff76e; test with a
+real order through to the confirmation view.
+
+### BLOCKER 3 — hero search input is now invisible
+
+**Evidence (browser):** after a clean dev restart, `.ms-search` is still a
+34×34px white pill and `.ms-search-input` computes to **24px wide, opacity 0**
+— the hero has no visible query field at all; the SEARCH key overlaps the
+ENTER CATALOG button.
+Cause: `61d7c4d` ADDED header-collapse rules to the hero family —
+`.ms-search-input { width: 0; opacity: 0 }` + `.ms-search.is-open
+.ms-search-input { width: 200px; opacity: 1 }` — but the hero form NEVER gets
+`is-open` (that's header-only state). S1 from round 2 was never fixed; this
+made it worse.
+
+**Fix (same as round 2, still not done):** delete the added collapse rules and
+copy the hero family verbatim from history —
+`git show f67b810:src/app/globals.css` lines ~1119-1205: `.ms-search` (steel
+grain face, padding 4px, border #47463f, width NOT set — the Tailwind
+`w-full sm:w-80 lg:w-96` classes size it), `.ms-search-input` (flex:1, dark
+milled socket, bone text, brand caret), `::placeholder`, `.ms-search-mark`
+(padding 0 9px 0 7px), press-flush `:focus-within`. Verify in the browser
+afterwards: form ≥ 320px on desktop, input visible with dark socket.
+
+### MAJOR 1 — fabricated duty/VAT math in drawer AND checkout (verified live)
+
+**Evidence (cart drawer, Kenya, Portland Cement 50KG):**
+`DUTY (4.500000000000001%) KSh 50.2 · VAT (4.7025%) KSh 52.4 · TOTAL KSh 3,291.2`
+- `duty = Σ ALL levy rates × subtotal` → for KE that's IDF 2.5% + RDL 2% =
+  4.5% **mislabeled as DUTY** (real duty = `region.dutyRate × subtotal`,
+  separate line)
+- `vat = Σ levy.rate × (inVatBase ? subtotal + duty : subtotal)` → 4.7%
+  nonsense (truth, `quoteCart`: `(subtotal + duty + leviesInVatBase) ×
+  region.vatRate`)
+- The `LEVIES (IDF 2.5% + RDL 2%)` row is gone; the total excludes the real
+  levies → **drawer/checkout totals will not match what the order API
+  charges**
+- Raw floats printed in labels — round with `pct()` from src/lib/levies.ts
+Same code is duplicated in checkout.tsx:47-60.
+
+**Fix:** delete all the hand-rolled reduce chains in both files and call
+`quoteCart(lines, displayRegion)` — it already computes
+duty/levies/leviesTotal/vat/shipping/total exactly like the server. This is
+round-2 C3, still open, now with live evidence.
+
+### MAJOR 2 — keyboard users cannot open the header search
+
+The grip is still a `<div>` with onClick — not focusable, no `role="button"`,
+no `aria-expanded`, no aria-label. Input has `tabIndex={-1}` when closed.
+Mouse works now (verified), but Tab-order users have zero way to open search.
+The original (f67b810 header) used `<button type="button">` with
+`aria-label={searchOpen ? "Close search" : "Open search"}` +
+`aria-expanded`. Also: after opening, focus isn't handed to the input
+(original had `useEffect(() => { if (searchOpen) searchInputRef.current?.focus() })`).
+
+### MAJOR 3 — Enter does nothing in the header search (verified live)
+
+Typed "cement" + Enter: no submit, no navigation (URL only changed via the
+query-state sync, not a submit). No `<form role="search">`, no onSubmit.
+Wrap the channel in a form that calls the same handler as GO.
+
+### MAJOR 4 — GO scrolls shoppers AWAY from their results (verified live)
+
+Scrolled to the catalog (y=406) with an active filter, clicked GO →
+**scrolled to y=0** (back to the hero). page.tsx still does not pass
+`onSearchSubmit` to Header, so GO falls back to `onNavigate("shop")` →
+`goShop()` → `scrollToTop()`. Fix in page.tsx: pass
+`onSearchSubmit={() => document.getElementById("catalog")?.scrollIntoView({
+behavior: "smooth" })}` like the hero's onShop.
+
+### MINOR
+
+1. Grip click doesn't focus the input after opening.
+2. Task-54 seating still absent — both search bars visible at once on the
+   homepage. Decide deliberately, don't leave it accidental.
+3. product-view.tsx: raw `'` in JSX copy (was `&apos;`) — will trip
+   `react/no-unescaped-entities` if lint runs; missing newline at EOF.
+4. `leviesFor(region)` with region `''` returns `[]` — silently zero levies
+   while the drawer still renders levy-dependent totals. Harmless today
+   (guarded), wrong if the guard ever disappears.
+
+### Pattern to learn (round 3)
+
+**Fix the contract, not the symptom.** Round 3 fixed names that tsc catches
+(store actions, imports) but the two bugs that decide whether the store
+actually WORKS — the order POST shape and the money math — were not touched,
+and the "safe access" fix introduced a new crash of the same class it fixed.
+Before writing an access like `x[0].field` or a POST body, open the consumer
+(API route) and copy its exact contract. And after every fix round: run the
+real flow in the browser (add → checkout → place order), not just tsc.
+
+### Definition of Done (round 3)
+
+- [ ] `/?view=checkout` renders the form (no error boundary) with empty regions
+- [ ] Place a real order end-to-end: POST succeeds, confirmation view renders
+- [ ] Hero search: steel channel ≥320px, dark input well visible, type + Enter scrolls to catalog
+- [ ] Cart drawer (KE): DUTY uses region.dutyRate, LEVIES row present, VAT = 16%-style rate, total matches server quote
+- [ ] Header search opens by mouse AND keyboard; Escape closes; GO scrolls to #catalog
+- [ ] `npx tsc --noEmit` = 0 and `npx next build` passes
