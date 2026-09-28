@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
-import CartDrawer from "@/components/storefront/cart-drawer";
+import { CartDrawer } from "@/components/storefront/cart-drawer";
 import FlyDot from "@/components/storefront/fly-dot";
 import { useCart, useFly, useRegion } from "@/lib/store";
 import { fmt } from "@/lib/format";
@@ -244,13 +244,13 @@ export default function ProductView({
                     <div className="mt-5">
                       {notifyDone ? (
                         <p className="ms-label text-emerald-600 flex items-center gap-2">
-                          <span aria-hidden="true">✓</span> ON THE LIST — WE&apos;LL EMAIL WHEN
-                          IT&apos;S BACK
+                          <span aria-hidden="true">✓</span> ON THE LIST — WE'LL EMAIL WHEN
+                          IT'S BACK
                         </p>
                       ) : (
                         <form onSubmit={handleNotify} className="flex flex-col gap-1.5">
                           <p className="ms-label mb-1 text-hush">
-                            NOTIFY ME WHEN IT&apos;S BACK IN STOCK
+                            NOTIFY ME WHEN IT'S BACK IN STOCK
                           </p>
                           <div className="flex gap-1.5">
                             <input

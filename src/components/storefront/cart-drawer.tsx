@@ -21,8 +21,8 @@ export function CartDrawer({
   onCheckout: () => void;
 }) {
   const lines = useCart((s) => s.lines);
-  const removeFromCart = useCart((s) => s.remove);
-  const setQuantity = useCart((s) => s.setQuantity);
+  const removeFromCart = useCart((s) => s.removeLine);
+  const setQuantity = useCart((s) => s.setQty);
   const clear = useCart((s) => s.clear);
   const active = regions.find((r) => r.region === region)!;
 
@@ -34,15 +34,15 @@ export function CartDrawer({
   // Calculate levies using the existing function
   const leviesList = leviesFor(region);
   const duty = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'DUTY') return sum + (levy.rate * subtotal);
+    if (levy.code === 'DUTY') return sum + (levy.rate * subtotal);
     return sum;
   }, 0);
   const vat = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'VAT') return sum + (levy.rate * subtotal);
+    if (levy.code === 'VAT') return sum + (levy.rate * subtotal);
     return sum;
   }, 0);
   const freight = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'FREIGHT') return sum + (levy.rate * subtotal);
+    if (levy.code === 'FREIGHT') return sum + (levy.rate * subtotal);
     return sum;
   }, 0);
   const total = subtotal + duty + vat + freight;
@@ -123,7 +123,7 @@ export function CartDrawer({
                               </p>
                             </div>
                             <button
-                              onClick={() => removeFromCart(l.productId, l.variantIndex)}
+                              onClick={() => removeFromCart(l.productId, l.variantLabel)}
                               className="ms-label text-hush hover:text-ink"
                             >
                               <Cross2Icon />
@@ -134,7 +134,7 @@ export function CartDrawer({
                               onClick={() =>
                                 setQuantity(
                                   l.productId,
-                                  l.variantIndex,
+                                  l.variantLabel,
                                   Math.max(1, l.qty - 1)
                                 )
                               }
@@ -149,7 +149,7 @@ export function CartDrawer({
                               onClick={() =>
                                 setQuantity(
                                   l.productId,
-                                  l.variantIndex,
+                                  l.variantLabel,
                                   l.qty + 1
                                 )
                               }

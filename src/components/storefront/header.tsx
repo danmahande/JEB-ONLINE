@@ -12,12 +12,14 @@ export default function Header({
   onOpenCart,
   query,
   onQuery,
+  onSearchSubmit,
 }: {
   regions: RegionConfig[];
   onNavigate: (view: "shop" | "track") => void;
   onOpenCart: () => void;
   query: string;
   onQuery: (q: string) => void;
+  onSearchSubmit?: () => void;
 }) {
   const pathname = usePathname();
   const cartCount = useCart((s) => s.lines.reduce((sum, l) => sum + l.qty, 0));
@@ -26,18 +28,31 @@ export default function Header({
   const hydrated = useRegion((s) => s.hasHydrated);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Close the search when clicking outside
   useEffect(() => {
     const listener = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setFocused(false);
       }
     };
     document.addEventListener("click", listener);
     return () => document.removeEventListener("click", listener);
   }, []);
+
+  // Handle Escape key to close search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && focused) {
+        setFocused(false);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [focused]);
 
   // Show loading indicator when changing regions
   const [isChangingRegion, setIsChangingRegion] = useState(false);
@@ -47,6 +62,16 @@ export default function Header({
     setRegion(newRegion);
     // Reset loading indicator after a short delay
     setTimeout(() => setIsChangingRegion(false), 500);
+  };
+
+  const handleGoClick = () => {
+    if (query.trim()) {
+      if (onSearchSubmit) {
+        onSearchSubmit();
+      } else {
+        onNavigate("shop");
+      }
+    }
   };
 
   return (
@@ -83,7 +108,7 @@ export default function Header({
           {/* Right section */}
           <div className="flex items-center gap-4">
             {/* Region selector with loading indicator */}
-            <div className="relative" ref={ref}>
+            <div className="relative" ref={regionRef}>
               <select
                 value={region}
                 onChange={(e) => handleRegionChange(e.target.value)}
@@ -124,7 +149,8 @@ export default function Header({
             {/* Search */}
             <div
               className={`ms-hsearch ${focused ? "is-open" : ""}`}
-              onFocus={() => setFocused(true)}
+              ref={searchContainerRef}
+              onClick={() => !focused && setFocused(true)} // Allow click to open
             >
               <input
                 type="text"
@@ -133,8 +159,15 @@ export default function Header({
                 placeholder="SEARCH…"
                 className="ms-search-input ms-field"
                 aria-label="Search products"
+                tabIndex={focused ? 0 : -1} // Manage tab focus
               />
-              <div className="ms-hsearch-grip">
+              <div 
+                className="ms-hsearch-grip cursor-pointer" 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent search container click
+                  setFocused(!focused);
+                }}
+              >
                 <svg
                   width="16"
                   height="16"
@@ -164,11 +197,7 @@ export default function Header({
                 </svg>
               </div>
               <button
-                onClick={() => {
-                  if (query.trim()) {
-                    onNavigate("shop");
-                  }
-                }}
+                onClick={handleGoClick}
                 className="ms-hsearch-key ms-key"
               >
                 GO

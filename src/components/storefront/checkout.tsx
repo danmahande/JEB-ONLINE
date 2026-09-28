@@ -41,17 +41,14 @@ export default function Checkout({
   // Calculate levies using the existing function
   const leviesList = leviesFor(region);
   const duty = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'DUTY') return sum + (levy.rate * subtotal);
-    return sum;
+    return sum + (levy.rate * subtotal);
   }, 0);
   const vat = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'VAT') return sum + (levy.rate * subtotal);
-    return sum;
+    // If levy is part of VAT base, add to VAT calculation
+    const levyAmount = levy.inVatBase ? subtotal + duty : subtotal;
+    return sum + (levy.rate * levyAmount);
   }, 0);
-  const freight = leviesList.reduce((sum, levy) => {
-    if (levy.tag === 'FREIGHT') return sum + (levy.rate * subtotal);
-    return sum;
-  }, 0);
+  const freight = active.shippingBase + (lines.reduce((sum, l) => sum + l.weightKg * l.qty, 0) * active.shippingPerKg);
   const total = subtotal + duty + vat + freight;
 
   async function placeOrder() {
@@ -81,7 +78,7 @@ export default function Checkout({
         body: JSON.stringify({
           customer: {
             ...customer,
-            country: active.country // Use the current region's country
+            country: active.countryName // Use the current region's country name
           },
           lines: lines,
           region,
@@ -309,7 +306,7 @@ export default function Checkout({
                 <p>{customer.company || "Individual"}</p>
                 <p>{customer.address}</p>
                 <p>{customer.city}, {customer.postalCode || 'N/A'}</p>
-                <p>{active.country}</p>
+                <p>{active.countryName}</p>
                 <p className="mt-2">{customer.email} · {customer.phone}</p>
               </div>
             </div>

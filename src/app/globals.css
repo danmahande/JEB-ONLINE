@@ -1241,6 +1241,30 @@ body {
     0 0 0 3px rgba(255, 107, 53, 0.2);
 }
 
+/* Search input */
+.ms-search-input {
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 0;
+  opacity: 0;
+  transition: width 0.3s, opacity 0.2s;
+}
+.ms-search-input:focus {
+  outline: none;
+}
+.ms-search-input::placeholder {
+  color: var(--color-hush);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+.ms-search.is-open .ms-search-input {
+  width: 200px;
+  opacity: 1;
+}
+
 /* Search mark */
 .ms-search-mark {
   flex: 0 0 34px;
@@ -1250,6 +1274,9 @@ body {
   justify-content: center;
   color: #47463f;
   transition: color 0.2s, transform 0.3s;
+}
+.ms-search-mark:hover {
+  color: var(--color-brand);
 }
 
 /* Footer rail */
