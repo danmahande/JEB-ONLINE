@@ -150,10 +150,11 @@
 }
 
 /* Steel-face paint tokens (Task 59) — one mix, every painted face.
-   The cabinet faces (.ms-tile), the search channels (.ms-search) and the
-   counter plaques (.ms-plaque) all dip the same sheet: warm office grey
-   with a hairline grain and machined bevels. Single source so the whole
-   rack can never drift out of tone again. */
+   The cabinet faces (.ms-tile) and the counter plaques (.ms-plaque) all
+   dip the same sheet: warm office grey with a hairline grain and
+   machined bevels. Single source so the whole rack can never drift out
+   of tone again. (The hero search channel that also used this paint was
+   retired — Option A.) */
 :root {
   --ms-steel-grain: repeating-linear-gradient(
     180deg,
@@ -1109,15 +1110,11 @@ body {
 
 /* Reduced motion: states swap instantly, no slide, no sink */
 @media (prefers-reduced-motion: reduce) {
-  .ms-search,
   .ms-hsearch,
   .ms-hsearch .ms-search-input,
   .ms-hsearch-key,
   .ms-hsearch-grip svg {
     transition: none;
-  }
-  .ms-search:focus-within {
-    transform: none;
   }
 }
 
@@ -1135,8 +1132,7 @@ body {
 }
 
 /* Enhanced button/key styles with improved visual feedback */
-.ms-key,
-.ms-search-key {
+.ms-key {
   border: 0;
   border-radius: 4px;
   color: #ffffff;
@@ -1156,16 +1152,14 @@ body {
     transform 0.15s,
     box-shadow 0.2s;
 }
-.ms-key:hover,
-.ms-search-key:hover {
+.ms-key:hover {
   background: var(--color-brand-dark);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     inset 0 -2px 0 rgba(0, 0, 0, 0.25),
     0 0 8px rgba(255, 107, 53, 0.4);
 }
-.ms-key:active,
-.ms-search-key:active {
+.ms-key:active {
   transform: translateY(1px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -1219,38 +1213,10 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Hero search channel — restored VERBATIM from the verified sheet
-   (f67b810). This is the machined steel face the hero mounts: full-width
-   (sized by the JSX Tailwind classes w-full sm:w-80 lg:w-96 — no width
-   property here), dark milled query well, stamped magnifier mark that lets
-   clicks fall through (pointer-events: none), and a press-flush focus
-   effect. Do NOT replace this with the header's collapsed-channel rules —
-   the header (.ms-hsearch) is a different machine that happens to share a
-   vocabulary. */
-.ms-search {
-  display: flex;
-  align-items: stretch;
-  padding: 4px;
-  border-radius: 6px;
-  border: 1px solid #47463f;
-  /* cabinet face — identical paint to .ms-tile */
-  background-image: var(--ms-steel-grain), var(--ms-steel-face);
-  box-shadow: var(--ms-steel-bevels);
-  transition: transform 0.25s cubic-bezier(0.2, 0.6, 0.2, 1), box-shadow 0.25s;
-}
-/* focused: the channel presses flush into its housing */
-.ms-search:focus-within {
-  transform: translateY(2px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 0 rgba(40, 40, 30, 0.2),
-    inset 1px 0 0 rgba(255, 255, 255, 0.25),
-    inset -1px 0 0 rgba(40, 40, 30, 0.08);
-}
-
-/* the well — dark milled socket the query sits in, light bone text, orange
-   caret. The header channel re-scopes these via .ms-hsearch .ms-search-input
-   (higher specificity), so this base is safe for both. */
+/* The well — dark milled socket the query sits in, light bone text, orange
+   caret. Base for the header channel only (the hero search was retired —
+   Option A): .ms-hsearch re-scopes sizing/padding/opacity via
+   .ms-hsearch .ms-search-input (higher specificity). */
 .ms-search-input {
   flex: 1;
   min-width: 0;
@@ -1271,16 +1237,6 @@ body {
 }
 .ms-search-input::placeholder {
   color: rgba(236, 235, 226, 0.55);
-}
-
-/* stamped magnifier mark on the face, left of the well — clicks fall
-   through to the input (pointer-events: none) */
-.ms-search-mark {
-  display: flex;
-  align-items: center;
-  padding: 0 9px 0 7px;
-  color: #47463f;
-  pointer-events: none;
 }
 
 /* Footer rail */

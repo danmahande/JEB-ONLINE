@@ -7,14 +7,16 @@ import Image from "next/image";
    line, no tint layers, no stars. */
 const HERO_LINE = "UGANDA ORIGIN — EXPORTING ACROSS THE EAC & WORLDWIDE";
 
+/* Option A (user decision): the hero is a display window, not a search
+   surface. Exactly ONE search lives on the page — the header channel —
+   so the hero carries the stock list line and two wired CTAs instead,
+   in a frame cut back even shorter. */
 export default function Hero({
   onShop,
-  query,
-  onQuery,
+  onTrack,
 }: {
   onShop: () => void;
-  query: string;
-  onQuery: (q: string) => void;
+  onTrack: () => void;
 }) {
   return (
     /* full-bleed — the display window runs wall to wall (no side gutters),
@@ -23,12 +25,12 @@ export default function Hero({
       <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
 
       {/* the display window — the photo hangs in the same steel frame the
-          catalog rack is built from (.ms-shopfront material), cut back to
-          the original hero strip height (Task 54). The day-part line and
-          the primary controls are bolted to the glass itself; a shaded top
-          edge keeps them legible while the photo stays vivid below. */}
+          catalog rack is built from (.ms-shopfront material). With the
+          search retired the controls are pure signage: one greeting line,
+          one stock-list line, two keys. A shaded top edge keeps them
+          legible while the photo stays vivid below. */}
       <div className="ms-shopfront">
-        <div className="relative h-[240px] md:h-[280px] lg:h-[310px] overflow-hidden rounded-[4px]">
+        <div className="relative h-[180px] md:h-[210px] lg:h-[240px] overflow-hidden rounded-[4px]">
           {/* HD composite: maize field dissolving into a warehouse — the LCP
               element, so it preloads through the optimizer */}
           <Image
@@ -48,44 +50,28 @@ export default function Hero({
             aria-hidden="true"
           />
 
-          {/* signage + controls, mounted on the glass */}
-          <div className="absolute inset-0 z-10 flex flex-col items-start gap-2.5 p-4 md:gap-3 md:p-6">
+          {/* signage + keys, mounted on the glass */}
+          <div className="absolute inset-0 z-10 flex flex-col items-start gap-2 md:gap-2.5 p-4 md:p-6">
             <p className="ms-label text-white/85">{HERO_LINE}</p>
-            <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center md:gap-3">
-              {/* search — the same machined steel channel as the header
-                  rail (Task 52); bolted to the window glass and sharing
-                  one query state with both. */}
-              <form
-                role="search"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  onShop();
-                }}
-                className="ms-search w-full sm:w-80 lg:w-96"
-              >
-                <span className="ms-search-mark" aria-hidden="true">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                    <circle cx="10.5" cy="10.5" r="6.5" />
-                    <path d="M15.5 15.5 21 21" />
-                  </svg>
-                </span>
-                <input
-                  value={query}
-                  onChange={(e) => onQuery(e.target.value)}
-                  placeholder="Search maize flour, cement, iron sheets…"
-                  aria-label="Search products"
-                  className="ms-search-input"
-                />
-                <button type="submit" className="ms-label ms-search-key px-5 md:px-7 shrink-0">
-                  SEARCH
-                </button>
-              </form>
-
+            <p className="ms-display text-xl md:text-2xl leading-none tracking-tight text-white">
+              MAIZE FLOUR. CEMENT. IRON SHEETS.
+              <span
+                className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle"
+                aria-hidden="true"
+              />
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5 md:gap-3">
               <button
                 onClick={onShop}
-                className="ms-label bg-brand text-white px-6 md:px-8 py-4 hover:bg-brand-dark transition-colors shrink-0"
+                className="ms-label bg-brand text-white px-6 md:px-8 py-3.5 hover:bg-brand-dark transition-colors"
               >
                 ENTER CATALOG ↓
+              </button>
+              <button
+                onClick={onTrack}
+                className="ms-label border border-white/70 text-white px-5 md:px-6 py-3.5 hover:border-white hover:bg-white/10 transition-colors"
+              >
+                TRACK ORDER
               </button>
             </div>
           </div>

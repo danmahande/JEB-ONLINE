@@ -170,8 +170,7 @@ export default function Storefront() {
                     catalogElement.scrollIntoView({ behavior: "smooth" });
                   }
                 }}
-                query={query}
-                onQuery={setQuery}
+                onTrack={goTrack}
               />
               <ProductGrid
                 products={products}

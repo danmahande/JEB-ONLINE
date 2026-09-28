@@ -6,6 +6,49 @@
 > time of writing. Do not ship until the Definition of Done at the bottom
 > passes.
 
+---
+
+## ⚠️ READ FIRST — STATUS UPDATE + PRODUCT DECISION (supersedes everything below)
+
+**Status:** every blocker and major in this document has been fixed, verified in
+the browser, and shipped (commit `0334e1c`: checkout contract + guards,
+`quoteCart` money math everywhere, header form/aria/focus handoff, GO scroll;
+plus the follow-up commit that implements the decision below). Do not re-fix
+them. Do not regress them.
+
+**PRODUCT DECISION — the hero search is RETIRED. Do not restore it.**
+The store owner approved "Option A": **exactly one search lives on the page —
+the header channel (`.ms-hsearch`)**. The hero search input was deleted from
+`hero.tsx` and the hero `.ms-search` / `.ms-search-key` / `.ms-search-mark`
+CSS families were deleted from `globals.css` on purpose.
+
+Therefore you MUST IGNORE every instruction in this document that restores or
+repairs the hero search — specifically:
+
+- ROUND 2 → "HERO SEARCH — `.ms-search` family" (restore CSS) — **obsolete**
+- ROUND 3 → "BLOCKER 3 — hero search input is now invisible" — **obsolete**
+- ROUND 4 ADDENDUM (V1/V2/V3 + the verbatim-restore fix) — **obsolete**
+
+V1/V2/V3 were real bugs, but they died with the component. Do NOT:
+
+- re-add a `<form role="search">`, `query` / `onQuery` props, or any input to
+  `src/components/storefront/hero.tsx`
+- re-add `.ms-search` (channel), `.ms-search-key`, or `.ms-search-mark` rules
+  to `globals.css`
+- re-copy CSS "verbatim from f67b810" into the hero
+
+`.ms-search-input` (the dark well base class) still exists — the **header**
+input uses it (`ms-search-input ms-field`); do not delete that one.
+
+**The hero now is (keep it this way):** a `ms-shopfront` display window at
+`h-[180px] md:h-[210px] lg:h-[240px]` carrying the greeting label, the display
+line "MAIZE FLOUR. CEMENT. IRON SHEETS." (`.ms-display`), and two wired CTAs —
+`ENTER CATALOG ↓` (scrolls to `#catalog`) and `TRACK ORDER` (`goTrack`).
+If catalog search discoverability ever becomes a problem, the fix is header
+search prominence, not a second input.
+
+---
+
 ## How to verify while fixing
 
 ```bash
