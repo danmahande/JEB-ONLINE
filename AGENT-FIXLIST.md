@@ -265,3 +265,52 @@ does this correctly in `product-grid.tsx` (`role="alert"` on errors).
 - [ ] Hero search channel, catalog tabs, trust plaques, footer rail all visibly styled again
 - [ ] `npx next build` completes (this is what CI runs)
 - [ ] `npx next build` also passes on a **fresh clone** of the branch — i.e. no reliance on uncommitted local state
+
+---
+
+## POSITIVES in `1927edc` — keep these, do not regress them while fixing
+
+Every blocker/major fix above must preserve the intent below. These are the
+genuinely good ideas in the commit; the bugs are in the wiring, not the ideas.
+
+1. **Multi-step checkout wizard** (`checkout.tsx` — typed `useState<1 | 2 | 3>`,
+   Details → Review → Pay). Right structure for launch. Fix the math/imports,
+   keep the wizard.
+2. **Progress indicator + animated width bar** (`(step / 3) * 100 %`). Keep;
+   restore `.progress-bar` transition as a Tailwind-arbitrary class
+   (`transition-[width] duration-300`) instead of a hand-written rule.
+3. **Back navigation** ("← BACK") that preserves entered data. Keep.
+4. **Field-level error object** (`Record<string, string>`) + email format check
+   + server errors surfaced through toast (`variant: "destructive"`) +
+   `!res.ok` guard. This is the correct error architecture — just add
+   `htmlFor`/`id`/`aria-invalid`/`role="alert"` on top (MAJOR 4).
+5. **`try/catch/finally` with `setPlacing(false)` in `finally`** — button can
+   never get stuck disabled. Keep exactly as written.
+6. **Checkout button disabled + spinner while processing** (cart-drawer) —
+   prevents double-click double-orders. Keep. (Drop only the fake 500 ms
+   `setTimeout` if you touch it; `onCheckout` is sync.)
+7. **Inline total on the checkout button** — `CHECKOUT (UGX …)`. Price
+   transparency at the point of action; keep.
+8. **Qty stepper floor `Math.max(1, l.qty - 1)`** — cannot decrement below 1.
+   Keep.
+9. **Bigger touch targets (`size-8`) + descriptive aria-labels** ("Decrease
+   quantity") in the cart lines. Keep.
+10. **Hydration-safe guards** — `q && q.levies.length > 0 && active` before
+    rendering levies rows. Keep; extend the same guard pattern where
+    `regionHasHydrated` is false.
+11. **`ProductSkeleton`** (`product-grid.tsx`) — anatomy-matching skeleton that
+    reuses the design system (`ms-tile`, `ms-base`, `ms-spot`) with staggered
+    `animationDelay: index * 40ms`. Best change in the commit; keep as-is.
+12. **`mt-auto` on the price/action row** — pins actions to card bottom,
+    equal-height card rhythm. Keep.
+13. **Sticky header** (`sticky top-0 z-20`) and **focus ring on the region
+    select** (`focus:ring-2 focus:ring-brand/30`). Keep.
+14. **Correct cart-count math** in header (`lines.reduce(... l.qty)` — right
+    field names). Keep.
+15. **Total row emphasized in brand color** (`text-brand`) in the cart totals.
+    Keep.
+
+Fix strategy that preserves all of the above: repair in place (imports, field
+names, fragment wrapper, delete the fatal CSS block, restore missing `.ms-*`
+families from `git show f67b810:src/app/globals.css`). Do not rewrite the
+components back to their pre-`1927edc` shape.
