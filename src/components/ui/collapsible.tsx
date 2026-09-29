@@ -28,7 +28,7 @@ function CollapsibleContent({
   return (
     <CollapsiblePrimitive.CollapsibleContent
       data-slot="collapsible-content"
-      className="ms-steel-face ms-steel-bevels border border-line bg-white p-4 rounded-md"
+      className="border border-line bg-white p-4 rounded-md"
       {...props}
     />
   )
