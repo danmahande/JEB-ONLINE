@@ -1090,3 +1090,103 @@ block + `useCart.addLine` wiring deleted). Verified: tile shows price +
 one ADD TO CART key; clicking it opens the sheet; 50KG × 3 → "ADD 3 TO
 CART" → badge 3; tile image click still opens the sheet; tsc 0 errors;
 build green 13/13.
+
+---
+
+## ROUND 7 — `6d162af` + `0b0d17a` + `07d1553` + `a95f8e9` audit: font swap, hero copy, 404, shadcn restyle (verified live)
+
+Four commits in one push. One real improvement (404), one product question
+(hero copy), one design-system decision executed badly (fonts), and drive-by
+deletions that must be restored regardless of what was asked.
+
+### POSITIVES — keep
+1. **404 HOME link** (`07d1553`) — two clear exits, correct `ms-label`
+   classes and voice. Ship as-is.
+2. `ms-steel-face` / `ms-steel-bevels` usage in the shadcn restyle is
+   legitimate — those primitives pre-exist in globals.css.
+3. No cascade white-slab bug, no fabricated stats/certs/contact rows,
+   `tsc` 0 errors, build green.
+
+### BLOCKER A — type tokens deleted while still referenced (incomplete refactor)
+`0b0d17a` deleted the Space Grotesk import and the `--font-display` variable
+from `layout.tsx`, but globals.css still declares
+`font-family: var(--font-display), …` at FOUR live sites:
+- `.ms-weight-toggle` (the pack selector on every tile)
+- `.ms-hsearch-input::placeholder` (the persistent header search)
+- `.ms-chip` (tile pack chips)
+- the hush label rule (~line 1250)
+
+With the variable gone, those declarations are invalid at computed-value
+time and silently fall back to inheritance. It renders "fine" today only
+because everything collapsed to Inter anyway. Either finish the refactor or
+revert it — an orphaned token is a landmine that springs back to life the
+next time someone touches fonts.
+
+### BLOCKER B — drive-by deletions in a font commit (`layout.tsx`)
+None of these are font-related; all were removed in the same commit:
+1. **schema.org Organization JSON-LD** — the site-wide identity shard for
+   crawlers. Verified gone from served HTML. Restore.
+2. **Accessibility skip link** (`#skip-main`) **and its target**
+   (`<div id="main-content" tabIndex={-1}>`). Verified gone. Restore both —
+   a keyboard-only user now tab-traps through the whole header.
+3. **openGraph `siteName` + `type`** deleted. og:title/og:description survive
+   via Next's metadata defaults (verified live), but the curated fields are
+   gone. Restore the block — WhatsApp link previews are the sales channel
+   in this region; do not degrade them for free.
+4. `suppressHydrationWarning` on `<html>` and the body
+   `antialiased bg-background text-foreground` utilities — stripped for no
+   stated reason. Restore.
+
+### BLOCKER C — "Amazon Ember" is fictional stack dressing
+`"Amazon Ember"` was inserted into every font stack in globals.css. Amazon
+Ember is Amazon's proprietary font — it is not loaded by this site and is
+installed on essentially zero visitors' machines, so it applies to NOBODY
+(the stack always falls through to Helvetica/Arial). The commit's own
+comment concedes Inter is the real choice. Shipping a font name that never
+renders is the CSS version of a fabricated claim — remove it from every
+stack it was added to.
+
+### MAJOR 1 — Button primitive breaks the standing rules + a11y
+`button.tsx` (the one shadcn component actually used — cart drawer):
+1. Size variants now inject `ms-label` while keeping `text-sm`/`text-xs`/
+   `text-base` in the same class strings. `.ms-label` sets font-size:10px
+   unlayered → the utilities are all DEAD (verified live: CONTINUE SHOPPING
+   renders 10px). This is the exact utilities-vs-primitive violation the
+   standing rules ban — committed inside a primitive.
+2. `focus-visible:border-ring focus-visible:ring-ring/50
+   focus-visible:ring-[3px]` were REMOVED from the base while
+   `outline-none` stayed → keyboard focus is now invisible on the drawer's
+   CONTINUE SHOPPING buttons. Restore a visible focus treatment.
+3. `rounded-md` was removed from the base but re-added per-size — noise.
+
+### MAJOR 2 — hero copy: soft trust claim with zero basis (OWNER QUESTION)
+`6d162af`: hero line changed from "MAIZE FLOUR. CEMENT. IRON SHEETS." to
+"ESSENTIAL GOODS YOU CAN TRUST". The concrete list named the store's real
+goods; the new line is generic AND asserts trust from a store with no sales
+yet — the softest member of the fabricated-claims family (Round 5).
+If the owner requested this copy, it is the owner's call and it stands —
+but flagging that the specific line was stronger and claim-free.
+
+### MINOR
+1. **EOF newlines stripped on FOUR files** in this push: `not-found.tsx`,
+   `hero.tsx`, `alert-dialog.tsx`, `avatar.tsx` — the 4th–7th documented
+   offenses of this pattern. Stop stripping trailing newlines.
+2. `alert-dialog.tsx` (0 usages in the app — dormant): `ms-display` on an
+   18px dialog title brings line-height 0.95 (cramped) and `ms-label` makes
+   the description 10px uppercase — unreadable styling if it's ever used.
+3. `avatar.tsx`/`badge.tsx` restyled but referenced NOWHERE in the app —
+   churn; badge also lost its focus-visible/aria-invalid treatments.
+4. Inter `weight: ['400'…]` pinning is redundant for a variable font —
+   harmless.
+
+### Definition of Done (Round 7)
+- `--font-display` either restored (Space Grotesk back on
+  ms-label/ms-display/ms-price) or fully retired: 0 references left in
+  globals.css, decision recorded in the design-system comment.
+- `"Amazon Ember"` → 0 hits in globals.css.
+- JSON-LD, skip link + #main-content, openGraph siteName/type,
+  suppressHydrationWarning, body utilities: all restored in layout.tsx.
+- Button base has a visible focus-visible treatment; size variants carry no
+  dead text-* utilities alongside ms-label.
+- Trailing newlines on all four stripped files.
+- Hero copy per owner's explicit answer (concrete list vs trust line).
