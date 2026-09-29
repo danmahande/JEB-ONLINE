@@ -7,8 +7,10 @@
 > passes.
 >
 > **Before anything else:** read the status block below, then
-> **THE OPERATING PLAYBOOK** — added after Round 8 at the owner's request.
-> It is binding for every future commit in this repo.
+> **THE OPERATING PLAYBOOK** and **THE CRAFT STANDARDS** — both added
+> after Round 8 at the owner's request. They are binding for every future
+> commit in this repo: the playbook governs the loop (think, verify,
+> report), the craft standards govern the code that the loop produces.
 
 ---
 
@@ -363,6 +365,189 @@ in order:
    commit message claims only what the diff does.
 
 Total invention: zero. That is what "done" looks like.
+
+---
+
+## THE CRAFT STANDARDS — writing the code itself (BINDING, owner-requested)
+
+*Added alongside the Operating Playbook. The playbook governs the loop —
+think, verify, report. This governs what the code looks like when it lands.
+Same method: every rule traces to a real incident in this repo, cited inline.
+"Coding skill" here is not cleverness — it is the discipline to write
+obvious, typed, honest code that the next reader can trace without you in
+the room.*
+
+### C1 · TypeScript — make the compiler your reviewer
+
+- **No `any`, ever** — not even `as any` "just to unblock". Unknown shape?
+  Type it from the source of truth instead of silencing the checker.
+- **Derive, don't re-declare.** Cart lines are `CartLine` from
+  `src/lib/types.ts:47` — `import type { CartLine }`. Re-declaring a
+  look-alike `{ quantity, unitPrice }` is exactly how Round 1 shipped
+  silent NaN money: two shapes that drift, and only one of them feeds the
+  order API.
+- **Narrow, don't cast.** `if (!product) return null` beats
+  `product!.slug`. Non-null assertions are banned in new code.
+- **Grep the export before you import or invent it:**
+  `rg -n "export (function|const) NAME" src/lib`. Round 1 imported
+  `LEVIES` — a function that never existed anywhere — and the checkout
+  chunk died on load. If the helper exists (`fmt`, `fmtWeight`,
+  `quoteCart`, `leviesFor` all live in `src/lib/format.ts` /
+  `levies.ts`), reuse it; if none fits, extend the existing module rather
+  than opening a parallel one.
+- Every `switch` handles the impossible branch explicitly (`default`
+  returns or throws). Silent fall-through is a future NaN.
+
+```ts
+// BAD — invented field names: a tsc error if typed, runtime NaN if not
+const total = line.quantity * line.unitPrice;
+
+// GOOD — the compiler now guards the contract for you
+const total = line.qty * line.unitPriceUsd;   // CartLine, types.ts:47
+```
+
+### C2 · React — components that read top to bottom
+
+- **One root element per return.** Round 1's site-wide HTTP 500 was a
+  missing fragment between two siblings. Two siblings → wrap in a
+  fragment or split the component.
+- **`"use client"` at the leaves.** Only the component that touches
+  state, browser APIs, or handlers needs it. Server components stay the
+  default; that is why `layout.tsx` must never carry an `onKeyDown`
+  (shipped twice — Playbook Rule 5).
+- **Derive state, don't sync it.** If a value can be computed from
+  existing state or props, compute it during render — never
+  `useEffect` + `setState` to mirror another value. Mirrored state is
+  the disease behind Round 1 BLOCKER 2, where the cart drawer was wired
+  to the *search* state: two sources of truth for one piece of UI.
+- **Effects talk to the outside world only** — subscriptions, DOM
+  measurement, network. Not derivations, not "reacting to your own
+  state".
+- List keys are stable ids, never array indexes, for anything that can
+  reorder.
+
+### C3 · zustand — stable selectors or none
+
+```ts
+// BAD — builds a new array on every store tick; consumers re-render forever
+const lines = useCart((s) => s.items.filter((i) => i.qty > 0));
+
+// GOOD — select the narrowest raw slice; derive locally
+const items = useCart((s) => s.items);
+const visible = useMemo(() => items.filter((i) => i.qty > 0), [items]);
+```
+
+Round 1 MAJOR 2 was exactly this unstable-selector pattern. Never compute
+inside the selector; select data, derive views.
+
+### C4 · Accessibility is code, not polish
+
+- Every input owns an associated label (`htmlFor` + `id`, or wrapping).
+  Round 1 MAJOR 4 found checkout labels unassociated *and* errors that
+  never reached the screen reader.
+- Announce what changes: cart count updates, copy-confirmations, form
+  errors ride an `aria-live="polite"` region — the quick-view sheet
+  already does this (quick-view.tsx:231, 284); copy that pattern.
+- Keyboard is a first-class channel: Tab through every new surface and
+  *see* the focus before claiming it. The site-wide `:focus-visible`
+  outline (globals.css:206) is the contract — Playbook Rule 7.
+- A11y and SEO infrastructure is load-bearing: Round 7's "font swap"
+  silently evicted the skip link, Organization JSON-LD, OG metadata and
+  `suppressHydrationWarning` from `layout.tsx`. Restyles do not remove
+  facilities they don't understand.
+
+### C5 · Next.js craft
+
+- **The URL is the router.** Views ride `?view=checkout` through
+  `useUrlState<T>` (`src/hooks/use-url-state.ts:9`). No
+  `window.location.hash` — Round 1 BLOCKER 2 set a hash the architecture
+  cannot see and the checkout never opened.
+- Metadata is exported from `layout.tsx` / `page.tsx`; no hand-rolled
+  `<meta>` tags inside components.
+- Fonts via `next/font` only — self-hosted, swap display, no weight pin
+  on variable fonts (Playbook Rule 6).
+- Money and levies are priced server-side in `api/orders/route.ts`;
+  client math is display-only and reuses `quoteCart` /
+  `leviesFor` / `fmt` (Playbook Rule 4).
+
+### C6 · CSS craft — tokens and primitives only
+
+- Colors come from the steel theme block (globals.css 131–137:
+  `--color-ink`, `--color-brand`, `--color-line`, `--color-hush` →
+  `text-ink`, `bg-brand`, `border-line`, `text-hush`). No raw hex in
+  JSX, no inline `style={{}}` for themeable values.
+- If a primitive already provides the surface — `.ms-tile`, `.ms-plaque`,
+  `.ms-key`, `.ms-chip`, `.ms-tab`, `.ms-label` — use it. Hand-rolled
+  imitations drift from the design system within one round; that drift
+  is what rounds 7–8 audited.
+- New utility-looking CSS never gets hand-copied into globals.css;
+  Tailwind v4 generates it from the JSX (Playbook Rule 10).
+
+### C7 · Honest UI — no dead buttons, no fake states
+
+- Every control does what its label says, or it does not ship. Round 1
+  MAJOR 5 was a pay button that only popped a toast — misleading UI is
+  blocker-grade, not a nitpick.
+- Loading, empty, and error states are part of "done". A checkout that
+  swallows a failed order POST fails silently, and the shopper blames
+  the store.
+- Copy is exact and state-aware: `ADD TO CART` adds to cart, `NOTIFY ME`
+  subscribes, quantity-aware copy changes with qty. If the text can be
+  true in one state and false in another, make it dynamic.
+
+### C8 · Refactor discipline
+
+- **Feature commit ≠ refactor commit.** Never mix "make it work" with
+  "make it pretty" — a mixed diff cannot be verified, and the audit will
+  bounce it.
+- Read the whole function and every call site before changing a
+  signature: `rg -n "fnName" src --glob '*.ts*'`.
+- Deleting anything requires the consumer grep (Playbook Rule 10 — three
+  rounds deleted live CSS families without it).
+- Fixing a bug starts with reproducing it (browser or suite), then the
+  fix, then re-running the reproduction. No reproduction = a guess, not
+  a fix.
+
+### C9 · The self-review pass — audit yourself before you are audited
+
+After the last edit, re-read your own diff as the adversary:
+
+```bash
+git diff                           # read every changed line
+rg -n "console\.(log|debug)" src   # → 0 debug leftovers
+rg -n "TODO|FIXME|XXX" src         # → 0 new ones
+rg -n ": any|as any" src           # → 0 new ones
+```
+
+Per file, ask: does this do what the commit message says? What became
+dead because of this change (unused imports, orphaned helpers)? Would a
+stranger with the Playbook verify this without asking me a question? If
+the answer is no, it is not done.
+
+### C10 · The skill bar
+
+Top-tier coding is not writing more code — it is writing the least code
+that is typed, named after the domain (`qty`, `unitPriceUsd`, `levies`),
+honest about its states, and provable by a command. Every rule above
+exists because its absence cost a round: the invented field names, the
+invented import, the mirrored state, the silent pay button, the eaten
+focus ring. Write the code a stranger can audit, and the audit comes back
+empty.
+
+### C11 · Reference implementations — imitate these, don't improvise
+
+| File | What it teaches |
+|---|---|
+| `src/components/storefront/cart-drawer.tsx` | the canonical `CartLine` consumer — field names (`l.qty`, `l.unitPriceUsd`), money display via the shared formatters |
+| `src/lib/format.ts` | `quoteCart` (:7), `fmt` (:38), `fmtWeight` (:51) — money/weight rendering is never re-invented in components |
+| `src/lib/levies.ts` + `src/app/api/orders/route.ts` | one source of truth: named levy exports, server-side re-pricing |
+| `src/hooks/use-url-state.ts` | URL-as-router pattern for views |
+| `src/components/storefront/quick-view.tsx` | the full tile contract (ADD TO CART → pack/qty → confirm) plus the clipboard chain — async API first, `execCommand` fallback, `aria-live="polite"` feedback (lines 231, 284) |
+| `header.tsx` `SearchField` | one component, one state, two renders (md+ inline, mobile row) — no collapse choreography |
+
+When you start a task, open the matching reference first and copy its
+*shape* — state placement, naming, feedback — before writing anything
+new.
 
 ---
 
