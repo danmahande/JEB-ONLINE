@@ -1970,3 +1970,81 @@ tsc 0 (filtered); build 13/13 routes; 22/22 browser suite after dev
 restart; usage grep → 0; fiction count → 16 tokens / 8 elements;
 `.ms-label` rule read at globals.css:228-234; EOF via od on all three
 files; commit parentage and timestamps via git log.
+
+---
+
+## ROUND 10 — `5e923a2` audit: first post-AGENTS.md push — partial Round 9 compliance (verified live)
+
+The test round. The owner asked the agent to review; ~20 minutes after
+`AGENTS.md` reached the repo the agent pushed a targeted fix (+14/−14,
+exactly the three audited files). For the first time since Round 6, a
+push contains **zero new violations** — nothing to add to the ledger.
+The commit does what its message says, in the way the Round 9 audit
+prescribed: remove fiction, restore standard utilities. Two of five DoD
+items fully closed, one partial, two untouched.
+
+### Round 9 DoD scorecard
+
+| Round 9 item | Status |
+|---|---|
+| MAJOR 1 — `ms-steel` class names → 0 | ✅ all 16 tokens removed; `rg "ms-steel" src --glob '*.tsx'` → 0 |
+| MAJOR 2 — `.ms-label` beside killed utilities (5 strings) | ✅ all five corrected by removing ms-label; CommandDialog heading got its `text-xs` restored |
+| MAJOR 3 — className swallowed in Collapsible | ❌ untouched — Trigger and Content still destructure `className` and hardcode the attribute; caller className still dropped |
+| MINOR 1 — EOF newlines ×3 | ⚠️ partial — collapsible restored (ends `}\n`); command + context-menu still stripped (offenses **#12–13 open**) |
+| MINOR 2 — CommandItem selected-state icon contrast | ❌ untouched — `data-[selected=true]:bg-ink` with `[&_svg:not([class*='text-'])]:text-ink` still renders ink icons on the ink selection background |
+| Standing gates | ✅ tsc 0 · build 13/13 · 22/22 browser suite |
+
+### POSITIVES — the bootstrap is working
+
+1. **Zero new violations.** No fictional classes, no cascade collisions,
+   no new EOF damage — the first push in four rounds that adds nothing
+   to the repeat-offense ledger.
+2. **Scope discipline (Playbook Phase II finally practiced):** the diff
+   touches exactly the three files the audit named (+14/−14). No
+   drive-by restyle of the next alphabetical primitive.
+3. **Fix-by-removal, not invention:** the corrections delete fiction and
+   restore standard shadcn utilities; no new helpers, no new CSS.
+4. **Honest commit message (Playbook Phase V, first time practiced):**
+   "remove fictional ms-steel-* classes and correct ms-label usage" —
+   both claims are true of the diff.
+5. **Responsiveness:** pushed ~20 minutes after `AGENTS.md` landed —
+   evidence the bootstrap file is actually being read.
+
+### REMAINING PUNCH LIST — closes Round 9 entirely (~10 lines)
+
+1. **collapsible.tsx — merge caller className via `cn()`.** Add
+   `import { cn } from "@/lib/utils"` (the file currently imports
+   nothing local; `cn` lives at `src/lib/utils.ts:4`). Then:
+   - Trigger: `className={cn("flex items-center gap-2 text-ink
+     hover:text-brand transition-colors ms-label", className)}`
+   - Content: `className={cn("border border-line bg-white p-4
+     rounded-md", className)}`
+   (The Trigger's `.ms-label` is accepted as a genuine micro-label
+   surface — keep it, but it must survive the merge refactor.)
+2. **command.tsx + context-menu.tsx — append the missing trailing
+   newline** (offenses #12–13; verify with
+   `od -An -c FILE | tr -s ' ' | tail -1` ending in `\n`).
+3. **command.tsx CommandItem — make the svg selector selection-aware:**
+   append `data-[selected=true]:[&_svg:not([class*='text-'])]:text-white`
+   so icons follow the white text on the ink selection background
+   instead of vanishing.
+4. **Re-run the gates:** tsc 0 · build 13/13 · suite 22/22 · fiction
+   grep 0 · EOF `\n` on every touched file.
+
+### Verdict
+
+**AGENTS.md test: PASSED on reading, INCOMPLETE on execution.** The
+agent located the named findings, applied the prescribed remedy style,
+and told the truth in the message — the three behaviors the last eight
+rounds said were impossible. What remains looks like stopping before
+the DoD was re-read. Hand the punch list back verbatim; if the next
+push closes all three items with the gates green, the constitution is
+working and the `src/components/ui/` freeze can stay advisory rather
+than becoming a bar.
+
+### Verification log (this audit)
+
+Fiction grep → 0; od EOF on all three files; collapsible.tsx source
+read (no local imports; `cn` confirmed at utils.ts:4); tsc 0 filtered;
+build 13/13; 22/22 suite post-merge; commit timestamp 01:06:58 +0300
+(= 22:06:58 UTC, ~20 min after the AGENTS.md push at 21:46:52 UTC).
