@@ -699,3 +699,151 @@ Then delete the added collapse rules (`.ms-search-input { width: 0; opacity:
 0 }` and `.ms-search.is-open .ms-search-input`). Verify: channel ≥ 320px,
 input visible and typeable, magnifier click focuses the input, no overlap
 with ENTER CATALOG.
+
+---
+
+## ROUND 5 — `c16d2ef` audit: trust strip + testimonials + expanded footer
+
+> What the commit does: adds a stats row, a testimonials block (page.tsx),
+> and rebuilds the footer with newsletter, Shop/Company columns, Trade
+> Specifications, Contact Info, legal buttons and social icons. Build
+> passes (✓ `next build`), no runtime errors — the page renders. But this
+> round introduces a new **category** of problem: invented facts on a live
+> storefront. Fix order below.
+
+### BLOCKER A — fabricated business claims on a real storefront
+
+**Files:** `src/app/page.tsx:254-260, 276-289` · `src/components/storefront/footer.tsx:127`
+
+This is not a design bug — it is invented commercial fact on a live shop:
+
+1. **Fake statistics** — "500+ Businesses Served", "98% On-Time Delivery",
+   "15+ Years Experience" (`page.tsx:256-259`). Nobody counted these. If a
+   real buyer asks for the 500 customers, the store has nothing to show.
+2. **Fake named testimonials with 5-star ratings** — "Sarah Kimani,
+   AgroProcessors Ltd, Nairobi" and "Thomas Mugisha, BuildTech Solutions,
+   Kigali" (`page.tsx:276-289`). These people do not exist. Publishing
+   fabricated endorsements for a real business is the fastest way to lose
+   trust (and in many jurisdictions, illegal — fake reviews are regulated).
+3. **Fabricated certification** — `["Certifications", "EAC, ISO 9001"]`
+   (`footer.tsx:127`). Claiming ISO 9001 without holding it is
+   misrepresentation with real legal exposure. The EAC claim is fine (the
+   shop does trade in the EAC); ISO 9001 must go unless the certificate
+   exists.
+
+**Fix — delete or replace with verified data.** Either remove the stats and
+testimonial sections entirely (preferred until real data exists), or wire
+them to real numbers (count of completed orders from the DB, real customer
+quotes with written permission). Never hardcode invented figures on a
+commerce site. This is a permanent rule, not a one-off.
+
+### BLOCKER B — placeholder contact details presented as real
+
+**File:** `src/components/storefront/footer.tsx:145-148`
+
+`["Address", "Plot 123, Industrial Area, Kampala, Uganda"]` and
+`["Phone", "+256 700 000 000"]` are template placeholders. A customer who
+calls +256 700 000 000 reaches nobody; a driver sent to "Plot 123" finds
+nothing. Same rule as Blocker A: real data or remove the row. (The real
+phone/address must come from the store owner — ask, don't invent.)
+
+### BLOCKER C — dead controls everywhere (the "fake button" pattern)
+
+Every one of these renders as an interactive control but does nothing when
+clicked or submitted — verified by clicking in the browser:
+
+1. **Newsletter** (`footer.tsx:37-52`): the input is not wrapped in a
+   `<form>` (`input.closest('form') → null`) and SUBSCRIBE has no
+   onClick/handler. No state, no POST, no toast. There IS an existing
+   endpoint pattern to follow — see `src/app/api/restock-notify/route.ts`
+   and the restock form in `product-view.tsx` (state → POST → success
+   state). Either build the newsletter on that pattern (new `/api/subscribe`
+   route + Prisma model) or remove the block until it exists.
+2. **Legal buttons** (`footer.tsx:163-167`): Privacy Policy / Terms of
+   Service / Cookie Policy — no handlers. If the pages don't exist, don't
+   ship the buttons; if they must stay, link to real pages.
+3. **Social icons** (`footer.tsx:172-190`): buttons with aria-labels but no
+   URLs. They should be `<a href="https://..." rel="noopener noreferrer"
+   target="_blank">` pointing at real accounts — or removed.
+4. **"GRAINS & HARDWARE — SOLD ACROSS BORDERS" became a `<button>`**
+   (`footer.tsx:169`) — it was a static `<p>`; a clickable element with no
+   action is noise for keyboard/screen-reader users. Revert to `<p>`.
+5. **"New Arrivals" / "Best Sellers"** (`footer.tsx:61-62`) and the whole
+   **COMPANY column** (`footer.tsx:82-110`): all navigate to `"shop"` with
+   no query/filter, so every link lands on the same unfiltered rack. From
+   the shopper's side these are lies with extra steps. Either implement
+   them (e.g. `onNavigate("shop")` + set the category tab or query — the
+   catalog already supports `?q=`; About/FAQ/Policy pages need real pages)
+   or cut the list back to links that are true today.
+
+### MAJOR 1 — CSS cascade bug in the newsletter input (the round-2 lesson, again)
+
+**File:** `src/components/storefront/footer.tsx:42-43`
+
+The markup hopes `ms-field` + `text-white bg-white/10 border-white/20
+placeholder:text-white/40` blend: dark translucent field on the ink footer.
+**Verified rendered result: solid white background `rgb(255,255,255)`, ink
+text `rgb(27,42,74)`, light border** — a bright white slab on the dark
+footer (screenshot `.shots/round5-footer-agent.png`).
+
+Why: `.ms-field` sets `background: #ffffff; color: var(--color-ink);
+border: 1px solid var(--color-line)` as **unlayered** custom CSS in
+globals.css. Unlayered beats Tailwind's layered utilities — the same
+mechanism that hid the hero search input in rounds 2–4. This is now the
+second time: **before styling over an existing `ms-*` primitive, read what
+it sets and either pick a primitive that matches (or no primitive) — never
+fight an unlayered class with utilities.**
+
+Fix options: drop `ms-field` and use plain Tailwind on a bare input; or add
+a dedicated dark-field primitive (e.g. `.ms-field-dark`) in globals.css;
+do not stack utilities against `.ms-field`.
+
+### MAJOR 2 — voice drift in the footer bottom bar
+
+`footer.tsx:162`: the legal row uses `text-sm` body text; every other
+footer label is `ms-label` (Space Grotesk caps, tracked). Same bar, two
+type systems. And re-check labels: the SHOP/COMPANY lists are written in
+Title Case but render uppercase only because `ms-label` forces
+`text-transform: uppercase` — fine visually, but write them in the voice
+you mean (uppercase), like the rest of the file did.
+
+### MINOR
+
+- `footer.tsx` lost its EOF newline again (`\ No newline at end of file`)
+  — this was fixed once before; keep the newline.
+- Newsletter input has no accessible label (`JOIN OUR NEWSLETTER` is a
+  sibling `<p>`); when the form becomes real, use `<label htmlFor>` or
+  `aria-label`.
+- Footer height roughly doubled (brand blurb + newsletter + 2 nav columns +
+  divider + 2 spec columns + bottom bar). On mobile that's many screens of
+  footer before the page ends — consider collapsing the spec/contact block
+  into a `<details>` or trimming rows once real data replaces the filler.
+
+### What was GOOD in `c16d2ef` — keep these instincts
+
+- Social proof & footer completeness is the right *impulse* — the execution
+  data is what must change (real numbers, real quotes, real links).
+- The nav hover treatment (small square bullet → brand color on hover) is
+  perfectly on-voice with the square brand marks used elsewhere.
+- Social icons carry `aria-label`s; sections reuse existing primitives
+  (`ms-plaque`, `ms-spot`, `Reveal`) so the stats cards blend into the
+  trust strip visually.
+- TRADE SPECIFICATIONS as a separate data sheet (instead of deleted) was
+  the right call.
+- Build stays green; no console/runtime errors introduced.
+
+### Round 5 Definition of Done
+
+1. No invented numbers, no fake testimonials, no unheld certifications —
+   anywhere in the app (grep for "500+", "98%", "ISO 9001", "Sarah
+   Kimani", "Thomas Mugisha" returns nothing).
+2. No placeholder contact data ("Plot 123", "+256 700 000 000") — real
+   details from the owner, or rows removed.
+3. Every interactive element in the footer actually does something:
+   newsletter posts somewhere (or is gone), legal links resolve (or are
+   gone), social icons are real `<a href>`s (or are gone), the tagline is
+   a `<p>` again, every nav item lands somewhere distinguishable from
+   clicking CATALOG.
+4. Newsletter field renders as an intentional dark field (or a white one
+   that matches the design system on purpose) — not a cascade accident.
+5. `npx next build` still green; EOF newline restored.
