@@ -77,6 +77,11 @@ export default function QuickView({
     onClose();
   }
 
+  // Calculate discount percentage if applicable
+  const discountPercentage = v?.priceDelta && product.unitSellingPrice > 0 
+    ? Math.round(Math.abs((v.priceDelta / product.unitSellingPrice) * 100))
+    : 0;
+
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
       <DialogContent key={product.productId} className="max-w-4xl sm:max-w-4xl p-0 gap-0 bg-white border border-line rounded-lg max-h-[90vh] overflow-y-auto ms-scroll">
@@ -94,6 +99,12 @@ export default function QuickView({
               sizes="(min-width: 768px) 448px, 100vw"
               className="w-full h-full object-cover"
             />
+            {/* Discount badge for special offers */}
+            {discountPercentage > 0 && !out && (
+              <span className="ms-label absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-sm text-xs font-bold z-10">
+                -{discountPercentage}%
+              </span>
+            )}
             <span className="ms-label absolute top-3 left-3 bg-white border border-line px-2 py-1 text-ink">
               HS {product.hsCode} · ORIGIN {product.originCountry}
             </span>
@@ -135,10 +146,17 @@ export default function QuickView({
                 <p className="ms-price text-2xl md:text-3xl tracking-tight text-brand">
                   {totalFmt(priceUsd)}
                 </p>
+                
+                {/* Original price strikethrough for discounted items */}
+                {discountPercentage > 0 && !out && (
+                  <div className="text-sm text-gray-500 line-through mt-1">
+                    {fmt(product.unitSellingPrice, active || regions[0])}
+                  </div>
+                )}
               </div>
-              <p className="ms-label text-right">
+              <p className={`ms-label text-right ${out ? "text-red-500" : ""}`}>
                 {out ? (
-                  <span className="text-red-500">SOLD OUT</span>
+                  "SOLD OUT"
                 ) : (
                   <>
                     {product.currentStock} {product.unit}
@@ -203,6 +221,29 @@ export default function QuickView({
             >
               FULL PRODUCT PAGE →
             </Link>
+            
+            {/* Quick links for related actions */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button 
+                onClick={() => navigator.share ? navigator.share({
+                  title: product.productLabel,
+                  text: `Check out ${product.productLabel} on Meridian Supply`,
+                  url: window.location.href
+                }) : null}
+                className="ms-label text-xs border border-line px-3 py-1.5 hover:bg-ink hover:text-white transition-colors"
+              >
+                Share
+              </button>
+              <button 
+                onClick={() => {
+                  // Copy product link to clipboard
+                  navigator.clipboard.writeText(`${window.location.origin}/p/${product.slug}`);
+                }}
+                className="ms-label text-xs border border-line px-3 py-1.5 hover:bg-ink hover:text-white transition-colors"
+              >
+                Copy Link
+              </button>
+            </div>
           </div>
         </div>
       </DialogContent>
