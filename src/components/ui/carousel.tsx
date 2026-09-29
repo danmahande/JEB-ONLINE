@@ -120,7 +120,7 @@ function Carousel({
     >
       <div
         onKeyDownCapture={handleKeyDown}
-        className={cn("relative ms-steel-face ms-steel-bevels", className)}
+        className={cn("relative", className)}
         role="region"
         aria-roledescription="carousel"
         data-slot="carousel"
@@ -185,7 +185,7 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white focus-visible:ring-0 ms-steel-bevels",
+        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white",
         orientation === "horizontal"
           ? "top-1/2 -left-14 -translate-y-1/2"
           : "-top-14 left-1/2 -translate-x-1/2 rotate-90",
@@ -215,7 +215,7 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white focus-visible:ring-0 ms-steel-bevels",
+        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white",
         orientation === "horizontal"
           ? "top-1/2 -right-14 -translate-y-1/2"
           : "-bottom-14 left-1/2 -translate-x-1/2 rotate-90",

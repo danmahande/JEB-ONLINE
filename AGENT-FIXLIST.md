@@ -1349,3 +1349,32 @@ Dormant today; landmines the day anyone imports these components.
   intended (chart tooltip values keep font-mono).
 - Trailing newlines restored on card.tsx / carousel.tsx / checkbox.tsx.
 - Standing gates: tsc 0, build 13/13, 22-check browser suite green.
+
+### ROUND 8 RESOLUTION — fixed by Super Z
+
+Executed per owner's "clean". No new rules invented — the storefront's
+real surfaces already live on ms-tile/ms-plaque; these dormant primitives
+just got honest.
+
+1. **Dead steel classes → 0 across the whole ui/ layer.** Removed
+   `ms-steel-face` / `ms-steel-bevels` from Card, Carousel root,
+   Carousel prev/next, chart tooltip, Checkbox root (this round's six)
+   AND from alert-dialog, badge, avatar (three latent hits from the
+   Round 7 push that the Round 7 button-only grep gate missed). Grep
+   `ms-steel` in src/components/ui → 0. No rule was promoted: if a steel
+   card surface is ever actually wanted, write a real `.ms-steel-card`
+   rule in globals.css first, then use it.
+2. **Type misuse fixed:** CardTitle `ms-display` → `text-xl font-semibold
+   leading-none tracking-tight text-ink` (no 0.95 crush, no forced
+   uppercase); CardDescription `ms-label` → `text-sm text-hush`; chart
+   tooltip values keep `font-mono tabular-nums` (ms-label removed — it
+   was overriding the mono face unlayered).
+3. **Carousel nav buttons:** dead bevels + redundant `focus-visible:ring-0`
+   removed; keyboard focus rides the site-wide outline rule like every
+   other surface.
+4. **EOF newlines** restored on card / carousel / checkbox (and badge,
+   found stripped during the sweep).
+
+**Gates (all green):** tsc 0 app errors; build 13/13; 22-check browser
+suite 0 regressions after dev restart; grep `ms-steel` in
+src/components/ui → 0; EOF OK on all touched files.
