@@ -120,7 +120,7 @@ function Carousel({
     >
       <div
         onKeyDownCapture={handleKeyDown}
-        className={cn("relative", className)}
+        className={cn("relative ms-steel-face ms-steel-bevels", className)}
         role="region"
         aria-roledescription="carousel"
         data-slot="carousel"
@@ -144,7 +144,7 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
       <div
         className={cn(
           "flex",
-          orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col",
+          orientation === "horizontal" ? "-ml-6" : "-mt-6 flex-col",
           className
         )}
         {...props}
@@ -163,7 +163,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="carousel-item"
       className={cn(
         "min-w-0 shrink-0 grow-0 basis-full",
-        orientation === "horizontal" ? "pl-4" : "pt-4",
+        orientation === "horizontal" ? "pl-6" : "pt-6",
         className
       )}
       {...props}
@@ -185,17 +185,17 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        "absolute size-8 rounded-full",
+        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white focus-visible:ring-0 ms-steel-bevels",
         orientation === "horizontal"
-          ? "top-1/2 -left-12 -translate-y-1/2"
-          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+          ? "top-1/2 -left-14 -translate-y-1/2"
+          : "-top-14 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollPrev}
       onClick={scrollPrev}
       {...props}
     >
-      <ArrowLeft />
+      <ArrowLeft className="size-5" />
       <span className="sr-only">Previous slide</span>
     </Button>
   )
@@ -215,17 +215,17 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        "absolute size-8 rounded-full",
+        "size-10 rounded-md bg-white border border-line hover:bg-ink hover:text-white focus-visible:ring-0 ms-steel-bevels",
         orientation === "horizontal"
-          ? "top-1/2 -right-12 -translate-y-1/2"
-          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+          ? "top-1/2 -right-14 -translate-y-1/2"
+          : "-bottom-14 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollNext}
       onClick={scrollNext}
       {...props}
     >
-      <ArrowRight />
+      <ArrowRight className="size-5" />
       <span className="sr-only">Next slide</span>
     </Button>
   )
