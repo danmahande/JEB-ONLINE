@@ -886,3 +886,150 @@ tested; browser E2E — subscribe success state renders, GRAINS link filters
 the rack to 7 lines and scrolls to catalog, TRACK AN ORDER switches to
 ?view=track, empty reviews state renders, no white cascade slab. Test
 subscriber rows deleted from the DB after the run.
+
+---
+
+## ROUND 6 — `7daee1a` audit: discount badges + quick add + share/copy (verified live in browser)
+
+Commit: "Improve catalog cards with discount badges, quick add functionality,
+enhanced quick-view with share options, and better visual hierarchy".
+Touched: `product-grid.tsx` (+64), `quick-view.tsx` (+47). Every finding below
+was reproduced in a real browser against the running site, not guessed from code.
+
+### POSITIVES — keep these
+1. **Quick Add is real and correct.** The payload matches the `CartLine`
+   contract field-for-field (productId, slug, productLabel, brand,
+   variantLabel, unitPriceUsd, weightKg, qty, image, maxStock), the store's
+   dedupe (productId + variantLabel) and maxStock cap handle it, `toast`
+   fires, and the drawer shows the right line at the right price — verified:
+   "Maize Flour (Posho) · 5KG BAG · USh 18,806". `e.stopPropagation()` keeps
+   the tile's quick-view open from hijacking the click. This is the first
+   agent commit in six rounds where a new control is fully functional.
+2. **No CSS cascade bug.** `.ms-label` / `.ms-sticker` only set font and
+   border, so the raw `bg-red-500 text-white` utilities on the badge render
+   correctly. Lesson from rounds 2/4/5 apparently absorbed.
+3. Copy Link targets a route that exists (`/p/[slug]`).
+
+### BLOCKER A — fabricated discounts, both directions (owner-policy violation)
+`product-grid.tsx` and `quick-view.tsx` both compute:
+
+```tsx
+const discountPercentage = v?.priceDelta && p.unitSellingPrice > 0
+  ? Math.round(Math.abs((v.priceDelta / p.unitSellingPrice) * 100))
+  : 0;
+```
+
+`priceDelta` is **pack-size economics**, not a promotion — the schema itself
+documents it: `[{ "label": "25KG BAG", "priceDelta": 0, "weightKg": 25 }]`.
+Seed data, Maize Flour: base $18.40, deltas `[-13.5, 0, +17.2]`.
+
+Browser-verified on the live tile (USh region):
+- **Small pack** (delta −13.5 → USh 18,806): red **"−73%"** badge +
+  strikethrough ~~USh 70,617~~. Nothing is on sale — that is simply the 5KG
+  bag's real price being framed as a 73%-off fire sale.
+- **Big pack** (delta +17.2 → USh 136,629): red **"−93%"** badge +
+  strikethrough ~~USh 70,617~~ **below** the actual price. `Math.abs()`
+  erases the sign, so a 93% **surcharge** renders as a 93% **discount**, and
+  the crossed-out "original" price is cheaper than the selling price. This is
+  the most self-contradicting price display a storefront can produce.
+
+This is Round 5's fabricated-claims category again (fake stats → now fake
+reference pricing). The store runs zero promotions; every "-%" badge it can
+ever show is fabricated, and fake "was/now" pricing is a consumer-protection
+liability in every EAC market, not just a style problem.
+
+**Fix:** delete the badge and the strikethrough in BOTH files (4 render
+sites: tile badge, tile strike, QV badge, QV strike) plus both
+`discountPercentage` computations. If pack-price context is wanted later, show
+honest unit economics (e.g. "≈ USh 5,466 / 100KG") — never a fake "was" price.
+
+### BLOCKER B — dead Share button on desktop
+`quick-view.tsx`:
+
+```tsx
+onClick={() => navigator.share ? navigator.share({ ... }) : null}
+```
+
+`navigator.share` is **undefined** on every desktop Chromium/Firefox build
+(browser-verified: `typeof navigator.share === "undefined"`), so on desktop
+the button renders, is clickable, and does literally nothing — Round 5
+BLOCKER C (dead controls) again, now shipped as new code. Two more defects in
+the same line: no try/catch (user-cancel throws an unhandled AbortError), and
+it shares `window.location.href` — the shop URL — while Copy Link shares
+`/p/<slug>`, so the two "share" paths disagree about what a product's URL is.
+
+**Fix:** delete the button, or wire the fallback chain properly: if
+`navigator.share` exists use it inside try/catch, else copy the product URL
+and show visible feedback (see BLOCKER C). Both buttons must share one URL
+canonicalization (`/p/${product.slug}`).
+
+### BLOCKER C — Copy Link is silent (dead-feeling control)
+`navigator.clipboard.writeText(...)` with no await, no catch, no feedback.
+Browser-verified: zero visual change after click. The user cannot tell
+whether anything happened. On non-secure origins (http://LAN-IP deployments
+of the standalone build) `navigator.clipboard` is undefined entirely →
+unhandled TypeError on click.
+
+**Fix:** flip the button to a "COPIED" state for ~2s (or toast), guard for a
+missing clipboard API, and handle the rejected promise. Silent controls fail
+the owner's standing rule: every interactive element must actually work.
+
+### MAJOR 1 — code that fails type-check was pushed to main
+`npx tsc --noEmit` → 2× TS2339: `Property 'createdAt' does not exist on type
+'Product'` (product-grid.tsx:346, twice). `npm run build` only stays green
+because `next.config` sets `ignoreBuildErrors: true` — the errors are silently
+swallowed, so the "build green" gate now proves nothing about types. Run
+`tsc --noEmit` yourself before every push; it takes 20 seconds.
+
+### MAJOR 2 — dead NEW-badge code, fabricated if ever wired
+- The badge block reads `p.createdAt`, but `/api/products` never returns
+  `createdAt` (its field mapping omits it) → runtime `undefined` → the badge
+  can never render (verified: 0 NEW badges on the page). Shipping dead code
+  with a type error against it is the visible symptom of MAJOR 1.
+- Worse is the road not taken: **all 14 products carry `createdAt` =
+  2026-09-23** (seeded once). If the agent "fixes" this by adding `createdAt`
+  to the API response, every tile in the catalog goes purple "NEW" —
+  fabricated urgency on a static catalog, Round 5's disease in merchandising
+  form.
+- `bg-purple-500` appears nowhere in the design system (matte steel, ink
+  #1B2A4A, brand #FF6B35).
+
+**Fix:** delete the NEW badge block. If freshness labeling is ever genuinely
+wanted, it must come from a deliberate merchandising flag set per product (in
+palette — brand orange, not purple), never derived from row timestamps.
+
+### MINOR
+1. **EOF newline regression:** the trailing newline that existed on
+   `quick-view.tsx` at `c5b7058` was stripped by this commit — third
+   documented offense. `product-grid.tsx` also lacks one (pre-existing).
+   Editors/`git diff` noise; just keep the newline.
+2. **Toast voice drift:** description "Maize Flour (Posho) added to cart" is
+   sentence-case inside an all-caps label system. Title "ADDED TO CART" is
+   right; make the description follow (e.g. "MAIZE FLOUR (POSO) · 5KG BAG
+   ADDED TO CART").
+3. **aria-label on a non-interactive div** (tile) — ignored by most
+   assistive tech; move the product/price/stock summary onto the button that
+   actually opens quick-view, which is where it does something.
+4. **`text-xs` on the badge silently loses:** `.ms-label` sets
+   `font-size: 10px` unlayered, so the utility's 12px never applies. Harmless
+   today (the badge renders at 10px), but it is the utilities-vs-primitive
+   skirmish again — do not stack sizing utilities on `ms-label`.
+5. **`ml-auto` removed from the NOTIFY slip button** — no OOS products exist
+   in the DB right now (0 sold-out tiles), so nothing is visibly broken, but
+   when stock hits zero the notify button will no longer right-align on its
+   row. Looks like unintended collateral from "visual hierarchy"; restore it.
+6. **QV price comparison is unit-vs-total:** the strikethrough compares
+   `unitSellingPrice` against `totalFmt(qty × unit)`. Moot once BLOCKER A's
+   strikethrough is deleted; noted so the pattern does not return.
+
+### Definition of Done (Round 6)
+- `rg "discountPercentage|priceDelta /"` in src/components → 0 hits; no
+  "-%" badge and no strikethrough price renders anywhere in the UI.
+- Share and Copy Link: either deleted, or functional on desktop with visible
+  feedback and one canonical product URL.
+- `npx tsc --noEmit` → 0 errors in app code; `npm run build` green.
+- `rg "purple-500"` → 0 hits.
+- Trailing newline present on `quick-view.tsx` and `product-grid.tsx`.
+- Browser check: select every pack size on Maize Flour → honest prices only,
+  no badges; Quick Add still adds the correct line (it must survive the
+  BLOCKER A deletion untouched).
