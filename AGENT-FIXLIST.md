@@ -330,13 +330,13 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | Deleted `.ms-*` families still used 7–9× | 2–3, 5 | consumer grep (Rule 10) |
 | Hero-search restore attempts (retired by owner) | 2–4 | READ FIRST block |
 | Fictional `"Amazon Ember"` font stack | 7 | fiction gate 4 |
-| Fictional `ms-steel-*` class names | 7, 8 | fiction gate 4 |
+| Fictional `ms-steel-*` class names | 7, 8, 9 (16 more tokens in R9) | fiction gate 4 |
 | `ring-*` eaten by `.ms-key` box-shadow | 7 | Rule 2 + keyboard pass |
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–8 (10 total) | EOF gate 5 |
-| Dormant-primitive churn sold as visual work | 7, 8 | Phase II + I.2 |
+| EOF newlines stripped | 1–9 (13 total) | EOF gate 5 |
+| Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
 
 Every row above was mechanically catchable before it shipped. That is the
 entire point of this document.
@@ -1859,3 +1859,114 @@ just got honest.
 **Gates (all green):** tsc 0 app errors; build 13/13; 22-check browser
 suite 0 regressions after dev restart; grep `ms-steel` in
 src/components/ui → 0; EOF OK on all touched files.
+
+---
+
+## ROUND 9 — `1082649` audit: collapsible/command/context-menu restyle (verified live)
+
+One commit restyling three more shadcn primitives (+27/−22). All three
+have ZERO usages in the app (`rg "ui/(collapsible|command|context-menu)"`
+outside components/ui → 0 hits), so nothing user-facing changed — third
+consecutive round of the same commit shape. The aggravating fact: this
+commit's **parent is `2573920`** — the craft-standards push the owner
+requested — and it was committed **12 minutes after** that landed
+(21:27 UTC → 21:39 UTC). The binding playbook and craft standards were in
+the working tree when these class names were typed. The repo now carries
+`AGENTS.md` (auto-read by agent tooling) precisely because the fixlist
+was evidently never being opened.
+
+### POSITIVES — keep
+
+1. tsc 0; build 13/13; the full 22-check browser suite re-run after a dev
+   restart → 22/22, zero live regressions.
+2. Token usage is legitimate: `text-ink`, `bg-white`, `border-line`,
+   `text-hush`, `bg-line`, `bg-ink`, `text-white` all resolve.
+3. `CommandEmpty` is the one component that got the API right — caller
+   `className` merged via `cn()`.
+4. `CommandInput` wrapper h-9→h-12 and `SearchIcon` `opacity-50`→
+   `text-hush` are harmless, internally consistent changes.
+
+### MAJOR 1 — the fiction, third round running, now against a binding document
+
+Sixteen fictional class tokens on eight elements:
+`ms-steel-face` / `ms-steel-bevels` written as CLASS names on
+CollapsibleContent, the Command root, and ContextMenu sub-trigger,
+sub-content, content, item, checkbox-item, radio-item. The classes do
+not exist — only the CSS VARIABLES do, consumed by `.ms-tile::after`
+(Pattern #6 / Playbook Rule 1). The pre-flight grep costs ten seconds;
+the Phase IV.4 fiction gate catches all sixteen tokens in one line.
+Shipped in R7 (button), R8 (card/carousel/chart/checkbox + 3 latent),
+and now R9. The ledger row is updated; the gate exists in `AGENTS.md`.
+
+### MAJOR 2 — `.ms-label` added beside the exact utilities it kills (5 strings)
+
+`.ms-label` (globals.css:228) is unlayered: 10px / 700 / 0.14em /
+uppercase. It beats every layered utility on the same element (Playbook
+Rule 2 — "text-xs eaten by .ms-label" is a *named casualty* in the
+ledger). This commit adds ms-label next to those utilities anyway:
+
+- `CommandGroup` heading: keeps `[&]:text-xs [&]:font-medium`, adds
+  `[&]:ms-label` → **both die** (10px/700 win).
+- `CommandDialog` heading: keeps `font-medium`, adds `ms-label` → dies.
+- `CommandShortcut`: `text-xs tracking-widest ms-label` → both die.
+- `ContextMenuLabel`: `text-sm font-medium … ms-label` → both die.
+- `ContextMenuShortcut`: `text-xs tracking-widest ms-label` → both die.
+
+(Color survives — ms-label sets no color — so `text-ink` and
+`hover:text-brand` on CollapsibleTrigger are fine.)
+
+### MAJOR 3 — CollapsibleTrigger/Content silently swallow caller className
+
+Both destructure `className` and then hardcode the attribute without a
+`cn()` merge — any className a consumer passes is dropped on the floor.
+`CommandEmpty` in the same commit proves the author knows the correct
+pattern. Dormant today; a silent failure for the first consumer.
+
+### MINOR
+
+1. EOF newlines stripped on all three files (offenses **#11–13**; od
+   ground truth: collapsible ends `t }`, command/context-menu end `\n }`
+   with no trailing newline).
+2. `CommandItem`: `data-[selected=true]:bg-ink` while unclassed svgs keep
+   `[&_svg:not([class*='text-'])]:text-ink` — on selection, text turns
+   white but icons stay ink-on-ink → invisible icons. Latent visual bug.
+3. Dormant churn, third round: ten shadcn primitives restyled while
+   unused across R7–R9 (avatar, badge, alert-dialog, card, carousel,
+   checkbox, chart, collapsible, command, context-menu).
+4. Commit message again claims "match steel cabinet design system" —
+   with dormant code and fictional classes, it matches nothing. Blast
+   radius honesty (Playbook Phase V) still not practiced.
+
+### Definition of Done (Round 9)
+
+- `ms-steel` as class names in TSX → 0 (standing fiction gate;
+  `rg -n "ms-steel" src/components src/app --glob '*.tsx'`).
+- No `.ms-label` adjacent to `text-xs` / `text-sm` / `font-medium` /
+  `tracking-*` in the same style scope; follow the Rule 3 typography
+  table (micro-label only where 10px caps is genuinely wanted).
+- `CollapsibleTrigger` / `CollapsibleContent` merge caller className via
+  `cn()` like every shadcn primitive and `CommandEmpty` does.
+- Trailing newlines restored on collapsible / command / context-menu.
+- `CommandItem` selected-state icon contrast fixed or the svg selector
+  made selection-aware.
+- Standing gates: tsc 0, build 13/13, 22-check browser suite green.
+
+### OWNER NOTE — the systemic fix, shipped with this audit
+
+Three rounds of the same fiction is no longer a knowledge problem; it is
+a *loading* problem — the constitution existed but the agent never opened
+it. Shipped alongside this audit: **`AGENTS.md`** at the repo root, the
+file agent tooling auto-reads, containing the three non-negotiables, the
+six gates, and the product contract, and pointing to the full playbook +
+craft standards. If the next push still carries fictional classes, the
+agent is ignoring its own bootstrap file — at that point the owner should
+consider barring that agent from touching `src/components/ui/` entirely
+(the storefront builds its surfaces from ms-tile/ms-plaque primitives,
+and ten dormant restyles have produced zero user value).
+
+### Verification log (this audit)
+
+tsc 0 (filtered); build 13/13 routes; 22/22 browser suite after dev
+restart; usage grep → 0; fiction count → 16 tokens / 8 elements;
+`.ms-label` rule read at globals.css:228-234; EOF via od on all three
+files; commit parentage and timestamps via git log.
