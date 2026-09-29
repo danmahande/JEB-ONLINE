@@ -12,9 +12,14 @@ export default function NotFound() {
           The page you asked for isn&apos;t stocked here — it may have moved or
           the address is off. The catalog, though, is full.
         </p>
-        <Link href="/?view=shop" className="ms-label ms-key inline-block px-8 py-4">
-          ← BACK TO THE SHOP
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/?view=shop" className="ms-label ms-key inline-block px-8 py-4">
+            ← BACK TO THE SHOP
+          </Link>
+          <Link href="/" className="ms-label border border-line inline-block px-8 py-4 hover:bg-ink hover:text-white transition-colors">
+            HOME
+          </Link>
+        </div>
       </div>
     </main>
   );
