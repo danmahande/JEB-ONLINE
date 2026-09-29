@@ -307,6 +307,14 @@ does this correctly in `product-grid.tsx` (`role="alert"` on errors).
    exactly those checks on every push — a red X lands before shoppers ever
    see the site. It could not be pushed from here because the stored token
    lacks the `workflow` scope; add it via the GitHub UI or a scoped token.
+6. **`.ms-steel-face` / `.ms-steel-bevels` are NOT classes.** They are CSS
+   variables (`--ms-steel-face`, `--ms-steel-bevels`) consumed by
+   `.ms-tile::after`. Writing them as class names does nothing. This
+   fiction shipped in Round 7's button.tsx, was removed with
+   documentation, and shipped AGAIN in Round 8 across card/carousel/
+   chart/checkbox. Before using ANY `.ms-*` class,
+   `rg "^\.CLASSNAME" src/app/globals.css` must hit — if the rule is not
+   there, the class is fiction.
 
 ## Definition of Done
 
@@ -1277,3 +1285,67 @@ dormant (0 usages); weight pin resolved as a side effect (see above).
   (tile → sheet → add → drawer); CHECKOUT keyboard focus shows brand
   outline; 404 HOME exit intact. Screenshots:
   `.shots/round7-fix-home.png`, `.shots/round7-fix-drawer-focus.png`.
+
+---
+
+## ROUND 8 — `8a10f45` audit: card/carousel/chart/checkbox restyle (verified live)
+
+One commit restyling four shadcn primitives. All four have ZERO usages in
+the app (`rg "ui/(card|carousel|checkbox|chart)"` outside components/ui →
+0 hits), so nothing user-facing changed. That is the only reason this
+push is not blocker-grade: it repeats a Round 7 offense one round after
+the fix was pushed and documented. Cleanest live impact of any push so
+far — and the most repeat-offensive.
+
+### POSITIVES — keep
+1. `tsc` 0 errors; build green 13/13; the full 22-check round-7 browser
+   suite re-run after a dev-server restart → 0 regressions.
+2. Token usage is legitimate: `--color-ink/-brand/-line/-hush` all exist
+   in the steel theme block — `text-ink`, `bg-white`, `border-line`,
+   `text-hush` all resolve.
+3. Carousel gap math (`-ml-6`/`pl-6`) is self-consistent; the larger
+   nav-arrow hit targets are reasonable.
+
+### MAJOR 1 — the commit's entire stated purpose is fictional (REPEAT OFFENSE)
+`ms-steel-face` / `ms-steel-bevels` were added as CLASS names in six
+places (Card root, Carousel root, Carousel prev/next, chart tooltip,
+Checkbox root). These classes DO NOT EXIST — only the CSS VARIABLES
+`--ms-steel-face` / `--ms-steel-bevels` exist, consumed by
+`.ms-tile::after`. Grep: `^\.ms-steel-(face|bevels)` in globals.css → 0
+hits; the whole src tree → 0 rules. Every surface this commit "restyled"
+renders exactly as before. The steel cabinet look it claims to apply is
+the CSS version of the Amazon Ember stack — a name that renders nothing.
+Round 7 removed the identical fiction from button.tsx and recorded
+"dead steel classes 0" as a gate; this push re-introduced it within one
+round. Pattern #6 added to the learn-list above.
+
+### MAJOR 2 — ms-display / ms-label misuse inside the dormant primitives
+- `CardTitle`: `ms-display text-xl` — ms-display forces line-height 0.95
+  + uppercase; 0.95 leading on a 20px title is the exact cramped styling
+  flagged on alert-dialog (Round 7 MINOR 2).
+- `CardDescription`: `ms-label` → 10px uppercase description text.
+- Chart tooltip value: `ms-label` silently kills `font-mono` (unlayered
+  primitive beats layered utility — same cascade lesson as Round 7's
+  eaten ring) and renders numerals as 10px caps.
+Dormant today; landmines the day anyone imports these components.
+
+### MINOR
+1. EOF newlines stripped on card.tsx, carousel.tsx, checkbox.tsx
+   (offenses #8–10; chart.tsx left intact).
+2. `focus-visible:ring-0` on carousel nav buttons — solves a box-shadow
+   conflict that does not exist (the bevels are dead classes) and is
+   redundant under the site-wide outline focus rule. Harmless, but it is
+   confusion compounding on confusion.
+3. Churn on zero-usage components: avatar + badge (Round 7), now card +
+   carousel + checkbox + chart. Six dormant primitives restyled across
+   two pushes while the storefront builds its surfaces from ms-tile /
+   ms-plaque primitives that predate the shadcn layer.
+
+### Definition of Done (Round 8)
+- `ms-steel-face` / `ms-steel-bevels` → 0 hits in src/; if a steel card
+  surface is actually wanted, promote a real rule (e.g. `.ms-steel-card`)
+  in globals.css and use THAT class name.
+- No ms-display on small titles; no ms-label where mono numerals were
+  intended (chart tooltip values keep font-mono).
+- Trailing newlines restored on card.tsx / carousel.tsx / checkbox.tsx.
+- Standing gates: tsc 0, build 13/13, 22-check browser suite green.
