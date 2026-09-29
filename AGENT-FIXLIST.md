@@ -1208,3 +1208,72 @@ The owner confirms both changes were explicitly requested:
 Unchanged by this answer and still pending a fix decision: BLOCKER A
 (orphaned `--font-display`), BLOCKER B (drive-by `layout.tsx` deletions),
 MAJOR 1 (Button focus + dead utilities), MINOR 1–4 (incl. EOF newlines ×4).
+
+### ROUND 7 RESOLUTION — fixed by Super Z
+
+Executed per owner's "go ahead". One commit, all DoD items plus two
+findings surfaced during verification.
+
+**Design decision recorded (BLOCKER A/C resolution):** the type system is
+now **Inter as the sole face** — the owner-approved "Amazon-style"
+direction. Space Grotesk / `--font-display` is RETIRED, not restored; the
+decision is written into the design-system comment above the `body` rule
+in globals.css. What was done:
+1. `var(--font-display)` removed from all four orphaned sites
+   (`.ms-weight-toggle`, `.ms-hsearch-input::placeholder`, `.ms-chip`,
+   `.ms-tab` — the 4th live site was ms-tab, not the "hush label") →
+   they now resolve `var(--font-body)` with full fallback chain.
+2. `"Amazon Ember"` removed from all 6 stacks it was sprinkled into
+   (`--font-sans` theme token, body, ms-root, ms-display, ms-label,
+   ms-price). 0 hits in src/.
+3. Inter `weight` pin dropped in layout.tsx — it wasn't just redundant:
+   the pin capped at 700 while `.ms-weight-toggle`/`.ms-chip` use 800,
+   so the pin silently forced synthetic bold. Variable Inter renders true
+   800 (verified computed weight).
+
+**BLOCKER B restorations (layout.tsx):** schema.org Organization JSON-LD,
+skip link `#skip-main` + `<div id="main-content" tabIndex={-1}>`,
+openGraph `siteName` + `type`, `suppressHydrationWarning` on `<html>`,
+body `antialiased bg-background text-foreground`. All verified in served
+HTML.
+
+**MAJOR 1 (button.tsx):** focus-visible trio restored to base
+(`focus-visible:border-ring focus-visible:ring-ring/50
+focus-visible:ring-[3px]`) plus the aria-invalid pair; dead
+`text-sm`/`text-xs`/`text-base` removed from size variants (ms-label owns
+type); `rounded-md` back in base, per-size copies removed.
+
+**New finding 1 — the ring alone was still not enough.** Tailwind
+`ring-*` composes through `box-shadow`, which unlayered steel primitives
+own (`.ms-key` on the drawer buttons sets box-shadow directly) — the
+restored ring was silently eaten exactly where keyboard focus matters
+most (CHECKOUT / CONTINUE SHOPPING). Added a site-wide unlayered
+`:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }`
+— outline is a separate property nothing overrides. Verified: focused
+CHECKOUT now shows the 2px brand outline. This is the standing rule: **on
+this site, focus visibility comes from outline, not ring** — ring
+utilities stay only for surfaces without a steel box-shadow.
+
+**New finding 2 — `ms-steel-face` / `ms-steel-bevels` in button.tsx were
+dead class names.** No `.ms-steel-face`/`.ms-steel-bevels` rules exist
+anywhere (only `--ms-steel-face`/`--ms-steel-bevels` variables feeding
+`.ms-tile::after`). Removed from base + 4 variants; 0 hits left. Same
+"lie" family as the dead text-* utilities.
+
+**MINOR 1:** trailing newlines restored on `not-found.tsx`, `hero.tsx`,
+`alert-dialog.tsx`, `avatar.tsx` (+ the two files I touched).
+**MINOR 2–4:** accepted, not fixed — alert-dialog/avatar/badge are
+dormant (0 usages); weight pin resolved as a side effect (see above).
+
+**Gates (all green):**
+- `npx tsc --noEmit` → 0 app errors (build alone proves nothing —
+  `ignoreBuildErrors: true` still set in next.config; see Round 6 MAJOR 1).
+- `npm run build` → compiled, 13/13 pages.
+- grep: `Amazon Ember` 0, `var(--font-display` 0, dead steel classes 0,
+  EOF newlines OK on all six touched/stripped files.
+- Browser E2E (scripts/verify-round7-fix.js): 22/22 — JSON-LD/skip
+  link/OG live; body, ms-chip, ms-tab, search ::placeholder and PDP
+  weight toggle all compute to Inter with true 800; drawer flow works
+  (tile → sheet → add → drawer); CHECKOUT keyboard focus shows brand
+  outline; 404 HOME exit intact. Screenshots:
+  `.shots/round7-fix-home.png`, `.shots/round7-fix-drawer-focus.png`.

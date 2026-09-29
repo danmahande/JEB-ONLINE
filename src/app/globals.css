@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -175,19 +175,37 @@ html {
 }
 
 .ms-root {
-  font-family: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   background: var(--color-mist);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
 }
 
-/* One type system for the whole storefront: Amazon-style consistent font from <body> down.
+/* One type system for the whole storefront: Amazon-style type from <body> down.
+   Inter is the sole face (owner decision, round 7): it is the standard
+   open-source stand-in for Amazon's proprietary display font, whose name
+   appears in NO stack — a font none of our visitors have renders for
+   nobody. The former display face (Space Grotesk, --font-display) is
+   RETIRED: the variable is gone from layout.tsx and no rule here may
+   reference it again.
    Radix portals (cart drawer, quick-view, toasts, dialogs…) mount on
    document.body — outside .ms-root — so the root-level declaration is
    what guarantees every surface speaks the same family, present and
    future. */
 body {
-  font-family: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Keyboard focus must never be invisible. Tailwind's ring-* composes
+   through box-shadow, which unlayered steel primitives own (.ms-key and
+   friends set box-shadow directly) — on those surfaces the ring is eaten.
+   OUTLINE is a separate property nothing here overrides, so the site-wide
+   keyboard treatment is an outline in the ring color. The restored
+   focus-visible:ring-* utilities on Button still serve surfaces that
+   don't carry a steel box-shadow. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .ms-root ::selection {
@@ -195,9 +213,9 @@ body {
   color: #ffffff;
 }
 
-/* Massive display type — now using the same Amazon-style font family */
+/* Massive display type — same Amazon-style family as everything else */
 .ms-display {
-  font-family: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 0.95;
@@ -208,7 +226,7 @@ body {
 }
 
 .ms-label {
-  font-family: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -217,7 +235,7 @@ body {
 
 /* Marketplace price numerals — using Amazon-style font */
 .ms-price {
-  font-family: var(--font-body), "Amazon Ember", "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
 }
 
@@ -750,7 +768,7 @@ body {
    800-weight type, and a solid ink detent on the engaged pack. Inset
    shadows only — nothing floats. */
 .ms-weight-toggle {
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-size: 11.5px;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -1067,7 +1085,7 @@ body {
 }
 .ms-hsearch-input::placeholder {
   color: #8a93a5;
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -1153,7 +1171,7 @@ body {
 
 /* Enhanced chip/toggle styles */
 .ms-chip {
-  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -1247,7 +1265,7 @@ body {
   background: transparent;
   border: none;
   color: var(--color-hush);
-  font-family: var(--font-display);
+  font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
