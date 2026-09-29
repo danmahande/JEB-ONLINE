@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type MouseEvent } from "react";
+import { useMemo, useRef, useState, type MouseEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -45,6 +45,9 @@ export default function QuickView({
     return best;
   });
   const [qty, setQty] = useState(1);
+  // COPY LINK feedback — flips to "COPIED ✓" for 2s after a successful write
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const v = useMemo(() => product?.variants?.[variantIdx], [product, variantIdx]);
   if (!product) return null;
@@ -77,10 +80,68 @@ export default function QuickView({
     onClose();
   }
 
-  // Calculate discount percentage if applicable
-  const discountPercentage = v?.priceDelta && product.unitSellingPrice > 0 
-    ? Math.round(Math.abs((v.priceDelta / product.unitSellingPrice) * 100))
-    : 0;
+  // ---- product URL actions ----------------------------------------------
+  // One canonical product URL for SHARE and COPY LINK — the shop URL with
+  // dialog state is never shared (window.location.href would leak ?view=shop
+  // and whatever opened the sheet).
+  function productUrl(p: Product) {
+    return `${window.location.origin}/p/${p.slug}`;
+  }
+
+  async function copyProductUrl(p: Product): Promise<boolean> {
+    const url = productUrl(p);
+    try {
+      await navigator.clipboard.writeText(url);
+      return true;
+    } catch {
+      // clipboard API missing or denied (non-secure origins) — legacy fallback
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  function flashCopied() {
+    setCopied(true);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleCopyLink() {
+    if (!product) return;
+    if (await copyProductUrl(product)) flashCopied();
+  }
+
+  async function handleShare() {
+    if (!product) return;
+    const url = productUrl(product);
+    // native share sheet where the platform has one (most mobile browsers)
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: product.productLabel,
+          text: `Check out ${product.productLabel} on Meridian Supply Co.`,
+          url,
+        });
+        return;
+      } catch {
+        return; // user dismissed the sheet — not an error
+      }
+    }
+    // desktop fallback — same path as COPY LINK, with visible feedback
+    if (await copyProductUrl(product)) flashCopied();
+  }
 
   return (
     <Dialog open={!!product} onOpenChange={(o) => !o && onClose()}>
@@ -99,12 +160,6 @@ export default function QuickView({
               sizes="(min-width: 768px) 448px, 100vw"
               className="w-full h-full object-cover"
             />
-            {/* Discount badge for special offers */}
-            {discountPercentage > 0 && !out && (
-              <span className="ms-label absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-sm text-xs font-bold z-10">
-                -{discountPercentage}%
-              </span>
-            )}
             <span className="ms-label absolute top-3 left-3 bg-white border border-line px-2 py-1 text-ink">
               HS {product.hsCode} · ORIGIN {product.originCountry}
             </span>
@@ -146,13 +201,6 @@ export default function QuickView({
                 <p className="ms-price text-2xl md:text-3xl tracking-tight text-brand">
                   {totalFmt(priceUsd)}
                 </p>
-                
-                {/* Original price strikethrough for discounted items */}
-                {discountPercentage > 0 && !out && (
-                  <div className="text-sm text-gray-500 line-through mt-1">
-                    {fmt(product.unitSellingPrice, active || regions[0])}
-                  </div>
-                )}
               </div>
               <p className={`ms-label text-right ${out ? "text-red-500" : ""}`}>
                 {out ? (
@@ -222,26 +270,25 @@ export default function QuickView({
               FULL PRODUCT PAGE →
             </Link>
             
-            {/* Quick links for related actions */}
+            {/* product URL actions — native share sheet where the platform
+                has one, copy + visible COPIED state everywhere else */}
             <div className="mt-6 flex flex-wrap gap-2">
-              <button 
-                onClick={() => navigator.share ? navigator.share({
-                  title: product.productLabel,
-                  text: `Check out ${product.productLabel} on Meridian Supply`,
-                  url: window.location.href
-                }) : null}
-                className="ms-label text-xs border border-line px-3 py-1.5 hover:bg-ink hover:text-white transition-colors"
+              <button
+                onClick={handleShare}
+                className="ms-label border border-line px-3 py-1.5 hover:bg-ink hover:text-white transition-colors"
               >
-                Share
+                SHARE
               </button>
-              <button 
-                onClick={() => {
-                  // Copy product link to clipboard
-                  navigator.clipboard.writeText(`${window.location.origin}/p/${product.slug}`);
-                }}
-                className="ms-label text-xs border border-line px-3 py-1.5 hover:bg-ink hover:text-white transition-colors"
+              <button
+                onClick={handleCopyLink}
+                aria-live="polite"
+                className={`ms-label border px-3 py-1.5 transition-colors ${
+                  copied
+                    ? "border-emerald-600 text-emerald-700"
+                    : "border-line hover:bg-ink hover:text-white"
+                }`}
               >
-                Copy Link
+                {copied ? "COPIED ✓" : "COPY LINK"}
               </button>
             </div>
           </div>

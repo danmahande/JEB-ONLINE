@@ -249,12 +249,6 @@ export default function ProductGrid({
             // can't shrink them off Alibaba's rendered gauges (Task 57)
             const priceStr = active && regionHasHydrated ? fmt(priceUsd, active) : `$${priceUsd.toFixed(2)}`;
             const priceSplit = /^([^\d]+)\s*(.+)$/.exec(priceStr);
-            
-            // Calculate discount percentage if applicable
-            const discountPercentage = v?.priceDelta && p.unitSellingPrice > 0 
-              ? Math.round(Math.abs((v.priceDelta / p.unitSellingPrice) * 100))
-              : 0;
-              
             return (
               <div
                 key={p.productId}
@@ -276,7 +270,6 @@ export default function ProductGrid({
                 className={`ms-tile ms-tile-in group relative flex flex-col border border-line cursor-pointer ${
                   out ? "ms-oos" : ""
                 }`}
-                aria-label={`${p.productLabel} - ${priceStr} - ${p.currentStock} ${p.unit} in stock`}
               >
                 {/* the slab's base — extruded steel thickness hanging
                     under the face (Task 43); painted behind the face,
@@ -290,7 +283,7 @@ export default function ProductGrid({
                     onSelect(p);
                   }}
                   className="relative block w-full text-left"
-                  aria-label={`View ${p.productLabel} details`}
+                  aria-label={`View ${p.productLabel} details — ${priceStr}, ${p.currentStock} ${p.unit} in stock`}
                 >
                   <div className="relative aspect-square overflow-hidden bg-muted">
                     {/* through the optimizer — AVIF/WebP + responsive srcset
@@ -312,13 +305,6 @@ export default function ProductGrid({
                       style={{ animationDelay: `${Math.min(i * 40, 240) + 350}ms` }}
                       aria-hidden="true"
                     />
-                    
-                    {/* Discount badge for special offers */}
-                    {discountPercentage > 0 && !out && (
-                      <span className="ms-label absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-sm text-xs font-bold z-10">
-                        -{discountPercentage}%
-                      </span>
-                    )}
                   </div>
                 </button>
 
@@ -340,12 +326,6 @@ export default function ProductGrid({
                     <span className="ms-label ms-sticker inline-flex items-center gap-1.5 bg-white/90 text-emerald-700 px-2 py-1">
                       <span className="ms-fresh-dot" aria-hidden="true" />
                       HARVESTED THIS WEEK
-                    </span>
-                  )}
-                  {/* Add new arrival badge for recently added products */}
-                  {p.createdAt && new Date(p.createdAt).getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 && (
-                    <span className="ms-label ms-sticker bg-purple-500 text-white px-2 py-1">
-                      NEW
                     </span>
                   )}
                 </div>
@@ -426,13 +406,6 @@ export default function ProductGrid({
                         <span className="text-[12px] font-bold mt-0.5">{priceSplit?.[1]}</span>
                         <span className="text-[20px] font-bold tracking-tight">{priceSplit?.[2]}</span>
                       </span>
-                      
-                      {/* Original price strikethrough for discounted items */}
-                      {discountPercentage > 0 && !out && (
-                        <div className="text-[12px] text-gray-500 line-through mt-1">
-                          {fmt(p.unitSellingPrice, active || regions[0])}
-                        </div>
-                      )}
                     </div>
                     {out ? (
                       notifyDone.has(p.productId) ? (
@@ -444,7 +417,7 @@ export default function ProductGrid({
                             setNotifyOpen((o) => (o === p.productId ? null : p.productId));
                           }}
                           aria-expanded={notifyOpen === p.productId}
-                          className={`ms-label ms-slip shrink-0 px-3 py-2.5 border transition-colors ${
+                          className={`ms-label ms-slip shrink-0 ml-auto px-3 py-2.5 border transition-colors ${
                             notifyOpen === p.productId
                               ? "ms-slip-open border-ink text-white"
                               : "border-line hover:bg-ink hover:text-white"
@@ -529,33 +502,35 @@ export default function ProductGrid({
                     </form>
                   )}
                   
-                  {/* Quick add to cart button for easier purchasing */}
+                  {/* quick add — one tap drops the pack shown on the tile
+                      (qty 1) into the cart; the tile stays the hit target,
+                      so propagation must be stopped here too */}
                   {!out && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Add to cart directly with default variant and quantity 1
                         addLine({
                           productId: p.productId,
                           slug: p.slug,
                           productLabel: p.productLabel,
                           brand: p.brand,
-                          variantLabel: v?.label || '',
+                          variantLabel: v?.label || "",
                           unitPriceUsd: priceUsd,
                           weightKg: v?.weightKg || 0,
                           qty: 1,
                           image: p.image,
                           maxStock: p.currentStock,
                         });
-                        
+                        // same toast shape as the PDP add (product-view.tsx):
+                        // caps title, "PRODUCT · PACK × QTY" description
                         toast({
                           title: "ADDED TO CART",
-                          description: `${p.productLabel} added to cart`,
+                          description: `${p.productLabel}${v?.label ? ` · ${v.label}` : ""} × 1`,
                         });
                       }}
-                      className="ms-label mt-2 text-center py-1 text-hush hover:text-ink transition-colors text-xs"
+                      className="ms-label mt-2 text-center py-1 text-hush hover:text-ink transition-colors"
                     >
-                      + Quick Add
+                      + QUICK ADD
                     </button>
                   )}
                 </div>

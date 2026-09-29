@@ -1033,3 +1033,39 @@ palette — brand orange, not purple), never derived from row timestamps.
 - Browser check: select every pack size on Maize Flour → honest prices only,
   no badges; Quick Add still adds the correct line (it must survive the
   BLOCKER A deletion untouched).
+
+### ROUND 6 RESOLUTION — fixed by Super Z
+1. **Fabricated discounts are gone.** Both `discountPercentage` computations,
+   both "-%" badges and both strikethrough prices deleted from
+   `product-grid.tsx` and `quick-view.tsx`. `priceDelta` stays what it always
+   was: pack-size economics. Verified: 5KG USh 18,806 / 25KG USh 70,617 /
+   50KG USh 136,629 — zero badges, zero crossed-out prices anywhere.
+2. **SHARE works on every platform now.** Native share sheet where
+   `navigator.share` exists (mobile), else the copy path with visible
+   feedback. try/catch around the sheet (user-dismiss is not an error). Both
+   buttons share ONE canonical URL: `/p/<slug>` — never `window.location.href`.
+3. **COPY LINK gives feedback.** Clipboard API with execCommand fallback for
+   non-secure origins; the button flips to "COPIED ✓" (emerald) for 2s,
+   `aria-live="polite"` announces it. Verified in-browser: clipboard contains
+   `http://…/p/maize-flour-posho`.
+4. **Dead NEW badge deleted** (also fixes the 2 tsc errors — `createdAt` is
+   not on the Product type and must not be, for merchandising). If freshness
+   labeling is ever wanted, it is a deliberate per-product flag in palette,
+   never row timestamps, never purple.
+5. **`ml-auto` restored** on the NOTIFY slip button (right-aligns like BUY
+   when stock hits zero).
+6. **Quick Add toast now matches the PDP convention** (product-view.tsx):
+   caps title + "PRODUCT · PACK × QTY" description — "Maize Flour (Posho) ·
+   50KG BAG × 1". Sentence-case descriptions are the app's established toast
+   voice, so the fixlist's all-caps example was superseded by consistency
+   with the existing toasts.
+7. **Tile aria-label moved off the non-interactive div** onto the button that
+   opens quick-view, now carrying price and stock. Pointless `text-xs`
+   dropped from `ms-label` buttons (utilities lose to the unlayered
+   primitive — standing rule).
+8. **EOF newlines restored** on both files.
+
+Gates: `npx tsc --noEmit` → 0 errors (app code); `npm run build` green 13/13;
+DoD greps empty (`discountPercentage`, `-%`, `purple-500`, `line-through`);
+browser E2E — pack switching honest, QUICK ADD adds the selected pack at the
+selected price (50KG BAG · USh 136,629 in drawer), SHARE/COPY feedback live.
