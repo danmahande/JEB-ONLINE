@@ -245,6 +245,66 @@ export default function Storefront() {
                     </div>
                   ))}
                 </Reveal>
+                
+                {/* Enhanced trust indicators section */}
+                <div className="mt-16 px-4">
+                  <div className="max-w-6xl mx-auto">
+                    <h2 className="ms-display text-center mb-12 text-2xl">TRUSTED BY BUSINESSES ACROSS EAST AFRICA</h2>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                      {[
+                        { value: "500+", label: "Businesses Served" },
+                        { value: "98%", label: "On-Time Delivery" },
+                        { value: "15+", label: "Years Experience" },
+                        { value: "5", label: "Countries Served" },
+                      ].map((stat, i) => (
+                        <div key={i} className="ms-plaque p-6">
+                          <p className="text-2xl md:text-3xl font-bold text-brand mb-2">{stat.value}</p>
+                          <p className="text-sm">{stat.label}</p>
+                          <span className="ms-spot" aria-hidden="true" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Testimonials section */}
+                <div className="mt-16 px-4">
+                  <div className="max-w-4xl mx-auto">
+                    <h2 className="ms-display text-center mb-12 text-2xl">WHAT OUR CUSTOMERS SAY</h2>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {[
+                        {
+                          quote: "Meridian Supply delivers consistent quality grains at competitive prices. Their cross-border expertise has simplified our procurement across East Africa.",
+                          author: "Sarah Kimani",
+                          company: "AgroProcessors Ltd, Nairobi"
+                        },
+                        {
+                          quote: "The transparent pricing and documentation made importing hardware from Uganda seamless. No hidden fees or delays.",
+                          author: "Thomas Mugisha",
+                          company: "BuildTech Solutions, Kigali"
+                        }
+                      ].map((testimonial, i) => (
+                        <div key={i} className="ms-plaque p-6">
+                          <div className="flex items-center mb-4">
+                            {[...Array(5)].map((_, j) => (
+                              <svg key={j} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <p className="italic mb-4">"{testimonial.quote}"</p>
+                          <div>
+                            <p className="font-medium">{testimonial.author}</p>
+                            <p className="text-sm text-hush">{testimonial.company}</p>
+                          </div>
+                          <span className="ms-spot" aria-hidden="true" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </section>
             </>
           )}
