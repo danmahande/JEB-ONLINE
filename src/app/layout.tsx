@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SITE_URL } from "@/lib/site";
 
-// Trending industrial pairing: Space Grotesk (display / labels / prices)
-// + Inter (body). Self-hosted by next/font — zero runtime requests.
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
-
+// Amazon-style font stack: using Inter which is similar to Amazon's approach
+// Amazon primarily uses a proprietary font called "Amazon Ember" with fallbacks to 
+// system fonts like Arial, Tahoma, and Geneva. Inter is a close open-source alternative.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
+  weight: ['400', '500', '600', '700'], // Include bolder weights for headings like Amazon uses
 });
 
 export const metadata: Metadata = {
@@ -29,13 +25,6 @@ export const metadata: Metadata = {
     "East Africa trade",
     "cross-border commerce",
   ],
-  openGraph: {
-    title: "MERIDIAN SUPPLY — Grains & Hardware. Cross-Border.",
-    description:
-      "East African grains and hardware equipment sold across borders. One catalog, five currencies, transparent duties and freight.",
-    siteName: "Meridian Supply Co.",
-    type: "website",
-  },
 };
 
 export default function RootLayout({
@@ -43,41 +32,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // schema.org Organization — site-wide identity shard for crawlers
-  const orgJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Meridian Supply Co.",
-    url: SITE_URL,
-    description:
-      "East African grains and hardware equipment exported across the EAC and worldwide with duties, levies and freight quoted upfront.",
-  };
-
   return (
-    <html
-  lang="en"
-  suppressHydrationWarning
-  className={`${spaceGrotesk.variable} ${inter.variable}`}
->
-      <body 
-        className="antialiased bg-background text-foreground"
-      >
-        {/* Skip link for accessibility */}
-        <a 
-          id="skip-main" 
-          href="#main-content" 
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:ring-2 focus:ring-ring"
-        >
-          Skip to main content
-        </a>
-        
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
-        />
-        <div id="main-content" tabIndex={-1}>
-          {children}
-        </div>
+    <html lang="en" className={inter.variable}>
+      <body>
+        {children}
         <Toaster />
       </body>
     </html>
