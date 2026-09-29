@@ -1,10 +1,69 @@
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import KampalaClock from "@/components/storefront/kampala-clock";
 import type { RegionConfig } from "@/lib/types";
+
+/* The store's single search (Option A) — PERSISTENT: always open,
+   no grip button, no collapse choreography. One component, two
+   mounts: inline in the header bar on md+, full-width row under
+   the bar on mobile. Both share the one query state owned by the
+   storefront, so typing in either filters the same rack. */
+function SearchField({
+  query,
+  onQuery,
+  onSubmit,
+  className,
+}: {
+  query: string;
+  onQuery: (q: string) => void;
+  onSubmit: () => void;
+  className?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <form
+      role="search"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (query.trim()) onSubmit();
+      }}
+      className={`ms-hsearch ${className ?? ""}`}
+    >
+      <span className="ms-hsearch-mark" aria-hidden="true">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.6-3.6" />
+        </svg>
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") inputRef.current?.blur();
+        }}
+        placeholder="SEARCH CATALOG…"
+        className="ms-hsearch-input"
+        aria-label="Search products"
+      />
+      <button type="submit" className="ms-hsearch-key ms-key">
+        GO
+      </button>
+    </form>
+  );
+}
 
 export default function Header({
   regions,
@@ -26,44 +85,11 @@ export default function Header({
   const region = useRegion((s) => s.region || '');
   const setRegion = useRegion((s) => s.setRegion);
   const hydrated = useRegion((s) => s.hasHydrated);
-  const [open, setOpen] = useState(false);
-  const [focused, setFocused] = useState(false);
   const regionRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLFormElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Close the search when clicking outside
-  useEffect(() => {
-    const listener = (e: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
-        setFocused(false);
-      }
-    };
-    document.addEventListener("click", listener);
-    return () => document.removeEventListener("click", listener);
-  }, []);
-
-  // Handle Escape key to close search (and hand focus back to the page)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && focused) {
-        setFocused(false);
-        searchInputRef.current?.blur();
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [focused]);
-
-  // Opening the channel hands focus straight to the well
-  useEffect(() => {
-    if (focused) searchInputRef.current?.focus();
-  }, [focused]);
 
   // Show loading indicator when changing regions
   const [isChangingRegion, setIsChangingRegion] = useState(false);
-  
+
   const handleRegionChange = (newRegion: string) => {
     setIsChangingRegion(true);
     setRegion(newRegion);
@@ -71,20 +97,19 @@ export default function Header({
     setTimeout(() => setIsChangingRegion(false), 500);
   };
 
-  const handleGoClick = () => {
-    if (query.trim()) {
-      if (onSearchSubmit) {
-        onSearchSubmit();
-      } else {
-        onNavigate("shop");
-      }
+  const handleSearchSubmit = () => {
+    if (!query.trim()) return;
+    if (onSearchSubmit) {
+      onSearchSubmit();
+    } else {
+      onNavigate("shop");
     }
   };
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-white">
-      <div className="container mx-auto px-4 py-3 md:px-6">
-        <div className="flex items-center justify-between gap-4">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex items-center justify-between gap-4 py-3">
           {/* Brand */}
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5">
@@ -128,14 +153,14 @@ export default function Header({
                   </option>
                 ))}
               </select>
-              
+
               {/* Loading indicator when changing region */}
               {isChangingRegion && (
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                   <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
-              
+
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                 <svg
                   width="16"
@@ -153,70 +178,13 @@ export default function Header({
               </span>
             </div>
 
-            {/* Search — a real search form: Enter submits, the grip is a
-                labelled toggle button, opening hands focus to the well */}
-            <form
-              role="search"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleGoClick();
-              }}
-              className={`ms-hsearch ${focused ? "is-open" : ""}`}
-              ref={searchContainerRef}
-            >
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => onQuery(e.target.value)}
-                placeholder="SEARCH…"
-                className="ms-search-input ms-field"
-                aria-label="Search products"
-                ref={searchInputRef}
-                tabIndex={focused ? 0 : -1} // Manage tab focus
-              />
-              <button
-                type="button"
-                className="ms-hsearch-grip cursor-pointer"
-                onClick={() => setFocused(!focused)}
-                aria-label={focused ? "Close search" : "Open search"}
-                aria-expanded={focused}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="icon-search"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="icon-close"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                </svg>
-              </button>
-              <button
-                type="submit"
-                tabIndex={focused ? 0 : -1}
-                className="ms-hsearch-key ms-key"
-              >
-                GO
-              </button>
-            </form>
+            {/* Search — persistent white channel, inline in the bar (md+) */}
+            <SearchField
+              query={query}
+              onQuery={onQuery}
+              onSubmit={handleSearchSubmit}
+              className="hidden md:flex w-[clamp(200px,20vw,320px)]"
+            />
 
             {/* Cart */}
             <button
@@ -238,14 +206,14 @@ export default function Header({
                 <circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
-              
+
               {/* Cart badge with animation */}
               {cartCount > 0 && (
                 <span className="ms-badge-pop absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
                   {cartCount}
                 </span>
               )}
-              
+
               {/* Cart live indicator when hydrated and has items */}
               {hydrated && cartCount > 0 && (
                 <span className="ms-cart-live absolute -top-1 -right-1 w-7 h-7 rounded-full opacity-0" />
@@ -255,6 +223,16 @@ export default function Header({
             {/* Clock */}
             <KampalaClock />
           </div>
+        </div>
+
+        {/* mobile: the same persistent search as its own full-width row */}
+        <div className="pb-3 md:hidden">
+          <SearchField
+            query={query}
+            onQuery={onQuery}
+            onSubmit={handleSearchSubmit}
+            className="flex w-full"
+          />
         </div>
       </div>
     </header>

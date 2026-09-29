@@ -37,15 +37,24 @@ V1/V2/V3 were real bugs, but they died with the component. Do NOT:
   to `globals.css`
 - re-copy CSS "verbatim from f67b810" into the hero
 
-`.ms-search-input` (the dark well base class) still exists — the **header**
-input uses it (`ms-search-input ms-field`); do not delete that one.
+**SECOND DECISION — the header search is PERSISTENT (always open).** No grip
+button, no `.is-open` class, no 34px collapse, no width/opacity transition
+choreography, no tabIndex juggling, no mobile takeover rule. The white
+channel (`.ms-hsearch`, 38px, hairline `--color-line` border, white bg to
+match the header rail, brand `:focus-within` ring, `.ms-hsearch-mark`
+magnifier, `.ms-hsearch-input` transparent well, GO = `.ms-hsearch-key
+.ms-key`) is rendered twice from the `SearchField` component in
+`header.tsx`: inline in the bar on md+, full-width row under the bar on
+mobile — both bound to the one query state. The dark `.ms-search-input`
+base was deleted from `globals.css`. Do NOT re-introduce any collapse
+machinery or dark well.
 
 **The hero now is (keep it this way):** a `ms-shopfront` display window at
 `h-[180px] md:h-[210px] lg:h-[240px]` carrying the greeting label, the display
 line "MAIZE FLOUR. CEMENT. IRON SHEETS." (`.ms-display`), and two wired CTAs —
 `ENTER CATALOG ↓` (scrolls to `#catalog`) and `TRACK ORDER` (`goTrack`).
-If catalog search discoverability ever becomes a problem, the fix is header
-search prominence, not a second input.
+Search discoverability is solved by the persistent header channel — never by
+a second input.
 
 ---
 

@@ -1009,111 +1009,87 @@ body {
 }
 
 /* ============================================================
-   Search (Task 52) — machined steel channel. Same material
-   system as the product cabinets: painted-steel face with the
-   same grain/bevel treatment, inset shadows only. */
+   Header search — PERSISTENT (user decision, follows Option A).
+   The store's single search lives in the header and is always
+   open: no grip, no collapse, no is-open. A white channel
+   machined to sit in the white rail it lives in — hairline
+   border that deepens on hover, brand focus ring, magnifier
+   mark, ink query text, and a GO key set into the right end.
+   Display (flex/hidden/width) is owned by the JSX Tailwind
+   classes, NOT here — unlayered CSS would beat utility layers. */
 
-/* Horizontal search — the header channel. Width grows from 34px to
-   26vw (clamped to 240–440px) on open. */
 .ms-hsearch {
-  position: relative;
-  display: flex;
   align-items: center;
-  border: 1px solid transparent;
+  height: 38px;
+  padding-left: 6px;
+  border: 1px solid var(--color-line);
   border-radius: 6px;
   background: #ffffff;
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), min-width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.2s;
+  box-shadow: 0 1px 0 rgba(27, 42, 74, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-/* Focus state — the channel is always a focus target, even closed */
+/* resting on white, the hairline takes one step more weight on hover */
+.ms-hsearch:hover {
+  border-color: #c3c9d4;
+}
+/* focused: the channel lights the brand ring */
 .ms-hsearch:focus-within {
   border-color: var(--color-brand);
-  box-shadow: 
-    inset 0 0 0 1px var(--color-brand),
-    0 0 0 3px rgba(255, 107, 53, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(255, 107, 53, 0.15),
+    0 1px 0 rgba(27, 42, 74, 0.04);
 }
-/* Open state — the channel stretches wide */
-.ms-hsearch.is-open {
-  width: clamp(240px, 26vw, 440px);
-  cursor: text;
-}
-.ms-hsearch .ms-search-input {
-  flex: 0 1 0px;
-  width: 0;
-  padding: 0;
-  opacity: 0;
-  transition: flex-grow 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), opacity 0.2s 0.12s, padding 0.4s;
-}
-.ms-hsearch.is-open .ms-search-input {
-  flex-grow: 1;
-  padding: 0 12px;
-  opacity: 1;
-}
-/* grip — the machined square itself; magnifier crossfades to ✕ */
-.ms-hsearch-grip {
-  flex: 0 0 34px;
-  width: 34px;
+
+/* magnifier mark — decorative; clicks fall through to the well */
+.ms-hsearch-mark {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #47463f;
-  transition: color 0.2s, transform 0.3s;
+  flex: 0 0 24px;
+  width: 24px;
+  color: #6b7280;
+  pointer-events: none;
 }
-.ms-hsearch-grip:hover {
-  color: var(--color-brand);
+
+/* the well — transparent on the white face (the dark milled
+   socket retired with the hero search): ink query text, brand
+   caret, label-set placeholder */
+.ms-hsearch-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  padding: 0 10px 0 4px;
+  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  color: var(--color-ink);
+  caret-color: var(--color-brand);
 }
-.ms-hsearch-grip svg {
-  position: absolute;
-  transition: opacity 0.2s, transform 0.3s;
+.ms-hsearch-input::placeholder {
+  color: #8a93a5;
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
 }
-.ms-hsearch .icon-close {
-  opacity: 0;
-  transform: rotate(-90deg) scale(0.6);
-}
-.ms-hsearch.is-open .icon-search {
-  opacity: 0;
-  transform: rotate(90deg) scale(0.6);
-}
-.ms-hsearch.is-open .icon-close {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-/* GO key — grows out of the face once the channel is open */
-.ms-hsearch-key {
+
+/* GO key — a machined key set into the channel's right end.
+   Doubled class specificity so it re-sizes .ms-key cleanly. */
+.ms-hsearch .ms-hsearch-key {
   flex: 0 0 auto;
-  width: 0;
-  padding: 0;
-  opacity: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  transition: width 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), padding 0.4s, opacity 0.2s 0.12s;
-}
-.ms-hsearch.is-open .ms-hsearch-key {
-  width: 52px;
-  padding: 0 14px;
-  opacity: 1;
+  height: 28px;
+  margin-right: 3px;
+  padding: 0 13px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
-/* mobile: the open channel takes over the whole header bar —
-   the Dribbble shot's "search replaces the header" moment */
-@media (max-width: 767px) {
-  .ms-hsearch.is-open {
-    position: absolute;
-    inset-block: 4px;
-    inset-inline: 8px;
-    width: auto;
-    z-index: 30;
-  }
-}
-
-/* Reduced motion: states swap instantly, no slide, no sink */
+/* Reduced motion: ring and border still swap, nothing animates */
 @media (prefers-reduced-motion: reduce) {
   .ms-hsearch,
-  .ms-hsearch .ms-search-input,
-  .ms-hsearch-key,
-  .ms-hsearch-grip svg {
+  .ms-hsearch .ms-hsearch-key {
     transition: none;
   }
 }
@@ -1211,32 +1187,6 @@ body {
   /* static chips don't change — they're labels, not toggles */
   cursor: default;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-/* The well — dark milled socket the query sits in, light bone text, orange
-   caret. Base for the header channel only (the hero search was retired —
-   Option A): .ms-hsearch re-scopes sizing/padding/opacity via
-   .ms-hsearch .ms-search-input (higher specificity). */
-.ms-search-input {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  border-radius: 4px;
-  outline: none;
-  padding: 10px 12px;
-  font-family: var(--font-body), "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  color: #f4f3ea;
-  caret-color: var(--color-brand);
-  background-image: linear-gradient(180deg, #4a4942 0%, #55544c 55%, #5f5e55 100%);
-  box-shadow:
-    inset 0 2px 3px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.22),
-    inset 2px 0 3px rgba(0, 0, 0, 0.28),
-    inset -2px 0 3px rgba(0, 0, 0, 0.28);
-}
-.ms-search-input::placeholder {
-  color: rgba(236, 235, 226, 0.55);
 }
 
 /* Footer rail */
