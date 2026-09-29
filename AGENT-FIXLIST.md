@@ -2048,3 +2048,50 @@ Fiction grep → 0; od EOF on all three files; collapsible.tsx source
 read (no local imports; `cn` confirmed at utils.ts:4); tsc 0 filtered;
 build 13/13; 22/22 suite post-merge; commit timestamp 01:06:58 +0300
 (= 22:06:58 UTC, ~20 min after the AGENTS.md push at 21:46:52 UTC).
+
+### ROUND 10 RESOLUTION — owner: "close it yourself" (executed by the auditor, not the agent)
+
+The punch list was closed by the auditor directly. Every change is the
+prescribed remedy verbatim — no invention, no drive-by.
+
+1. **collapsible.tsx — MAJOR 3 CLOSED.** Added
+   `import { cn } from "@/lib/utils"`; Trigger and Content now merge via
+   `cn(base, className)` — caller className survives. The Trigger's
+   `.ms-label` was carried through the merge untouched (accepted as a
+   genuine micro-label surface per the audit).
+2. **command.tsx + context-menu.tsx — MINOR 1 CLOSED.** Trailing newlines
+   appended; ledger offenses **#12–13 cleared** (EOF ledger now stands at
+   1–11, all historical).
+3. **command.tsx CommandItem — MINOR 2 CLOSED.** Appended
+   `data-[selected=true]:[&_svg:not([class*='text-'])]:text-white` —
+   selection-aware icon color; icons now follow white text on the ink
+   selection background instead of vanishing (ink-on-ink).
+
+### Round 10 DoD scorecard
+
+| Punch list item | Status |
+|---|---|
+| MAJOR 3 — `cn()` merge in Collapsible Trigger/Content | ✅ cn imported + merged both sites |
+| MINOR 1 — EOF ×2 (command, context-menu) | ✅ both end `\n` (od-verified) |
+| MINOR 2 — CommandItem selection-aware svg color | ✅ `data-[selected=true]:[…]:text-white` live |
+| Gates re-run | ✅ tsc 0 filtered · build 13/13 · suite 22/22 · fiction greps 0×4 |
+
+### Verification log (this resolution)
+
+`tsc --noEmit` → 0 app errors (skills/ noise only, pre-existing);
+`npm run build` → 13/13 routes; `node scripts/verify-round7-fix.js` →
+**22 pass / 0 fail** (dev restarted, HTTP 200 before suite);
+`rg "ms-steel" src --glob '*.tsx'` → 0; "Amazon Ember" → 0;
+`var(--font-display` → 0; `focus-visible:ring-0` → 0; `od` EOF → `\n`
+on all three touched files.
+
+### Standing status after Round 10
+
+- **Round 9 DoD: 5/5 closed.** The `src/components/ui/` freeze stays
+  **advisory** (per the Round 10 verdict's own condition).
+- Dormant primitives remain unused (card/carousel/chart/checkbox/
+  collapsible/command/context-menu/avatar/badge/alert-dialog); the
+  standing rule applies — restyling them is churn until imported.
+- The craft-standards test for the agent is now whether it can produce a
+  push like this one *itself*: prescribed remedy, no invention, honest
+  message, gates re-run. Next audit scores against that bar.
