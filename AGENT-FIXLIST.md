@@ -5,6 +5,10 @@
 > verified against the working tree — file:line references are exact at the
 > time of writing. Do not ship until the Definition of Done at the bottom
 > passes.
+>
+> **Before anything else:** read the status block below, then
+> **THE OPERATING PLAYBOOK** — added after Round 8 at the owner's request.
+> It is binding for every future commit in this repo.
 
 ---
 
@@ -58,15 +62,307 @@ a second input.
 
 ---
 
-## How to verify while fixing
+## THE OPERATING PLAYBOOK — how to think and code here (BINDING, owner-requested)
+
+*Added after Round 8. Eight audited rounds keep failing in the same handful
+of ways, and every single failure was provable in under a minute by a
+command that nobody ran. This playbook is that command set turned into a
+working habit. It is not style advice — it is what the next audit will
+check. Nothing here is superseded by the status block above; the
+obsoletions listed there concern the retired hero-search repair
+instructions from rounds 1–4 only.*
+
+**The loop: THINK → PLAN → CODE → VERIFY → REPORT. Never skip a phase,
+never start at CODE.**
+
+### 0 · The prime directive — nothing is done until a command proves it
+
+"Not build-broken" is the weakest claim in this repo. `next.config` sets
+`ignoreBuildErrors: true`, so a green build proves nothing about types —
+type-level wreckage has shipped behind green builds. Every claim you make
+about your own work must be backed by a command output you actually ran
+this session:
+
+- "the class exists" → a grep that hits
+- "the types are fine" → `tsc` output showing 0 errors
+- "it renders" → an HTTP 200 plus a screenshot
+- "no regressions" → the 22-check browser suite passing
+
+If you cannot produce the output, you do not make the claim. A red truth
+beats a green fiction: Round 8's commit described a steel restyle that
+rendered exactly nothing, because the "restyle" was six class names that
+do not exist. Nobody grepped. Do not be that commit.
+
+### I · THINK — orient before you touch a file
+
+1. **Re-read every file you plan to edit, end to end, this session.**
+   Files change between rounds; your memory of round N is wrong at round
+   N+1. Round 8 re-introduced the exact fiction Round 7 removed from
+   `button.tsx` — because the edit was made from memory of what the design
+   system "must" contain, not from the file.
+2. **Map consumers before you claim impact.** Before and after any
+   component edit: `rg -n "ui/card" src --glob '*.tsx'` (substitute the
+   name). Round 8 restyled four primitives with **zero** usages in the
+   app while the commit message claimed a visual upgrade — it changed
+   nothing user-facing. Dormant code is where landmines get planted; if
+   you touch it anyway, say "dormant, zero usages" in the commit message.
+3. **Open the type before wiring data.** The cart line is
+   `CartLine { qty, unitPriceUsd, … }` (`src/lib/types.ts:47`); the
+   correct consumer to copy from is `cart-drawer.tsx`. Round 1 invented
+   `quantity` / `unitPrice` and produced silent `NaN` money in checkout.
+4. **Read the CSS primitive before you use it.** Every `.ms-*` family in
+   `src/app/globals.css` is hand-machined for this store. The steel theme
+   tokens live at globals.css 131–137: `--color-ink #1B2A4A`,
+   `--color-brand #FF6B35`, `--color-line #E2E8F0`, `--color-hush
+   #64748B` — so `text-ink`, `bg-brand`, `border-line`, `text-hush`
+   resolve. Verify any other token the same way before using it.
+
+### II · PLAN — say the diff in words before you write code
+
+Write, in one sentence: *"This change makes X do Y for Z, touching A, B,
+C."* Then list every class name, prop, token, and import the diff will
+add, and pre-flight each one:
 
 ```bash
-npx tsc --noEmit        # 0 errors (currently: 1 parse error in header.tsx)
-npm run dev             # or the resident dev server on :3000
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/   # must be 200
-curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000/?view=checkout"
-npx next build          # must complete — this is what CI will run
+# every .ms-* class you plan to write must exist as a CSS rule:
+rg -n "^\.ms-your-class" src/app/globals.css          # must HIT
+# every theme token you plan to use must exist in the steel block:
+rg -n "color-your-token:" src/app/globals.css          # must HIT
 ```
+
+If a pre-flight misses, the **plan changes — never the check**. You do not
+get to write `ms-steel-face` because it sounds right; you write a real
+rule in globals.css first, or you use a class that exists.
+
+Also: **smallest diff that achieves the sentence.** No drive-by restyles
+of files the task does not name. Six dormant shadcn primitives (avatar,
+badge, alert-dialog, card, carousel, checkbox) were restyled across rounds
+7–8 while unused; that is churn, and churn is where repeat offenses live.
+
+### III · CODE — the standing rules (each one earned by an incident)
+
+**Rule 1 — a class name that is not in globals.css renders nothing.**
+`ms-steel-face` / `ms-steel-bevels` are CSS *variables*
+(`--ms-steel-face`, `--ms-steel-bevels`) consumed by `.ms-tile::after` —
+written as class names they are fiction. This shipped in Round 7
+(`button.tsx`), was documented, and shipped again in Round 8 (card,
+carousel ×3, chart, checkbox) plus three latent hits in
+alert-dialog/badge/avatar left by the Round 7 push. Nine removals in the
+Round 8 clean. Same disease as Round 7's fictional `"Amazon Ember"` font
+stack: a name that renders nothing is a lie in the diff. Need a steel
+card surface? Write the real rule first, then use it:
+
+```css
+/* globals.css — only after this exists may the class appear in JSX */
+.ms-steel-card { background-image: var(--ms-steel-face);
+                 box-shadow: var(--ms-steel-bevels); }
+```
+
+**Rule 2 — cascade law: unlayered primitives beat layered utilities.**
+`globals.css` primitives are unlayered; Tailwind utilities live in
+`@layer`. When both set the same property, the utility silently loses.
+Three casualties so far:
+
+- `ring-*` on a `.ms-key` surface — eaten by the primitive's box-shadow;
+  keyboard focus vanished on CHECKOUT (Round 7). The site-wide
+  `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }`
+  (globals.css:206) now owns keyboard focus; `ring` utilities remain only
+  for surfaces that carry no steel box-shadow.
+- `font-mono` next to `.ms-label` — the label's font family wins; the
+  chart tooltip's numerals would have silently lost their mono face
+  (Round 8).
+- `text-xs` on Button size variants — `.ms-label` owns that element's
+  size; the utility was dead weight (Round 7).
+
+So: never fight a primitive with a utility. Change the primitive, pick a
+different surface, or don't write the utility.
+
+**Rule 3 — typography mapping.** Inter is the only face (owner decision,
+Round 7). Use the right tool for each job:
+
+| You are typesetting | Use | Never use |
+|---|---|---|
+| hero / display line (≥32px) | `.ms-display` | `.ms-display` below 32px — 0.95 leading + forced uppercase crushes a 20px title (Round 8 CardTitle) |
+| card / section titles (~20px) | `text-xl font-semibold leading-none tracking-tight text-ink` | `.ms-display` |
+| descriptions / body text | `text-sm text-hush` | `.ms-label` (that is 10px caps — Round 8 CardDescription) |
+| genuine micro-labels (10px caps) | `.ms-label` | any font/size utility on top of it — they die (Rule 2) |
+| numerals, data, tooltip values | `font-mono tabular-nums` | wrapping in `.ms-label` |
+
+**Rule 4 — one source of truth for money and levies.** The order API
+re-prices every line server-side and applies `BORDER_LEVIES` there
+(`src/app/api/orders/route.ts` ~194–208). Client-side math is display-only
+and reuses the named exports (`leviesFor`, `fmt`). Round 1's invented
+`LEVIES()` helper crashed the checkout chunk on load. Never approximate
+the server's math with a new local function.
+
+**Rule 5 — event handlers live in `"use client"` files only.**
+`layout.tsx` is a server component (it exports `metadata`); `onKeyDown`
+on `<body>` cannot compile. This exact crash shipped twice. Need a
+listener in the layout? Extract a tiny client component.
+
+**Rule 6 — the font block is settled: Inter only, no weight pin.**
+
+```tsx
+const inter = Inter({ subsets: ["latin"], variable: "--font-body", display: "swap" });
+```
+
+Do not add `weight:` — a pin capped at 700 breaks the 800 used by
+`.ms-weight-toggle` and `.ms-chip` (they would render synthetic bold). Do not introduce any other family: `var(--font-display)` and
+Space Grotesk are retired by owner decision. Radix portals mount outside
+`<body>`; the root-level font declarations are what keep them consistent.
+
+**Rule 7 — keyboard focus is owned by the site-wide outline.** Never
+write `focus-visible:ring-0` (Round 8 confusion), and never assume a
+`ring-*` class survives over a `.ms-*` box-shadow (Rule 2). If you build
+a new interactive surface, Tab to it in the browser and confirm you can
+see the focus ring before you claim it works.
+
+**Rule 8 — file hygiene.** Every file you touch ends with exactly one
+trailing newline (`od -An -c FILE | tail -1` is ground truth — `tail -c1`
+has produced contradictory output before). Ten EOF offenses across eight
+rounds. No trailing whitespace; keep import grouping as the file has it.
+
+**Rule 9 — the product contract is owner-locked; do not redesign it.**
+
+- One action per catalog tile: **ADD TO CART** → opens the quick-view
+  sheet → choose pack + qty → the sheet's **ADD TO CART** → drawer. No
+  direct-to-cart, no Buy Now, no second action button. Sold-out tiles
+  keep **NOTIFY ME**.
+- Exactly one search: the persistent header channel (`.ms-hsearch`). The
+  hero search is retired; do not restore it (see READ FIRST, above).
+- The hero is the `ms-shopfront` display window with the greeting, the
+  `.ms-display` line "MAIZE FLOUR. CEMENT. IRON SHEETS." and two wired
+  CTAs (`ENTER CATALOG ↓`, `TRACK ORDER`). Search discoverability comes
+  from the header channel — never from a second input.
+
+**Rule 10 — deleting or renaming CSS requires the consumer grep.** Three
+commits in a row deleted `.ms-*` families that JSX still used 7–9 times
+each. `rg -n "ms-your-family" src --glob '*.tsx'` before any removal.
+And never hand-copy Tailwind utilities into globals.css (`:not-sr-only`,
+`.animate-spin`) — Tailwind v4 already generates them from the class
+strings in JSX.
+
+### IV · VERIFY — the gate, in this exact order
+
+Run all of it after the last edit; quote the outputs in your report.
+Every expected value below was re-verified against this repo's current
+state when this playbook was written.
+
+```bash
+# 1 — types. The build is type-blind (ignoreBuildErrors: true), so tsc is the only proof.
+npx tsc --noEmit 2>&1 | grep -v "^skills/" | grep -c "error TS"    # → 0
+
+# 2 — production build (what CI will run)
+npx next build                                                     # → 13/13 pages
+
+# 3 — routes serve 200 (resident dev server on :3000)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/                    # 200
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/?view=checkout"    # 200
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/?view=track"       # 200
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/p/long-grain-rice" # 200
+
+# 4 — fiction gates. All four must print nothing (0 hits).
+rg -n "ms-steel"             src/components src/app --glob '*.tsx' # steel exists only as CSS vars
+rg -n "Amazon Ember"         src                                   # Inter is the sole face
+rg -n 'var\(--font-display'  src                                   # display face retired
+rg -n "focus-visible:ring-0" src                                   # site outline owns focus
+
+# 5 — EOF newline on every file you touched
+od -An -c src/components/ui/card.tsx | tr -s ' ' | tail -1         # ends in \n
+
+# 6 — if ANY user-facing surface changed: the 22-check browser suite
+node scripts/verify-round7-fix.js      # local only (scripts/ is gitignored); → 22/22
+# plus two evidence screenshots into .shots/
+```
+
+Operational notes the gates depend on:
+
+- `scripts/` is gitignored — verification scripts stay out of the commit,
+  or the push itself fails.
+- `.github/workflows/build-check.yml` is written but untracked (the
+  stored token lacks the `workflow` scope). Until the owner adds it via
+  the GitHub UI or a scoped token, these gates are manual and mandatory.
+- Browser-suite specifics: exercise the weight toggle on the multi-variant
+  PDP (`long-grain-rice`); qty=1 quick-view confirms with plain
+  `ADD TO CART`; after Tab, loop Shift+Tab until focus lands on
+  `data-slot="button"` before asserting focus treatment.
+
+### V · REPORT — the honesty protocol
+
+The commit message and your hand-back summary may claim only what a
+command output supports. Format:
+
+```
+Files: 7 changed (+17/−17)
+Verified: tsc 0 · build 13/13 · curl 200 ×4 · fiction gates 0 ×4 · EOF \n ×7 · 22/22 browser
+Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
+```
+
+- Every "verified" item maps to a command you ran **this session**.
+- Failures are reported as failures. A stopped push costs minutes; a
+  fictional push costs an audit round and a fixlist entry (eight rounds
+  of them so far).
+- State the blast radius honestly. "Dormant change, zero usages" is a
+  fine and truthful commit message; "restyled to match the design
+  system" for the same diff is exactly how Round 8 happened.
+
+### VI · The five questions before every commit
+
+1. Did I re-read every file I edited, end to end, in this session?
+2. Does every class, token, prop, and import I added exist — with grep
+   proof?
+3. Did I run all six gates, and can I quote each output?
+4. Is this the smallest diff that achieves the stated goal — and does the
+   commit message claim only what renders?
+5. Are EOFs intact, and is the tree clean of strays (`scripts/` stays
+   local, nothing untracked sneaks into the push)?
+
+### VII · The repeat-offense ledger — never a second time
+
+| Offense | Round(s) | Gate that catches it |
+|---|---|---|
+| Two-root JSX parse error → whole site 500 | 1 | tsc (1) + curl (3) |
+| Invented import (`LEVIES`) → checkout chunk crash | 1 | tsc (1) + consumer grep (I.2) |
+| Invented cart field names → NaN money | 1 | types-first (I.3) |
+| Invalid CSS killing the whole stylesheet | 1 (3rd occurrence) | build (2) + browser (6) |
+| Deleted `.ms-*` families still used 7–9× | 2–3, 5 | consumer grep (Rule 10) |
+| Hero-search restore attempts (retired by owner) | 2–4 | READ FIRST block |
+| Fictional `"Amazon Ember"` font stack | 7 | fiction gate 4 |
+| Fictional `ms-steel-*` class names | 7, 8 | fiction gate 4 |
+| `ring-*` eaten by `.ms-key` box-shadow | 7 | Rule 2 + keyboard pass |
+| `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
+| `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
+| `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
+| EOF newlines stripped | 1–8 (10 total) | EOF gate 5 |
+| Dormant-primitive churn sold as visual work | 7, 8 | Phase II + I.2 |
+
+Every row above was mechanically catchable before it shipped. That is the
+entire point of this document.
+
+### VIII · Worked example — the Round 8 clean, done the right way
+
+The audit found six dead steel-class references in a restyle of four
+zero-usage primitives. The resolution (`97dc699`) executed this playbook
+in order:
+
+1. **THINK** — enumerated every `ms-steel` hit in the ui layer by grep:
+   9 total (the 6 fresh + 3 latent in alert-dialog/badge/avatar left by
+   the Round 7 push, which the Round 7 button-only gate had missed).
+2. **PLAN** — remove all nine fictions; fix the three typography misuses
+   via the Rule 3 table (CardTitle → `text-xl font-semibold
+   leading-none tracking-tight text-ink`; CardDescription → `text-sm
+   text-hush`; tooltip values keep `font-mono tabular-nums`); drop the
+   pointless `focus-visible:ring-0`; restore EOFs. No new CSS invented —
+   no `.ms-steel-card` promoted, because nothing would consume it.
+3. **CODE** — 7 component files, +17/−17, plus this document's
+   resolution section. Nothing else.
+4. **VERIFY** — tsc 0 · build 13/13 · 22/22 browser suite after dev
+   restart · `ms-steel` in the ui layer → 0 · EOF `\n` on every touched
+   file.
+5. **REPORT** — resolution written into this document with gate outputs;
+   commit message claims only what the diff does.
+
+Total invention: zero. That is what "done" looks like.
 
 ---
 
