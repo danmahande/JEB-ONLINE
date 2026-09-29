@@ -1069,3 +1069,24 @@ Gates: `npx tsc --noEmit` → 0 errors (app code); `npm run build` green 13/13;
 DoD greps empty (`discountPercentage`, `-%`, `purple-500`, `line-through`);
 browser E2E — pack switching honest, QUICK ADD adds the selected pack at the
 selected price (50KG BAG · USh 136,629 in drawer), SHARE/COPY feedback live.
+
+---
+
+## PRODUCT DECISION (owner) — one action per tile: ADD TO CART
+
+Round 7, owner directive. On every catalog tile:
+- **QUICK ADD is removed** — the owner called it irrelevant; nothing may
+  add to the cart directly from a tile.
+- **BUY is removed.**
+- The tile's single action key is **ADD TO CART** and it OPENS THE
+  QUICK-VIEW SHEET (`onSelect(p)`) — that is where pack and quantity are
+  chosen ("ADD n TO CART" confirms). It must not add anything directly.
+- Sold-out tiles keep the NOTIFY ME restock flow, unchanged.
+- Do not re-introduce tile-level direct-add buttons, "Buy Now", express
+  checkout, or any second action key on tiles.
+
+Implemented in `product-grid.tsx` (button label/aria updated, Quick Add
+block + `useCart.addLine` wiring deleted). Verified: tile shows price +
+one ADD TO CART key; clicking it opens the sheet; 50KG × 3 → "ADD 3 TO
+CART" → badge 3; tile image click still opens the sheet; tsc 0 errors;
+build green 13/13.

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { Product, RegionConfig } from "@/lib/types";
 import { fmt } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
-import { useCart, useRegion } from "@/lib/store";
+import { useRegion } from "@/lib/store";
 import { HousePlate } from "@/components/storefront/house-plates";
 
 const TABS = [
@@ -93,7 +93,6 @@ export default function ProductGrid({
   const [notifyBusy, setNotifyBusy] = useState<string | null>(null);
   const [notifyError, setNotifyError] = useState<string | null>(null);
   const { toast } = useToast();
-  const addLine = useCart((s) => s.addLine);
   const active = regions.find((r) => r.region === region);
   const regionHasHydrated = useRegion((s) => s.hasHydrated);
   const gridCols = useGridColumns();
@@ -427,15 +426,18 @@ export default function ProductGrid({
                         </button>
                       )
                     ) : (
+                      // one action per tile — ADD TO CART opens the
+                      // quick-view sheet where pack + quantity are chosen
+                      // (owner decision: no direct-add from the tile)
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelect(p);
                         }}
                         className="ms-label ms-key px-3 py-2.5 shrink-0 ml-auto"
-                        aria-label={`Buy ${p.productLabel} — choose pack and quantity`}
+                        aria-label={`Add ${p.productLabel} to cart — choose pack and quantity`}
                       >
-                        BUY
+                        ADD TO CART
                       </button>
                     )}
                   </div>
@@ -500,38 +502,6 @@ export default function ProductGrid({
                         </p>
                       )}
                     </form>
-                  )}
-                  
-                  {/* quick add — one tap drops the pack shown on the tile
-                      (qty 1) into the cart; the tile stays the hit target,
-                      so propagation must be stopped here too */}
-                  {!out && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addLine({
-                          productId: p.productId,
-                          slug: p.slug,
-                          productLabel: p.productLabel,
-                          brand: p.brand,
-                          variantLabel: v?.label || "",
-                          unitPriceUsd: priceUsd,
-                          weightKg: v?.weightKg || 0,
-                          qty: 1,
-                          image: p.image,
-                          maxStock: p.currentStock,
-                        });
-                        // same toast shape as the PDP add (product-view.tsx):
-                        // caps title, "PRODUCT · PACK × QTY" description
-                        toast({
-                          title: "ADDED TO CART",
-                          description: `${p.productLabel}${v?.label ? ` · ${v.label}` : ""} × 1`,
-                        });
-                      }}
-                      className="ms-label mt-2 text-center py-1 text-hush hover:text-ink transition-colors"
-                    >
-                      + QUICK ADD
-                    </button>
                   )}
                 </div>
 
