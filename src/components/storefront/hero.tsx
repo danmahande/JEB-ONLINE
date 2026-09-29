@@ -20,7 +20,7 @@ export default function Hero({
 }) {
   return (
     /* full-bleed — the display window runs wall to wall (no side gutters),
-       matching the footer and the rack below */
+        matching the footer and the rack below */
     <section className="pt-3 md:pt-5" aria-label="Hero">
       <h1 className="sr-only">Meridian Supply Co. — Grains &amp; Hardware</h1>
 
@@ -54,7 +54,7 @@ export default function Hero({
           <div className="absolute inset-0 z-10 flex flex-col items-start gap-2 md:gap-2.5 p-4 md:p-6">
             <p className="ms-label text-white/85">{HERO_LINE}</p>
             <p className="ms-display text-xl md:text-2xl leading-none tracking-tight text-white">
-              MAIZE FLOUR. CEMENT. IRON SHEETS.
+              ESSENTIAL GOODS YOU CAN TRUST
               <span
                 className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle"
                 aria-hidden="true"
