@@ -1190,3 +1190,21 @@ but flagging that the specific line was stronger and claim-free.
   dead text-* utilities alongside ms-label.
 - Trailing newlines on all four stripped files.
 - Hero copy per owner's explicit answer (concrete list vs trust line).
+
+### OWNER ANSWER (received after audit)
+The owner confirms both changes were explicitly requested:
+
+1. **Amazon-style font** — direction approved, but BLOCKER C stands as
+   written. Writing the literal name "Amazon Ember" into font stacks
+   delivers the Amazon look to ZERO visitors (the font never loads, no
+   visitor has it). The correct implementation of "Amazon-style" is what
+   the commit's own comment already concedes: Inter as the working face —
+   Inter is the standard stand-in for Ember's humanist sans — with the
+   fictional name deleted from every stack it was sprinkled into.
+2. **New hero line** — MAJOR 2 resolved as the owner's call:
+   "ESSENTIAL GOODS YOU CAN TRUST" stands as approved copy. Recorded here
+   so no future audit re-flags it as a fabricated claim.
+
+Unchanged by this answer and still pending a fix decision: BLOCKER A
+(orphaned `--font-display`), BLOCKER B (drive-by `layout.tsx` deletions),
+MAJOR 1 (Button focus + dead utilities), MINOR 1–4 (incl. EOF newlines ×4).
