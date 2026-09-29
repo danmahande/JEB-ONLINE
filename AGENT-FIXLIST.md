@@ -847,3 +847,42 @@ you mean (uppercase), like the rest of the file did.
 4. Newsletter field renders as an intentional dark field (or a white one
    that matches the design system on purpose) — not a cascade accident.
 5. `npx next build` still green; EOF newline restored.
+
+---
+
+## ROUND 5 RESOLUTION — fixed by Super Z (owner approved the rules)
+
+Do not re-introduce any of the removed content. The owner set permanent
+policy for this storefront:
+
+1. **No invented social proof.** The stats row and the fake testimonials are
+   gone. The "WHAT OUR CUSTOMERS SAY" section STAYS as a reserved shelf with
+   an honest empty state ("NOTHING PUBLISHED YET…"). Real reviews go into
+   the `REVIEWS` constant at the top of `src/app/page.tsx` — only with
+   written permission, verbatim, no stars until real ratings exist.
+2. **No unheld certifications.** The Certifications row is gone. If the
+   business ever actually certifies, it comes back with the real
+   certificate number.
+3. **No invented contact data.** Address/phone/hours rows are gone. CONTACT
+   now carries only what is real: the support email and the fact that
+   orders run and track on this site. When the owner publishes a real
+   address/phone, add them back as real rows.
+4. **No dead controls.** The newsletter is now REAL: `POST /api/subscribe`
+   → `NewsletterSubscriber` table (Prisma, deduped per email) with a
+   idle→sending→done/error state machine in `footer.tsx` (`NewsletterSignup`).
+   Social icons and Privacy/Terms/Cookie buttons are REMOVED until real
+   accounts/pages exist. The tagline is a `<p>` again.
+5. **Every nav destination is distinguishable.** Footer SHOP links ride the
+   catalog's real `?q=` filter (`GRAINS` → 7 grain lines, `HARDWARE` → its
+   rack) via `goShopQuery` in `page.tsx`. "New Arrivals"/"Best Sellers" and
+   the whole COMPANY column are gone (no such pages).
+6. **Never style over a `ms-*` primitive with Tailwind utilities.** The
+   newsletter input is a bare input with Tailwind-only classes (renders
+   translucent dark on the ink wall, as designed). This is the standing
+   rule from rounds 2/4/5 — unlayered custom CSS always wins.
+
+Verified: `next build` green; /api/subscribe 201/200-already/400 paths
+tested; browser E2E — subscribe success state renders, GRAINS link filters
+the rack to 7 lines and scrolls to catalog, TRACK AN ORDER switches to
+?view=track, empty reviews state renders, no white cascade slab. Test
+subscriber rows deleted from the DB after the run.

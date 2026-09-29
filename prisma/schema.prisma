@@ -189,6 +189,15 @@ model RestockNotify {
   @@index([status])
 }
 
+/// Newsletter signups from the footer — the store's pre-sale lead list.
+/// Deduplicated per email; a repeat signup is a no-op that still resolves
+/// success so the footer UI can flip to the confirmed state either way.
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
 /// Counter model for generating atomic sequences
 model Counter {
   id    String @id @default(cuid())

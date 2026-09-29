@@ -19,6 +19,12 @@ import type { PlacedOrder, Product } from "@/lib/types";
 
 type View = "shop" | "checkout" | "confirmation" | "track";
 
+/* Customer reviews — populated ONLY with real, published reviews from
+   real customers (written permission on file). An empty list renders
+   the honest "nothing published yet" state. Owner decision, round 5:
+   no invented quotes, no fabricated stars, ever. */
+const REVIEWS: { quote: string; author: string; company: string }[] = [];
+
 // Custom hook for managing view state with URL sync
 function useViewState() {
   const [view, setView] = useState<View>(() => {
@@ -105,6 +111,21 @@ export default function Storefront() {
     scrollToTop();
   }, [setView, scrollToTop]);
 
+  /* Footer SHOP links: category queries ride the same ?q= filter the
+     search bar uses — GRAINS lands on the grains rack, not a lie. */
+  const goShopQuery = useCallback(
+    (q?: string) => {
+      setView("shop");
+      if (q) {
+        setQuery(q);
+        document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" });
+      } else {
+        scrollToTop();
+      }
+    },
+    [setView, setQuery, scrollToTop]
+  );
+
   const handleAdded = useCallback(() => {
     toast({ 
       title: "ADDED TO CART", 
@@ -142,7 +163,9 @@ export default function Storefront() {
             </button>
           </div>
         </main>
-        <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />
+        <Footer
+          onNavigate={(v, q) => (v === "shop" ? goShopQuery(q) : goTrack())}
+        />
       </div>
     );
   }
@@ -246,63 +269,44 @@ export default function Storefront() {
                   ))}
                 </Reveal>
                 
-                {/* Enhanced trust indicators section */}
+                {/* Reviews — the reserved shelf. The store hasn't made its
+                    first delivery yet, so there is nothing to publish and
+                    the section says so plainly (owner decision, round 5:
+                    no invented quotes, no fake stars). REVIEWS is the
+                    drop-in point — real entries render as plaques. */}
                 <div className="mt-16 px-4">
-                  <div className="max-w-6xl mx-auto">
-                    <h2 className="ms-display text-center mb-12 text-2xl">TRUSTED BY BUSINESSES ACROSS EAST AFRICA</h2>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                      {[
-                        { value: "500+", label: "Businesses Served" },
-                        { value: "98%", label: "On-Time Delivery" },
-                        { value: "15+", label: "Years Experience" },
-                        { value: "5", label: "Countries Served" },
-                      ].map((stat, i) => (
-                        <div key={i} className="ms-plaque p-6">
-                          <p className="text-2xl md:text-3xl font-bold text-brand mb-2">{stat.value}</p>
-                          <p className="text-sm">{stat.label}</p>
-                          <span className="ms-spot" aria-hidden="true" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Testimonials section */}
-                <div className="mt-16 px-4">
-                  <div className="max-w-4xl mx-auto">
-                    <h2 className="ms-display text-center mb-12 text-2xl">WHAT OUR CUSTOMERS SAY</h2>
-                    
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {[
-                        {
-                          quote: "Meridian Supply delivers consistent quality grains at competitive prices. Their cross-border expertise has simplified our procurement across East Africa.",
-                          author: "Sarah Kimani",
-                          company: "AgroProcessors Ltd, Nairobi"
-                        },
-                        {
-                          quote: "The transparent pricing and documentation made importing hardware from Uganda seamless. No hidden fees or delays.",
-                          author: "Thomas Mugisha",
-                          company: "BuildTech Solutions, Kigali"
-                        }
-                      ].map((testimonial, i) => (
-                        <div key={i} className="ms-plaque p-6">
-                          <div className="flex items-center mb-4">
-                            {[...Array(5)].map((_, j) => (
-                              <svg key={j} width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-yellow-400">
-                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                              </svg>
-                            ))}
-                          </div>
-                          <p className="italic mb-4">"{testimonial.quote}"</p>
-                          <div>
-                            <p className="font-medium">{testimonial.author}</p>
-                            <p className="text-sm text-hush">{testimonial.company}</p>
-                          </div>
-                          <span className="ms-spot" aria-hidden="true" />
-                        </div>
-                      ))}
-                    </div>
+                  <div className="mx-auto max-w-4xl">
+                    <h2 className="ms-display mb-10 text-center text-2xl">
+                      WHAT OUR CUSTOMERS SAY
+                    </h2>
+                    {REVIEWS.length === 0 ? (
+                      <div className="ms-plaque p-8 text-center">
+                        <p className="ms-display text-lg text-ink md:text-xl">
+                          NOTHING PUBLISHED YET
+                        </p>
+                        <p className="mx-auto mt-3 max-w-md text-[13px] leading-[21px] text-hush">
+                          This store is new and the first deliveries haven&apos;t
+                          landed. Every customer review will publish here
+                          unedited — good or bad. That&apos;s the standard.
+                        </p>
+                        <span className="ms-spot" aria-hidden="true" />
+                      </div>
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-2">
+                        {REVIEWS.map((r) => (
+                          <figure key={r.author} className="ms-plaque p-6">
+                            <blockquote className="text-[13px] leading-[21px] text-ink">
+                              &ldquo;{r.quote}&rdquo;
+                            </blockquote>
+                            <figcaption className="mt-4">
+                              <p className="ms-label text-ink">{r.author}</p>
+                              <p className="ms-label text-hush">{r.company}</p>
+                            </figcaption>
+                            <span className="ms-spot" aria-hidden="true" />
+                          </figure>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -334,7 +338,9 @@ export default function Storefront() {
         </div>
       </main>
 
-      <Footer onNavigate={(v) => (v === "shop" ? goShop() : goTrack())} />
+      <Footer
+        onNavigate={(v, q) => (v === "shop" ? goShopQuery(q) : goTrack())}
+      />
 
       {/* fly-to-cart dot — page-level so it can reach the header badge */}
       <FlyDot />
