@@ -84,6 +84,10 @@ od -An -c <file> | tr -s ' ' | tail -1
 git diff origin/main HEAD          # or: git show --stat HEAD
 
 # 3 — the six gates in Playbook §IV. All of them. Every time.
+
+# 4 — write the PROOF BLOCK into your commit message (see NEW STANDING
+#     INSTRUCTIONS above) from the outputs of steps 1–3.
+#     No PROOF BLOCK → the commit is rejected.
 ```
 
 **Consequence, on record since Round 9 (OWNER NOTE in AGENT-FIXLIST.md):**
@@ -228,6 +232,74 @@ read-your-diff rule were both printed in the report you had just read.
 Nothing in your tooling forces this behavior; it is a skipped check,
 every time. The ui/ bar recommendation now stands on five rounds of
 receipts (see ROUND 14, AGENT-FIXLIST.md).
+
+## NEW STANDING INSTRUCTIONS — owner-directed after Round 14 (BINDING, effective immediately)
+
+Read the addendum above one more time, because it is the diagnosis: you
+read a report that quoted your own commit against your own diff, and
+eleven minutes later you shipped the identical damage a second time
+(`8b668d6` — `collapsible.tsx`, byte-identical stripped blob, offense
+#22; message "ensure proper EOF newlines ... as per standards" false
+against its diff for the second consecutive commit; CommandShortcut's
+tag silently rewritten `/>` → `></span>`; context-menu named in the
+message but never touched). You clearly HAVE the knowledge — you pulled
+the report first. What you do not have is a verification step you
+actually run. So the owner has replaced discretion with evidence. These
+instructions are permanent and they are checked, not trusted.
+
+### 1. THE PROOF BLOCK — mandatory in every commit message
+
+Every commit message you write must END with this block, filled from
+commands you ran in that session:
+
+```
+EOF-CHECK (od -An -c <file> | tr -s ' ' | tail -1):
+  <touched file 1>: ends \n
+  <touched file 2>: ends \n
+DIFF-CHECK (git show HEAD, read top to bottom):
+  <file> <line range>: <one-line reason for this hunk>
+GATES: tsc 0 · build 13/13 · suite 22/22
+```
+
+- No PROOF BLOCK = the commit is rejected outright.
+- A block the diff contradicts (e.g. a file listed as "ends \n" whose
+  diff shows `\ No newline at end of file`) = falsified evidence — the
+  most serious offense class in this repo, worse than any code bug,
+  because it poisons the record. The auditor re-runs `od` on every file
+  you name; the block is verified line by line.
+- The GATES line names outputs you must actually have; do not copy
+  expected values, paste real ones.
+
+### 2. Prove the problem exists BEFORE you fix it
+
+If a task says "add X" or "fix X": run the check that shows X is
+missing BEFORE writing any code. Rounds 13 and 14 both shipped damage
+because you acted on a stale task description instead of the repo's
+current state — the newlines you were told to add already existed
+(twice). If the check shows the problem is not there, commit NOTHING
+and report "nothing to do — verified". An empty diff with an honest
+message is a completed task; a fix for a problem that did not exist is
+a new offense.
+
+### 3. Every hunk gets a reason — in the message, in the DIFF-CHECK lines
+
+This is the standing every-hunk rule made concrete. If you cannot write
+a one-line reason for a hunk, do not ship the commit: your editor or
+your attention introduced something you did not intend. Fix your tree,
+re-run the gates, commit again. A hunk that appears without a
+DIFF-CHECK line is treated as a silent, undisclosed change.
+
+### 4. What happens on the next violation
+
+This is the final instruction set delivered in writing. Per the Round 9
+OWNER NOTE and the fired consequence of Rounds 13–14: the next push
+that strips an EOF, carries a hunk without a DIFF-CHECK reason, or
+contradicts its own message will be **reverted outright — not repaired**
+— and the `src/components/ui/` bar will move from recommendation to
+requested enforcement, with six rounds of receipts attached. Your
+storefront record is clean (zero fiction across every audited round).
+The gap between your storefront work and your ui/ work is not talent —
+it is the checks you skip. Run them.
 
 ## THE THREE NON-NEGOTIABLES (the ones that keep recurring)
 

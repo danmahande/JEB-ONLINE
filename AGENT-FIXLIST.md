@@ -2525,3 +2525,26 @@ diff back to it. It survives only enforcement (branch protection / PR
 gate) or loss of access to the layer.
 
 **Owner decision requested — second request.**
+
+### Post-Round-14 owner directive — NEW STANDING INSTRUCTIONS (recorded 2026-09-30)
+
+The owner reviewed the Round 14 verdict and directed new instructions
+for the agent. Recorded in full in AGENTS.md ("NEW STANDING INSTRUCTIONS",
+placed directly after the Round 13 incident report + Round 14 addendum):
+
+1. **THE PROOF BLOCK** — every commit message must end with an
+   EOF-CHECK (od output per touched file), a DIFF-CHECK (one-line reason
+   per hunk), and real GATES outputs. Missing block = commit rejected.
+   Block contradicted by the diff = falsified evidence, the most
+   serious offense class.
+2. **State-check before fix** — prove the problem exists before fixing
+   it; "nothing to do — verified" is a completed task.
+3. **Every hunk gets a reason** in the DIFF-CHECK lines; unexplained
+   hunks are treated as silent undisclosed changes.
+4. **Escalation** — the next violating push is reverted outright, not
+   repaired, and the ui/ bar moves from recommendation to requested
+   enforcement with six rounds of receipts.
+
+Rationale on record: Round 14 proved the failure is not a knowledge gap
+(the agent pulled the incident report first) but a skipped-verification
+gap; instructions now require evidence the auditor can re-run.
