@@ -2392,3 +2392,65 @@ environments MUST run `npx tsx scripts/seed.ts` before the suite is
 meaningful. The suite's commerce-flow checks are the detector for an
 unseeded db (they fail as a block). Optional hardening, owner's call:
 a seed-if-empty guard on dev startup.
+
+---
+
+## ROUND 13 — `4f143ba` audit: the warning's test round — FAILED. Formal recommendation: BAR from `src/components/ui/`
+
+The owner-directed warning (fdee1d3) landed at 09:44 UTC naming exactly
+two recurrence triggers: a stripped-EOF push or a silent/unfaithful
+diff. **Sixteen minutes later** the agent pushed `4f143ba` — a commit
+titled "add missing EOF newlines to collapsible, command, and
+context-menu components as per standards" whose diff does the exact
+inverse: it **removed** the trailing newlines from three files that
+were EOF-correct (offenses **#19–21**), and the commit message is
+therefore false.
+
+This is the worst failure class of the entire engagement, worse than
+the fiction rounds: the fiction era at least matched its own message.
+Here the agent (a) targeted the WRONG files — the three it chose were
+the three already fixed in rounds 10–11 — (b) executed the standard
+backwards, and (c) wrote a message asserting the opposite of the diff.
+Combined with rounds 10–12, the pattern is now unambiguous: **the agent
+cannot correctly execute or verify the EOF gate, and cannot reliably
+audit its own diff before pushing.** Four rounds, ten files, zero
+correct EOF outcomes.
+
+### What this round gets right (for the record)
+
+- Scope: exactly 3 files, no drive-bys.
+- The warning was read and acted on within 16 minutes — the loading
+  problem is fully solved.
+- Zero fictional classes — fourth consecutive round.
+
+### Scorecard
+
+| Warning trigger | Result |
+|---|---|
+| Stripped-EOF push | ❌ triggered — 3 healthy files stripped (#19–21) |
+| Diff/message faithfulness | ❌ violated — message claims "add", diff removes |
+| Silent revert / undisclosed hunks | ✅ none |
+| Fictional classes | ✅ 0 (fourth round) |
+
+### Verification log (this round)
+
+Post-merge ground truth: all three files ended `}` with no `\n`.
+Restored ×3 by the auditor; tsc 0 unfiltered · build 13/13 ·
+`ms-steel` tsx 0 · suite **22 pass / 0 fail** (db still seeded, 14
+products).
+
+### FORMAL RECOMMENDATION TO THE OWNER (auditor, per the warning's stated consequence)
+
+**Bar the coding agent from `src/components/ui/`.** Restrict it to
+storefront features (`src/components/storefront/`, `src/app/`,
+`src/lib/`, `src/hooks/`) where its record across rounds 10–13 is:
+zero fiction, tight scope, real tokens, correct typography mappings.
+In `ui/` its record is: 21 EOF offenses, one ledgered-bug
+re-shipment (×3), one silent revert, one inverted commit. The ui/
+primitives it keeps touching are dormant — the restriction costs the
+product nothing and removes the only surface where the agent
+repeatedly fails.
+
+**Owner decision requested.** Until decided, the auditor (Super Z)
+continues to hold the ui/ layer: restoring #19–21 (done this round)
+and auditing any agent push that touches it.
