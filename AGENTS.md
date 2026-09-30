@@ -8,16 +8,22 @@ before your first edit, not after your first push.
 
 ## READ BEFORE YOUR FIRST EDIT
 
-**`AGENT-FIXLIST.md`** — read top to bottom. Two sections are binding for
+**`AGENT-FIXLIST.md`** — read top to bottom. Three sections are binding for
 every commit:
 
-1. **THE OPERATING PLAYBOOK** — the working loop: THINK → PLAN → CODE →
+1. **THE REASONING CONSTITUTION** — the thinking layer (owner-adopted):
+   understand before acting, separate facts from assumptions, verify
+   before claiming, calibrated confidence, no invented APIs or class
+   names, arithmetic shown not done in your head.
+2. **THE OPERATING PLAYBOOK** — the working loop: THINK → PLAN → CODE →
    VERIFY → REPORT, plus the six pre-push gates with exact commands and
    expected outputs.
-2. **THE CRAFT STANDARDS (C1–C11)** — TypeScript / React / zustand /
+3. **THE CRAFT STANDARDS (C1–C11)** — TypeScript / React / zustand /
    accessibility / Next.js / CSS rules, each traced to a real incident in
    this repo, plus the reference implementations to imitate
    (cart-drawer.tsx, src/lib/format.ts, use-url-state.ts, quick-view.tsx).
+
+Where these overlap, the repo-specific rule wins (it is stricter).
 
 The **repeat-offense ledger** (Playbook §VII) lists every failure class
 that has already shipped broken — some of them three times. Do not add a
@@ -46,7 +52,7 @@ row to it.
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
 
 ```bash
-npx tsc --noEmit 2>&1 | grep -v "^skills/" | grep -c "error TS"   # → 0
+npx tsc --noEmit                                                   # → exit 0, no output (unfiltered)
 npx next build                                                     # → 13/13
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/    # → 200
 rg -n "ms-steel" src/components src/app --glob '*.tsx'             # → 0 hits
@@ -54,8 +60,9 @@ od -An -c <EVERY touched file> | tr -s ' ' | tail -1               # ends in \n
 node scripts/verify-round7-fix.js                                  # → 22/22
 ```
 
-`tsc` is the only type proof — `next.config` sets `ignoreBuildErrors: true`,
-so a green build proves nothing about types.
+The build now type-checks for real (`ignoreBuildErrors` was removed in
+Task 90) — but a green build is still just one gate. `tsc` unfiltered is
+the type proof; the suite is the regression proof.
 
 Report format (Playbook §V): files changed / verified (with outputs) /
 NOT verified. Every claim maps to a command you ran **this session**.
