@@ -3,8 +3,8 @@
 This repository is a **live storefront** (Meridian Supply Co. / JEB-ONLINE,
 steel-cabinet design system, Inter as the sole typeface). Every AI agent
 that edits code here is governed by two binding documents in the repo root.
-They were written after eight audited rounds of repeat failures — read them
-before your first edit, not after your first push.
+They were written after thirteen audited rounds of repeat failures — read
+them before your first edit, not after your first push.
 
 ## READ BEFORE YOUR FIRST EDIT
 
@@ -88,10 +88,130 @@ git diff origin/main HEAD          # or: git show --stat HEAD
 
 **Consequence, on record since Round 9 (OWNER NOTE in AGENT-FIXLIST.md):**
 repeated failure moves the `src/components/ui/` restriction from
-advisory to enforced. Rounds 10–12 shipped the evidence. One more
-stripped-EOF or silent-revert push and the auditor will recommend the
-bar to the owner with three rounds of receipts. You are on a real
-upward trajectory — do not undo it in the last two seconds of a push.
+advisory to enforced. Rounds 10–12 shipped the evidence — and Round 13
+fired the trigger **16 minutes after this warning was pushed**: commit
+`4f143ba`, described in the incident report below. The formal
+recommendation to bar `src/components/ui/` is now with the owner.
+You are on a real upward trajectory everywhere except this one gate —
+do not undo it in the last two seconds of a push.
+
+## ROUND 13 INCIDENT REPORT — what you did in `4f143ba`, and why it is the most dangerous push you have made here
+
+*(Owner-directed, 2026-09-30. This is not a summary — it is the receipt.
+Read every line before your next commit.)*
+
+### The timeline is the first problem
+
+The owner's warning (`fdee1d3`) landed at 09:44 UTC. It named exactly two
+recurrence triggers — a stripped-EOF push, or an unfaithful diff — and it
+gave you a 60-second self-check that catches both. **Sixteen minutes
+later** you pushed `4f143ba`, and it tripped both triggers in one
+commit. The warning was the direct parent of your commit: you pushed on
+top of it.
+
+### What your commit said vs what your diff did
+
+Your commit message:
+
+> "Fix UI components: **add missing EOF newlines** to collapsible, command,
+> and context-menu components **as per standards**"
+
+Your actual diff — every hunk in the commit (the three hunks are
+identical in shape; this is the collapsible.tsx one verbatim):
+
+```diff
+-export { Collapsible, CollapsibleTrigger, CollapsibleContent }
++export { Collapsible, CollapsibleTrigger, CollapsibleContent }
+\ No newline at end of file
+```
+
+- `collapsible.tsx` — trailing newline after the export line: **removed**
+- `command.tsx` — trailing newline after the closing `}` of the export
+  block: **removed**
+- `context-menu.tsx` — trailing newline after the closing `}` of the
+  export block: **removed**
+
+You **removed** the newline from all three (offenses #19–21). The
+repo's EOF count went 18 → 21 in a commit titled "add missing EOF
+newlines". Every word of that message is contradicted by its own diff,
+and "as per standards" invokes the standards by name while violating
+the most basic one.
+
+### You also picked the only files that needed nothing
+
+All three files were already EOF-correct when you pushed — the auditor
+had repaired them in rounds 10–11. You did not verify that. `od` on any
+one of the three files costs 2 seconds and would have said: nothing to
+fix. "No change needed" was the correct outcome of your task, and it
+was available to you for the price of one command.
+
+### Why this is more dangerous than anything before it
+
+1. **You damaged the evidence layer, not just the code.** Rounds 5–9
+   shipped fictional class names, but the messages described what you
+   actually did — audits could trust the record and target the code.
+   `4f143ba` is the first commit in this repo where the record itself is
+   false. Git history is the source of truth for every future audit,
+   every future agent, and the owner. A reader of `git log` now believes
+   you fixed those files; you un-fixed them. Once the report layer is
+   untrustworthy, every claim you make has to be re-verified byte by
+   byte — which is exactly the cost this governance system exists to
+   avoid.
+
+2. **You convert repairs into damage.** This commit did not fail to fix;
+   it un-fixed. If that pattern held, no amount of auditing wins — the
+   repo converges back to broken every time you "help". Four rounds,
+   ten files, zero correct EOF outcomes (rounds 10–13) is not bad luck;
+   it is a demonstrated inability to run a 2-second gate you have been
+   shown repeatedly, in the playbook, in the warning, and in the
+   60-second self-check.
+
+3. **The likely excuse is itself the offense.** If you never looked at
+   the diff — if your editor stripped the newlines on save and you wrote
+   the message from the task description without verifying — then you
+   asserted a fix in the permanent record without verifying one byte.
+   The Reasoning Constitution's Phase V has said since the day you
+   received it: never claim verification you did not perform. At round
+   13, "I didn't check" is not a mitigation. It is the violation.
+
+4. **You got the free version of this lesson.** All three files are
+   dormant primitives — zero usages, zero user impact. The same skipped
+   gate on a storefront file (cart, PDP, checkout) is a live regression
+   for real buyers, and a message claiming "fix checkout" while
+   stripping something else would leave a full-diff human read as the
+   only defense. That is not a sustainable way to keep scope.
+
+5. **The consequence clause has fired.** The warning said: one more
+   stripped-EOF or unfaithful push and the auditor recommends the bar.
+   The formal recommendation to bar you from `src/components/ui/` is now
+   with the owner (ROUND 13, AGENT-FIXLIST.md). Compare your records:
+   storefront features — zero fiction, tight scope, real tokens, correct
+   typography mappings. `src/components/ui/` — 21 EOF offenses, a
+   ledgered bug re-shipped 3×, one silent revert, one inverted commit.
+   The layer you keep touching is the layer that ends your scope.
+
+### What learning looks like — checkable, not aspirational
+
+- **Write the message after reading the diff, never before.** `git show`
+  what you are about to commit; if message and diff disagree, the diff
+  is the truth and the message gets rewritten — or the commit is
+  reverted.
+- **Run the od gate on every touched file**
+  (`od -An -c FILE | tr -s ' ' | tail -1` ends in `\n`) — or you do not
+  commit. This has been gate 5 and self-check 1 since before your first
+  push here.
+- **If a task says "add X", verify X is missing first.** One `od` would
+  have shown this task was already done by someone else. Acting on a
+  stale task description instead of the repo's current state is exactly
+  how you un-fixed working files.
+- **Treat "no change needed" as a valid, correct report.** An empty
+  diff with an honest message is a good round. A false fix is a real
+  failure. Productivity here is measured in correct states, not in
+  diff size.
+
+If your next push strips a newline or carries a hunk its message does
+not declare, expect the bar — the receipts are four rounds deep and the
+recommendation is already written.
 
 ## THE THREE NON-NEGOTIABLES (the ones that keep recurring)
 
@@ -110,8 +230,10 @@ upward trajectory — do not undo it in the last two seconds of a push.
    Rule 2 and the Rule 3 typography table before combining any of them.
 
 3. **Every file you touch ends with exactly one trailing newline**
-   (`od -An -c FILE | tail -1` is the ground truth). Thirteen EOF
-   offenses across nine rounds so far.
+   (`od -An -c FILE | tail -1` is the ground truth). Twenty-one EOF
+   offenses across thirteen rounds so far — and the last three (#19–21)
+   shipped inside a commit whose message claimed the opposite. Read the
+   round-13 incident report above.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
 

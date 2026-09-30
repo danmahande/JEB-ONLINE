@@ -485,8 +485,11 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–9 (13 total) | EOF gate 5 |
+| EOF newlines stripped | 1–13 (**21 total**; #14–16 R11, #17–18 R12, #19–21 R13 — see the R13 incident report in AGENTS.md) | EOF gate 5 + self-check 1 |
 | Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
+| Ledgered icon-contrast bug re-shipped (`text-ink` svg on `hover:bg-ink` / `focus:bg-ink`) | 9 → re-shipped ×3 in 11 | Round-10 RESOLUTION re-read + browser (6) |
+| Silent revert of an auditor fix inside an unrelated commit (drawer handle) | 12 | self-check 2 (full-diff read) + every-hunk-explained rule |
+| Commit message asserts the opposite of the diff ("add EOF newlines" removed them) | 13 | self-check 2 — read `git show` BEFORE writing the message |
 
 Every row above was mechanically catchable before it shipped. That is the
 entire point of this document.
