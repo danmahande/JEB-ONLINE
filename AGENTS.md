@@ -318,11 +318,12 @@ it is the checks you skip. Run them.
    Rule 2 and the Rule 3 typography table before combining any of them.
 
 3. **Every file you touch ends with exactly one trailing newline**
-   (`od -An -c FILE | tail -1` is the ground truth). Twenty-two EOF
-   offenses across fourteen rounds — and #22 shipped twelve minutes
-   after the round-13 incident report, inside a commit whose message
-   claimed to ADD newlines. Read the round-13 incident report and its
-   Round-14 addendum above.
+   (`od -An -c FILE | tail -1` is the ground truth). Twenty-four EOF
+   offenses across fifteen rounds — #22 shipped twelve minutes after the
+   round-13 incident report; #23–24 (page.tsx, cart-drawer.tsx) dated to
+   round 1 and were found and repaired by the agent itself in round 15,
+   the first push with a fully verifiable PROOF BLOCK. That is the
+   standard every push is now held to.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
 

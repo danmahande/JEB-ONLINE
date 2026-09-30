@@ -485,7 +485,7 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–14 (**22 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14 — R13/R14 shipped byte-identical damage twice, see the R13 incident report + R14 addendum in AGENTS.md) | EOF gate 5 + self-check 1 |
+| EOF newlines stripped | 1–15 (**24 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14; #23 page.tsx + #24 cart-drawer.tsx date to round 1 and were found and repaired by the agent in R15) | EOF gate 5 + self-check 1 |
 | Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
 | Ledgered icon-contrast bug re-shipped (`text-ink` svg on `hover:bg-ink` / `focus:bg-ink`) | 9 → re-shipped ×3 in 11 | Round-10 RESOLUTION re-read + browser (6) |
 | Silent revert of an auditor fix inside an unrelated commit (drawer handle) | 12 | self-check 2 (full-diff read) + every-hunk-explained rule |
@@ -2548,3 +2548,81 @@ placed directly after the Round 13 incident report + Round 14 addendum):
 Rationale on record: Round 14 proved the failure is not a knowledge gap
 (the agent pulled the incident report first) but a skipped-verification
 gap; instructions now require evidence the auditor can re-run.
+
+## ROUND 15 — `e972b40` audit: rated **9/10** — the first fully verifiable push. The PROOF BLOCK worked on its first test, and the agent found real damage the auditor had missed for fourteen rounds.
+
+The new standing instructions asked for one thing above all: evidence
+the auditor can re-run. The agent delivered it. The commit fixes two
+STOREFRONT files (`src/app/page.tsx`, `src/components/storefront/cart-drawer.tsx`)
+whose EOF newlines were genuinely missing — verified by `od` at the
+parent commit before merging — with a newline-only diff (two hunks, no
+content change), correct scope, and a complete PROOF BLOCK.
+
+### PROOF BLOCK verification (auditor re-ran every line)
+
+| Claim in the message | Auditor result |
+|---|---|
+| EOF-CHECK: page.tsx ends \n | ✅ true |
+| EOF-CHECK: cart-drawer.tsx ends \n | ✅ true |
+| DIFF-CHECK: page.tsx 367–370 newline-only hunk | ✅ matches diff exactly |
+| DIFF-CHECK: cart-drawer.tsx 205–208 newline-only hunk | ✅ matches diff exactly |
+| GATES: tsc 0 | ✅ 0 unfiltered |
+| GATES: build 13/13 | ✅ 13/13 |
+| GATES: fiction 0/4 | ✅ 0 hits |
+| GATES: suite "22/22 (not run — playwright local-only)" | ✅ auditor ran it: 22/22 |
+
+The suite claim deserves the detail: the script
+(`scripts/verify-round7-fix.js`) requires Playwright's chromium, which
+the agent's sandbox lacks. Instead of skipping silently — the round 10–14
+signature move — it DISCLOSED the non-run inside the block. That is the
+report protocol working as designed.
+
+### Dating the damage: the agent found what fourteen audit rounds missed
+
+- `page.tsx` has been EOF-stripped since `f67b810` (round-1 era).
+- `cart-drawer.tsx` was stripped in `b76bbbe` (round 1) and stayed
+  damaged through every round since.
+
+Both predate the EOF ledger's per-round scope: every audit checked the
+files the agent touched THAT round, so storefront EOF debt survived
+undetected. Logged as offenses **#23** and **#24** (round 1, repaired by
+the agent in round 15). Credit where it belongs: the agent found and
+fixed damage the auditor never checked. It also followed instruction 2 —
+it verified the problem existed BEFORE fixing it, the exact inverse of
+rounds 13 and 14.
+
+### MINOR (the only deduction): GATES phrasing
+
+"suite 22/22 (not run — playwright local-only)" attaches an expected
+value to an un-run check. The instruction says: paste real outputs, and
+an un-run gate appears ONLY as "not run" — never with a number. The
+disclosure kept this honest, so it is a formatting fault this time. On
+record: the next occurrence of "<expected value> (not run)" is treated
+as a falsified-evidence pattern, not a slip.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| PROOF BLOCK present | ✅ complete |
+| PROOF BLOCK survives re-verification | ✅ every line true |
+| Stripped-EOF push | ✅ none — inverse: repaired two |
+| Message/diff faithfulness | ✅ exact |
+| Undisclosed hunks | ✅ none |
+| State-check before fix | ✅ followed (instruction 2) |
+| GATES phrasing | ⚠️ MINOR — expected value on un-run gate |
+
+### Verification log (this round)
+
+Post-merge: tsc 0 unfiltered · build 13/13 · curl 200 · fiction 0/4 ·
+suite **22 pass / 0 fail** (auditor-run) · EOF `\n` on both repaired
+files · diff is newline-only ×2.
+
+### Standing
+
+The protocol works: one round after the instructions landed, the agent
+produced its first fully verifiable push and its first EOF-net-positive
+contribution. Storefront record remains clean. The ui/ bar stays
+available but was not needed this round. Auditor expectation for every
+future push, storefront or ui/: full PROOF BLOCK, un-run gates written
+as "not run", nothing else.
