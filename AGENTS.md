@@ -29,6 +29,70 @@ The **repeat-offense ledger** (Playbook §VII) lists every failure class
 that has already shipped broken — some of them three times. Do not add a
 row to it.
 
+## WHERE YOU KEEP FAILING — owner-directed warning (audited rounds 10–12)
+
+You have made real progress: zero fictional classes for three
+consecutive pushes, real tokens, correct scope, and in round 12 you
+applied the CardTitle typography mapping unprompted. That is the
+direction the owner wants. These four behaviors are the ones still
+costing audit rounds — each has shipped more than once, each was
+pointed out in a resolution you did not re-read:
+
+1. **You have NEVER run the EOF gate. Not once in three pushes.**
+   Seven files shipped stripped across rounds 10, 11 and 12
+   (offenses #14–18) — including the same two files the auditor
+   restored an hour before you stripped them again. The gate is two
+   seconds per file and it is gate V in the playbook you claim to
+   follow:
+   `od -An -c <file> | tr -s ' ' | tail -1` must end in `\n`
+   for EVERY file you touch. Your editor strips trailing newlines when
+   it rewrites files. That is exactly why the gate exists — your tool
+   is the suspect, so you verify.
+
+2. **You re-shipped a bug that is IN the ledger, fixed and documented.**
+   Round 9 MINOR 2: a pinned `[&_svg:not([class*='text-'])]:text-ink`
+   next to `hover:bg-ink` / `focus:bg-ink` renders invisible ink icons
+   on the ink background. It was ledgered, fixed in the round-10
+   resolution with the exact selector to use, and you re-created it
+   three times in dropdown-menu in round 11. Before you write any
+   `bg-ink` hover/focus state, re-read ledger §VII and the round-10
+   RESOLUTION. The ledger is not history — it is the list of your
+   personal failure modes.
+
+3. **You silently reverted a fix inside an unrelated commit.** In
+   `c209f9e` (a typography commit) you removed the auditor's
+   drawer-handle `hidden` restoration without a word in the message.
+   Standing rule, effective immediately: **every hunk in your diff must
+   be explained by your commit message.** If you did not intend a
+   change, your editor made it — read your full diff top to bottom
+   before committing. If you disagree with an auditor fix, override it
+   IN THE OPEN (say so in the commit message and why); never overwrite
+   it silently.
+
+4. **You touch dormant primitives without the required label.** The
+   product contract says: if you restyle an unused primitive anyway,
+   the commit message must say "dormant, zero usages". Round 11
+   touched drawer + dropdown-menu (both 0 usages) without it.
+
+### The last 60 seconds before every `git push`
+
+```bash
+# 1 — EOF on every file you touched (all must end in \n)
+od -An -c <file> | tr -s ' ' | tail -1
+
+# 2 — read your OWN full diff. Every hunk must match your message.
+git diff origin/main HEAD          # or: git show --stat HEAD
+
+# 3 — the six gates in Playbook §IV. All of them. Every time.
+```
+
+**Consequence, on record since Round 9 (OWNER NOTE in AGENT-FIXLIST.md):**
+repeated failure moves the `src/components/ui/` restriction from
+advisory to enforced. Rounds 10–12 shipped the evidence. One more
+stripped-EOF or silent-revert push and the auditor will recommend the
+bar to the owner with three rounds of receipts. You are on a real
+upward trajectory — do not undo it in the last two seconds of a push.
+
 ## THE THREE NON-NEGOTIABLES (the ones that keep recurring)
 
 1. **A class name that is not in `src/app/globals.css` renders nothing.**
