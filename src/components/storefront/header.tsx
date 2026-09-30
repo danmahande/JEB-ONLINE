@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
@@ -85,17 +85,6 @@ export default function Header({
   const region = useRegion((s) => s.region || '');
   const setRegion = useRegion((s) => s.setRegion);
   const hydrated = useRegion((s) => s.hasHydrated);
-  const regionRef = useRef<HTMLDivElement>(null);
-
-  // Show loading indicator when changing regions
-  const [isChangingRegion, setIsChangingRegion] = useState(false);
-
-  const handleRegionChange = (newRegion: string) => {
-    setIsChangingRegion(true);
-    setRegion(newRegion);
-    // Reset loading indicator after a short delay
-    setTimeout(() => setIsChangingRegion(false), 500);
-  };
 
   const handleSearchSubmit = () => {
     if (!query.trim()) return;
@@ -139,13 +128,12 @@ export default function Header({
 
           {/* Right section */}
           <div className="flex items-center gap-4">
-            {/* Region selector with loading indicator */}
-            <div className="relative" ref={regionRef}>
+            {/* Region selector */}
+            <div className="relative">
               <select
                 value={region}
-                onChange={(e) => handleRegionChange(e.target.value)}
-                className="ms-label appearance-none bg-transparent py-1.5 pl-3 pr-8 text-ink focus:outline-none focus:ring-2 focus:ring-brand/30"
-                disabled={isChangingRegion}
+                onChange={(e) => setRegion(e.target.value)}
+                className="ms-label appearance-none bg-transparent py-1.5 pl-3 pr-8 text-ink"
               >
                 {regions.map((r) => (
                   <option key={r.region} value={r.region}>
@@ -153,13 +141,6 @@ export default function Header({
                   </option>
                 ))}
               </select>
-
-              {/* Loading indicator when changing region */}
-              {isChangingRegion && (
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              )}
 
               <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
                 <svg
