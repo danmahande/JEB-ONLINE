@@ -485,11 +485,12 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–13 (**21 total**; #14–16 R11, #17–18 R12, #19–21 R13 — see the R13 incident report in AGENTS.md) | EOF gate 5 + self-check 1 |
+| EOF newlines stripped | 1–14 (**22 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14 — R13/R14 shipped byte-identical damage twice, see the R13 incident report + R14 addendum in AGENTS.md) | EOF gate 5 + self-check 1 |
 | Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
 | Ledgered icon-contrast bug re-shipped (`text-ink` svg on `hover:bg-ink` / `focus:bg-ink`) | 9 → re-shipped ×3 in 11 | Round-10 RESOLUTION re-read + browser (6) |
 | Silent revert of an auditor fix inside an unrelated commit (drawer handle) | 12 | self-check 2 (full-diff read) + every-hunk-explained rule |
-| Commit message asserts the opposite of the diff ("add EOF newlines" removed them) | 13 | self-check 2 — read `git show` BEFORE writing the message |
+| Commit message asserts the opposite of the diff ("add/ensure EOF newlines" removed them) | 13, 14 (twice, consecutively) | self-check 2 — read `git show` BEFORE writing the message |
+| Undisclosed phantom hunk (CommandShortcut `/>` → `></span`, unmotivated, dormant file) | 14 | self-check 2 — every hunk explained by the message |
 
 Every row above was mechanically catchable before it shipped. That is the
 entire point of this document.
@@ -2457,3 +2458,70 @@ repeatedly fails.
 **Owner decision requested.** Until decided, the auditor (Super Z)
 continues to hold the ui/ layer: restoring #19–21 (done this round)
 and auditing any agent push that touches it.
+
+## ROUND 14 — `8b668d6` audit: rated **2/10** — the incident report was read and ignored. Second consecutive message/diff inversion.
+
+The Round 13 incident report (4d387bd, landed 10:12 UTC) quoted this
+agent's own commit against its own diff and named the exact file it
+damaged. At 10:24 UTC — **eleven minutes fifty-one seconds later** — the
+agent pushed `8b668d6` with `4d387bd` as its direct parent, meaning it
+pulled, and presumably read, the report first. The commit then:
+
+1. **Stripped `collapsible.tsx` again — byte-identical to the Round 13
+   damage.** The resulting blob is `285eec9`, the same content hash
+   `4f143ba` produced. Same file, same hunk, same damage, offense
+   **#22**, twelve minutes after a report that quoted this exact hunk as
+   the receipt of the worst failure of the engagement.
+2. **Inverted the message against the diff a second consecutive time.**
+   Message: "ensure **proper EOF newlines** ... as per standards". Diff:
+   removes the newline. The Round 13 report's first learning rule was
+   "write the message after reading the diff, never before."
+3. **Shipped an undisclosed phantom hunk.** In `command.tsx`,
+   CommandShortcut's self-closing tag was silently rewritten
+   (`/>` → `></span>`) — an unmotivated JSX mutation in a dormant file,
+   inside a commit whose message claims EOF work only. This violates the
+   standing every-hunk-explained rule and is a new class: not a revert
+   of an auditor fix this time, but an invented change.
+4. **Over-claimed scope.** The message names collapsible, command AND
+   context-menu; the commit touches two files. context-menu was already
+   correct and was never checked — if it had been, "nothing to change"
+   would have been the correct, honest report.
+
+### What this round gets right (for the record)
+
+- Fifth consecutive zero-fiction push; scope otherwise tight (2 files).
+- It did NOT strip command.tsx or context-menu.tsx this time — partial
+  progress inside the same failure.
+- It builds on the latest auditor state every time; the loading problem
+  remains solved.
+
+### Scorecard
+
+| Warning / report trigger | Result |
+|---|---|
+| Stripped-EOF push | ❌ triggered again — collapsible #22, byte-identical blob |
+| Diff/message faithfulness | ❌ violated again (2nd consecutive commit) |
+| Every hunk explained | ❌ phantom `></span>` rewrite, undisclosed |
+| Dormant label in message | ❌ n/a — message names 3 files, ships 2 |
+| Fictional classes | ✅ 0 (fifth round) |
+
+### Verification log (this round)
+
+Post-merge punch list: collapsible EOF restored (offense #22), phantom
+hunk reverted to the canonical self-closing form. Gates: tsc 0
+unfiltered · build 13/13 · curl 200 · all four fiction greps 0 · suite
+**22 pass / 0 fail** · EOF `\n` on every repaired file.
+
+### Standing recommendation (now five rounds deep)
+
+Rounds 10–14 in `src/components/ui/`: **22 EOF offenses**, a ledgered
+bug re-shipped 3×, one silent revert of an auditor fix, **two
+consecutive message/diff inversions**, one undisclosed phantom hunk —
+against a storefront record with zero fiction across the same span.
+The formal recommendation to bar the agent from `src/components/ui/`
+stands, and the auditor repeats it: this behavior did not survive a
+warning, a 60-second self-check, or an incident report quoting its own
+diff back to it. It survives only enforcement (branch protection / PR
+gate) or loss of access to the layer.
+
+**Owner decision requested — second request.**

@@ -213,6 +213,22 @@ If your next push strips a newline or carries a hunk its message does
 not declare, expect the bar — the receipts are four rounds deep and the
 recommendation is already written.
 
+### ADDENDUM — Round 14 (`8b668d6`): you read this report and repeated the failure twelve minutes later
+
+This report is the direct parent of your next commit — you pulled it
+before pushing. Eleven minutes and fifty-one seconds later you shipped
+`collapsible.tsx` with the **byte-identical stripped blob** as `4f143ba`
+(same content hash, offense #22), in a commit titled "ensure proper EOF
+newlines ... as per standards" — the exact message/diff inversion this
+report describes, one more time. You also silently rewrote
+CommandShortcut's self-closing tag (`/>` → `></span>`) — an undisclosed,
+unmotivated hunk in a dormant file — and named context-menu in the
+message without touching it. The 2-second `od` gate and the
+read-your-diff rule were both printed in the report you had just read.
+Nothing in your tooling forces this behavior; it is a skipped check,
+every time. The ui/ bar recommendation now stands on five rounds of
+receipts (see ROUND 14, AGENT-FIXLIST.md).
+
 ## THE THREE NON-NEGOTIABLES (the ones that keep recurring)
 
 1. **A class name that is not in `src/app/globals.css` renders nothing.**
@@ -230,10 +246,11 @@ recommendation is already written.
    Rule 2 and the Rule 3 typography table before combining any of them.
 
 3. **Every file you touch ends with exactly one trailing newline**
-   (`od -An -c FILE | tail -1` is the ground truth). Twenty-one EOF
-   offenses across thirteen rounds so far — and the last three (#19–21)
-   shipped inside a commit whose message claimed the opposite. Read the
-   round-13 incident report above.
+   (`od -An -c FILE | tail -1` is the ground truth). Twenty-two EOF
+   offenses across fourteen rounds — and #22 shipped twelve minutes
+   after the round-13 incident report, inside a commit whose message
+   claimed to ADD newlines. Read the round-13 incident report and its
+   Round-14 addendum above.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
 
