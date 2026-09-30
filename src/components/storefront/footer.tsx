@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Reveal from "@/components/storefront/reveal";
 
 /* Task 58 — the footer joins the design system for real.
@@ -174,7 +175,7 @@ export default function Footer({
             today. No certifications (none held), no street address or
             phone (none published yet), no invented hours. */}
         <Reveal delay={100}>
-          <div className="md:grid md:grid-cols-2 gap-10">
+          <div className="md:grid md:grid-cols-3 gap-10">
             <div>
               <p className="ms-label mb-4 text-white/40">TRADE SPECIFICATIONS</p>
               <ul className="space-y-3">
@@ -219,6 +220,28 @@ export default function Footer({
               >
                 TRACK AN ORDER
               </button>
+            </div>
+
+            <div>
+              <p className="ms-label mb-4 text-white/40">LEGAL</p>
+              <ul className="space-y-3">
+                {(
+                  [
+                    ["PRIVACY POLICY", "/privacy"],
+                    ["TERMS OF SERVICE", "/terms"],
+                    ["SHIPPING POLICY", "/shipping"],
+                  ] as const
+                ).map(([label, href]) => (
+                  <li key={label}>
+                    <Link
+                      href={href}
+                      className="ms-label flex gap-3 leading-[1.7] text-white/75 transition-colors hover:text-brand"
+                    >
+                      <span className="w-[110px] shrink-0 text-white/35">{label}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </Reveal>

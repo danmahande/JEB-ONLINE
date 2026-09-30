@@ -412,6 +412,24 @@ body {
   animation: ms-tile-in 0.42s cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
 }
 
+/* View transition — soft fade-rise on route/view changes */
+@keyframes ms-view-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.ms-view-in {
+  animation: ms-view-in 0.45s cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+/* Price flash — brief highlight when price updates (e.g. region change) */
+@keyframes ms-price-flash {
+  0% { background-color: rgba(255, 107, 53, 0.25); }
+  100% { background-color: transparent; }
+}
+.ms-price-flash {
+  animation: ms-price-flash 0.8s ease-out both;
+}
+
 /* Buttons depress on press, system-wide (Windows-7-style physical click) */
 .ms-root :where(button:not(:disabled)):active {
   transform: scale(0.97);

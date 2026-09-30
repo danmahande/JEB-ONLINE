@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { useRef } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import KampalaClock from "@/components/storefront/kampala-clock";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import type { RegionConfig } from "@/lib/types";
 
 /* The store's single search (Option A) — PERSISTENT: always open,
@@ -99,32 +102,71 @@ export default function Header({
     <header className="sticky top-0 z-20 border-b border-line bg-white">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between gap-4 py-3">
-          {/* Brand */}
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5">
-              <span className="ms-label text-ink">MERIDIAN SUPPLY</span>
-            </Link>
+{/* Brand */}
+           <div className="flex items-center gap-6">
+             <Link href="/" className="flex items-center gap-2.5">
+               <span className="ms-label text-ink">MERIDIAN SUPPLY</span>
+             </Link>
 
-            {/* Navigation */}
-            <nav className="hidden md:flex items-center gap-6 text-sm">
-              <button
-                onClick={() => onNavigate("shop")}
-                className={clsx("ms-label", {
-                  "text-brand": pathname === "/" || pathname.startsWith("/p"),
-                })}
-              >
-                CATALOG
-              </button>
-              <button
-                onClick={() => onNavigate("track")}
-                className={clsx("ms-label", {
-                  "text-brand": typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'track',
-                })}
-              >
-                TRACK ORDER
-              </button>
-            </nav>
-          </div>
+             {/* Mobile menu hamburger */}
+             <div className="md:hidden">
+               <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+                   <button className="p-2 rounded-md hover:bg-line">
+                     <svg
+                       width="24"
+                       height="24"
+                       viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                       strokeWidth="2"
+                       strokeLinecap="round"
+                       strokeLinejoin="round"
+                       className="ms-label text-ink"
+                     >
+                       <line x1="3" y1="6" x2="21" y2="6"></line>
+                       <line x1="3" y1="12" x2="21" y2="12"></line>
+                       <line x1="3" y1="18" x2="21" y2="18"></line>
+                     </svg>
+                   </button>
+                 </DropdownMenuTrigger>
+                 <DropdownMenuContent className="w-[200px] p-2">
+                   <button
+                     onClick={() => onNavigate("shop")}
+                     className="w-full text-left ms-label p-2 rounded hover:bg-line"
+                   >
+                     CATALOG
+                   </button>
+                   <button
+                     onClick={() => onNavigate("track")}
+                     className="w-full text-left ms-label p-2 rounded hover:bg-line"
+                   >
+                     TRACK ORDER
+                   </button>
+                 </DropdownMenuContent>
+               </DropdownMenu>
+             </div>
+
+             {/* Navigation */}
+             <nav className="hidden md:flex items-center gap-6 text-sm">
+               <button
+                 onClick={() => onNavigate("shop")}
+                 className={clsx("ms-label", {
+                   "text-brand": pathname === "/" || pathname.startsWith("/p"),
+                 })}
+               >
+                 CATALOG
+               </button>
+               <button
+                 onClick={() => onNavigate("track")}
+                 className={clsx("ms-label", {
+                   "text-brand": typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('view') === 'track',
+                 })}
+               >
+                 TRACK ORDER
+               </button>
+             </nav>
+           </div>
 
           {/* Right section */}
           <div className="flex items-center gap-4">

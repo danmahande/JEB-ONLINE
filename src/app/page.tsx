@@ -15,6 +15,7 @@ import TrackOrder from "@/components/storefront/track-order";
 import Reveal from "@/components/storefront/reveal";
 import FlyDot from "@/components/storefront/fly-dot";
 import Footer from "@/components/storefront/footer";
+import ErrorBoundary from "@/components/error-boundary";
 import type { PlacedOrder, Product } from "@/lib/types";
 
 type View = "shop" | "checkout" | "confirmation" | "track";
@@ -181,162 +182,164 @@ export default function Storefront() {
         onSearchSubmit={scrollToCatalog}
       />
 
-      <main className="flex-1 flex flex-col">
-        {/* keyed by view — remounts replay the soft fade-rise on every switch */}
-        <div key={view} className="ms-view-in flex-1 flex flex-col">
-          {view === "shop" && (
-            <>
-              <Hero
-                onShop={() => {
-                  const catalogElement = document.getElementById("catalog");
-                  if (catalogElement) {
-                    catalogElement.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-                onTrack={goTrack}
-              />
-              <ProductGrid
-                products={products}
-                regions={regions}
-                region={region}
-                onSelect={setSelected}
-                loading={loading}
-                error={error}
-                onRetry={retry}
-                query={query}
-                onClearQuery={() => setQuery("")}
-              />
-              {/* trust strip — the shop counter (Task 59): three steel service
+      <ErrorBoundary>
+        <main className="flex-1 flex flex-col">
+          {/* keyed by view — remounts replay the soft fade-rise on every switch */}
+          <div key={view} className="ms-view-in flex-1 flex flex-col">
+            {view === "shop" && (
+              <>
+                <Hero
+                  onShop={() => {
+                    const catalogElement = document.getElementById("catalog");
+                    if (catalogElement) {
+                      catalogElement.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  onTrack={goTrack}
+                />
+                <ProductGrid
+                  products={products}
+                  regions={regions}
+                  region={region}
+                  onSelect={setSelected}
+                  loading={loading}
+                  error={error}
+                  onRetry={retry}
+                  query={query}
+                  onClearQuery={() => setQuery("")}
+                />
+                {/* trust strip — the shop counter (Task 59): three steel service
                   plaques bolted between the rack and the back wall. Same face
                   paint as the cabinets (shared tokens), the cabinet drawers'
                   dark-framed label card as the title, a milled die with the
                   stamped mark, an orange ink index stamp, and the rack's
                   cursor sheen crossing the face on hover. */}
-              <section className="border-t border-line bg-mist py-10 md:py-12" aria-label="Trade assurances">
-                <Reveal className="grid gap-6 sm:grid-cols-3">
-                  {[
-                    {
-                      index: "01",
-                      title: "EAC DUTY-FREE MOVEMENT",
-                      // Fact-checked (Tasks 60/61): intra-EAC zero-duty comes from
-                      // the Customs Union free trade area + EAC Rules of Origin —
-                      // never the CET, which governs goods entering the bloc from
-                      // outside. DR Congo is an EAC member on a transitional
-                      // customs-integration roadmap, so its corridor carries an
-                      // estimated duty quoted transparently at checkout.
-                      body: "Goods originating in Uganda clear duty-free into Kenya, Tanzania and Rwanda under the EAC Customs Union free trade area — certified against the EAC Rules of Origin. DR Congo moves on a transitional corridor as its customs integration completes — duty, certificates and levies quoted upfront.",
-                      icon: (
-                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z" />
-                          <path d="M9 11.6l2.1 2.1L15.5 9" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      index: "02",
-                      title: "END-TO-END FULFILLMENT",
-                      body: "Every order flows into our warehouse system — stock decrements, picking, driver runsheets and cash-on-delivery reconciliation follow automatically.",
-                      icon: (
-                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M2.5 6.5h11v9h-11z" />
-                          <path d="M13.5 9.5h4l3 3.2v2.8h-7" />
-                          <circle cx="6.5" cy="17.8" r="1.7" />
-                          <circle cx="16.8" cy="17.8" r="1.7" />
-                        </svg>
-                      ),
-                    },
-                    {
-                      index: "03",
-                      title: "TRANSPARENT CROSS-BORDER PRICING",
-                      body: "Duties, VAT and freight are estimated per destination before payment — no surprise fees at the border.",
-                      icon: (
-                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M12 2H2v10l9.3 9.3a1.4 1.4 0 0 0 2 0l8-8a1.4 1.4 0 0 0 0-2L12 2z" />
-                          <circle cx="7.2" cy="7.2" r="1.5" />
-                        </svg>
-                      ),
-                    },
-                  ].map((p, i) => (
-                    <div key={p.index} className="ms-plaque flex flex-col p-5">
-                      <div className="mb-4 flex items-start justify-between">
-                        <span className="ms-plaque-die" aria-hidden="true">{p.icon}</span>
-                        <span className="ms-plaque-index" aria-hidden="true">{p.index}</span>
+                <section className="border-t border-line bg-mist py-10 md:py-12" aria-label="Trade assurances">
+                  <Reveal className="grid gap-6 sm:grid-cols-3">
+                    {[
+                      {
+                        index: "01",
+                        title: "EAC DUTY-FREE MOVEMENT",
+                        // Fact-checked (Tasks 60/61): intra-EAC zero-duty comes from
+                        // the Customs Union free trade area + EAC Rules of Origin —
+                        // never the CET, which governs goods entering the bloc from
+                        // outside. DR Congo is an EAC member on a transitional
+                        // customs-integration roadmap, so its corridor carries an
+                        // estimated duty quoted transparently at checkout.
+                        body: "Goods originating in Uganda clear duty-free into Kenya, Tanzania and Rwanda under the EAC Customs Union free trade area — certified against the EAC Rules of Origin. DR Congo moves on a transitional corridor as its customs integration completes — duty, certificates and levies quoted upfront.",
+                        icon: (
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 3l7 3v5c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z" />
+                            <path d="M9 11.6l2.1 2.1L15.5 9" />
+                          </svg>
+                        ),
+                      },
+                      {
+                        index: "02",
+                        title: "END-TO-END FULFILLMENT",
+                        body: "Every order flows into our warehouse system — stock decrements, picking, driver runsheets and cash-on-delivery reconciliation follow automatically.",
+                        icon: (
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M2.5 6.5h11v9h-11z" />
+                            <path d="M13.5 9.5h4l3 3.2v2.8h-7" />
+                            <circle cx="6.5" cy="17.8" r="1.7" />
+                            <circle cx="16.8" cy="17.8" r="1.7" />
+                          </svg>
+                        ),
+                      },
+                      {
+                        index: "03",
+                        title: "TRANSPARENT CROSS-BORDER PRICING",
+                        body: "Duties, VAT and freight are estimated per destination before payment — no surprise fees at the border.",
+                        icon: (
+                          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 2H2v10l9.3 9.3a1.4 1.4 0 0 0 2 0l8-8a1.4 1.4 0 0 0 0-2L12 2z" />
+                            <circle cx="7.2" cy="7.2" r="1.5" />
+                          </svg>
+                        ),
+                      },
+                    ].map((p, i) => (
+                      <div key={p.index} className="ms-plaque flex flex-col p-5">
+                        <div className="mb-4 flex items-start justify-between">
+                          <span className="ms-plaque-die" aria-hidden="true">{p.icon}</span>
+                          <span className="ms-plaque-index" aria-hidden="true">{p.index}</span>
+                        </div>
+                        <p className="ms-file-label">{p.title}</p>
+                        <p className="ms-plaque-body">{p.body}</p>
+                        <span className="ms-spot" aria-hidden="true" />
                       </div>
-                      <p className="ms-file-label">{p.title}</p>
-                      <p className="ms-plaque-body">{p.body}</p>
-                      <span className="ms-spot" aria-hidden="true" />
-                    </div>
-                  ))}
-                </Reveal>
-                
-                {/* Reviews — the reserved shelf. The store hasn't made its
+                    ))}
+                  </Reveal>
+                  
+                  {/* Reviews — the reserved shelf. The store hasn't made its
                     first delivery yet, so there is nothing to publish and
                     the section says so plainly (owner decision, round 5:
                     no invented quotes, no fake stars). REVIEWS is the
                     drop-in point — real entries render as plaques. */}
-                <div className="mt-16 px-4">
-                  <div className="mx-auto max-w-4xl">
-                    <h2 className="ms-display mb-10 text-center text-2xl">
-                      WHAT OUR CUSTOMERS SAY
-                    </h2>
-                    {REVIEWS.length === 0 ? (
-                      <div className="ms-plaque p-8 text-center">
-                        <p className="ms-display text-lg text-ink md:text-xl">
-                          NOTHING PUBLISHED YET
-                        </p>
-                        <p className="mx-auto mt-3 max-w-md text-[13px] leading-[21px] text-hush">
-                          This store is new and the first deliveries haven&apos;t
-                          landed. Every customer review will publish here
-                          unedited — good or bad. That&apos;s the standard.
-                        </p>
-                        <span className="ms-spot" aria-hidden="true" />
-                      </div>
-                    ) : (
-                      <div className="grid gap-6 md:grid-cols-2">
-                        {REVIEWS.map((r) => (
-                          <figure key={r.author} className="ms-plaque p-6">
-                            <blockquote className="text-[13px] leading-[21px] text-ink">
-                              &ldquo;{r.quote}&rdquo;
-                            </blockquote>
-                            <figcaption className="mt-4">
-                              <p className="ms-label text-ink">{r.author}</p>
-                              <p className="ms-label text-hush">{r.company}</p>
-                            </figcaption>
-                            <span className="ms-spot" aria-hidden="true" />
-                          </figure>
-                        ))}
-                      </div>
-                    )}
+                  <div className="mt-16 px-4">
+                    <div className="mx-auto max-w-4xl">
+                      <h2 className="ms-display mb-10 text-center text-2xl">
+                        WHAT OUR CUSTOMERS SAY
+                      </h2>
+                      {REVIEWS.length === 0 ? (
+                        <div className="ms-plaque p-8 text-center">
+                          <p className="ms-display text-lg text-ink md:text-xl">
+                            NOTHING PUBLISHED YET
+                          </p>
+                          <p className="mx-auto mt-3 max-w-md text-[13px] leading-[21px] text-hush">
+                            This store is new and the first deliveries haven&apos;t
+                            landed. Every customer review will publish here
+                            unedited — good or bad. That&apos;s the standard.
+                          </p>
+                          <span className="ms-spot" aria-hidden="true" />
+                        </div>
+                      ) : (
+                        <div className="grid gap-6 md:grid-cols-2">
+                          {REVIEWS.map((r) => (
+                            <figure key={r.author} className="ms-plaque p-6">
+                              <blockquote className="text-[13px] leading-[21px] text-ink">
+                                &ldquo;{r.quote}&rdquo;
+                              </blockquote>
+                              <figcaption className="mt-4">
+                                <p className="ms-label text-ink">{r.author}</p>
+                                <p className="ms-label text-hush">{r.company}</p>
+                              </figcaption>
+                              <span className="ms-spot" aria-hidden="true" />
+                            </figure>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </section>
-            </>
-          )}
+                </section>
+              </>
+            )}
 
-          {view === "checkout" && (
-            <Checkout
-              regions={regions}
-              onPlaced={(o) => {
-                setPlaced(o);
-                setView("confirmation");
-                scrollToTop();
-              }}
-              onBack={goShop}
-            />
-          )}
+            {view === "checkout" && (
+              <Checkout
+                regions={regions}
+                onPlaced={(o) => {
+                  setPlaced(o);
+                  setView("confirmation");
+                  scrollToTop();
+                }}
+                onBack={goShop}
+              />
+            )}
 
-          {view === "confirmation" && placed && (
-            <Confirmation
-              order={placed}
-              regions={regions}
-              onContinue={goShop}
-              onTrack={goTrack}
-            />
-          )}
+            {view === "confirmation" && placed && (
+              <Confirmation
+                order={placed}
+                regions={regions}
+                onContinue={goShop}
+                onTrack={goTrack}
+              />
+            )}
 
-          {view === "track" && <TrackOrder />}
-        </div>
-      </main>
+            {view === "track" && <TrackOrder />}
+          </div>
+        </main>
+      </ErrorBoundary>
 
       <Footer
         onNavigate={(v, q) => (v === "shop" ? goShopQuery(q) : goTrack())}

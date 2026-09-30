@@ -1,7 +1,8 @@
 'use client';
 
 import { Component, ReactNode } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import Header from '@/components/storefront/header';
+import Footer from '@/components/storefront/footer';
 
 interface Props {
   children: ReactNode;
@@ -29,16 +30,34 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-xl font-bold mb-4">Something went wrong</h2>
-            <button 
-              onClick={() => this.setState({ hasError: false })}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Try Again
-            </button>
-          </div>
+        <div className="min-h-screen flex flex-col">
+          <Header
+            regions={[]}
+            onNavigate={() => {}}
+            onOpenCart={() => {}}
+            query=""
+            onQuery={() => {}}
+            onSearchSubmit={() => {}}
+          />
+          <main className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="text-center">
+              <h2 className="ms-display text-2xl mb-6">Something went wrong</h2>
+              <p className="mb-6 text-hush">
+                Please try again or contact us if the issue persists.
+              </p>
+              <button 
+                onClick={() => this.setState({ hasError: false })}
+                className="ms-key ms-label px-6 py-3"
+              >
+                Try Again
+              </button>
+            </div>
+          </main>
+          <Footer
+            onNavigate={(v, q) => {
+              // Simple navigation handling for error state
+            }}
+          />
         </div>
       );
     }
