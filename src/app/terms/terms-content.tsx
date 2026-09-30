@@ -19,7 +19,7 @@ export default function TermsContent() {
           <h1 className="ms-display text-3xl md:text-4xl mb-6">
             Terms of Service
           </h1>
-          <div className="prose prose-sm md:prose-lg max-w-2xl">
+          <div className="max-w-2xl">
             <p>
               Last updated: September 30, 2026
             </p>

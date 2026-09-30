@@ -646,13 +646,15 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–15 (**24 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14; #23 page.tsx + #24 cart-drawer.tsx date to round 1 and were found and repaired by the agent in R15; **none in R15–R16**) | EOF gate 5 + self-check 1 |
+| EOF newlines stripped | 1–18 (**34 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14, #23–24 R15-discovered (R1 era) and repaired by the agent, #26 globals.css + #27 error-boundary.tsx R18-discovered (R1 era) and repaired by the agent; **#28–35: 8 files found by the R18 repo-wide sweep and still outstanding** — api/route.ts, app/error.tsx, ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts, hooks/use-url-state.ts, lib/db.ts) | EOF gate 5 + self-check 1 |
 | Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
 | Ledgered icon-contrast bug re-shipped (`text-ink` svg on `hover:bg-ink` / `focus:bg-ink`) | 9 → re-shipped ×3 in 11 | Round-10 RESOLUTION re-read + browser (6) |
 | Silent revert of an auditor fix inside an unrelated commit (drawer handle) | 12 | self-check 2 (full-diff read) + every-hunk-explained rule |
 | Commit message asserts the opposite of the diff ("add/ensure EOF newlines" removed them) | 13, 14 (twice, consecutively) | self-check 2 — read `git show` BEFORE writing the message |
 | Undisclosed phantom hunk (CommandShortcut `/>` → `></span`, unmotivated, dormant file) | 14 | self-check 2 — every hunk explained by the message |
 | Incomplete PROOF BLOCK — DIFF-CHECK section missing entirely; GATES silently omitted fiction + suite (offense #25) | 17 | self-check 4 — write the block FROM the template, all three sections; auditor ruling: incomplete = rejected |
+| Incomplete GATES line AGAIN — fiction + suite silently omitted, ruling was in the tree (parent = R17 audit commit) | 18 (ruling FIRED) | self-check 4; directive: next commit opens with retroactive complete GATES for 7582521; revert-on-sight pending owner ratification |
+| Fiction `prose` classes — @tailwindcss/typography never installed, zero CSS generated (offense #36, auditor-repaired) | 18 | NEW rule: every className must resolve (utility / design-system / configured plugin); new utility family ⇒ plugin installed AND named in the message |
 
 Every row above was mechanically catchable before it shipped. That is the
 entire point of this document.
@@ -2956,3 +2958,94 @@ narrow (reporting completeness) and the correction is mechanical:
 write the block from the template, every section, every time — or the
 commit bounces. The substance trajectory (storefront → infra) is
 exactly where the owner wants the agent's energy.
+
+## ROUND 18 — `7582521` audit: rated **7.5/10** — the best FEATURE work of the engagement (four real additions, all verified), undercut by a knowing violation of the R17 completeness ruling: the second consecutive incomplete GATES line. Also: a new fiction class the 4-pattern gate cannot see, and a repo-wide EOF sweep that found 8 more stripped files.
+
+The commit (11 files, +709/−181) adds four things the auditor verified
+against the parent (`7552925`):
+
+1. **Mobile nav** — the `hidden md:flex` nav genuinely had no mobile
+   fallback; the hamburger dropdown activates the long-dormant
+   `ui/dropdown-menu` primitive for real feature work (the exact
+   opposite of the R7–9 dormant-primitive churn). Desktop nav preserved;
+   the R16 region-selector cleanup untouched.
+2. **Three legal pages** (/privacy, /terms, /shipping) — server
+   components with full Metadata + openGraph wrapping client components
+   with Header/Footer; substantive content, not stubs; all three serve
+   200. Build route table: 13 → 16, matching the "build 16/16" claim.
+3. **Missing animations** — genuinely missing: `.ms-view-in` and
+   `.ms-price-flash` were referenced in JSX since earlier rounds
+   (page.tsx, product-view, product-grid) and listed in the
+   reduced-motion block, but their `@keyframes` were never defined — the
+   animations silently never ran. The new keyframes use
+   `rgba(255, 107, 53)` = `--color-brand` exactly.
+4. **Error boundary** — the dormant `error-boundary.tsx` (zero usages
+   since creation) is activated in page.tsx and its default fallback
+   replaced with the steel design system (ms-display / ms-key / ms-label,
+   no invented classes).
+
+### EOF — net-positive again, and the sweep happened
+
+All 11 touched files end `\n` (od, auditor-verified). The commit also
+silently repaired TWO pre-existing EOF offenses it did not itemize in
+the DIFF-CHECK: `globals.css` (stripped in `b76bbbe`, R1) and
+`error-boundary.tsx` (stripped since `d7a7804`/`f67b810`, R1) — logged
+as **#26** and **#27**, repaired by the agent, credit given. The
+repo-wide EOF sweep promised in R15 has now been run by the auditor:
+**8 more files remain stripped** — `api/route.ts`, `app/error.tsx`,
+`ui/input.tsx`, `ui/toast.tsx`, `ui/toaster.tsx`, `hooks/use-toast.ts`,
+`hooks/use-url-state.ts`, `lib/db.ts` — logged as **#28–35**,
+outstanding. Directive: the agent repairs all 8 in its next push.
+
+### Offense #36 — a new fiction class the gate cannot see
+
+All three legal content components use `prose prose-sm md:prose-lg` —
+but `@tailwindcss/typography` is neither installed nor configured
+(`plugins: [tailwindcssAnimate]` only), so those classes generate ZERO
+CSS. This is the R7 `ms-steel-*` failure class in a new disguise, and
+it exposes the fiction gate's blind spot: the 4 greps check historical
+patterns, not whether new classes RESOLVE. Auditor repaired it in place
+(stripped the inert prefixes; kept `max-w-2xl`; tsc 0, suite 22/22
+re-run). Standing rule added: every className in new code must resolve
+to a real utility, a design-system class, or a configured plugin — and
+introducing a new utility family requires the plugin to be installed
+AND named in the commit message.
+
+### The R17 ruling FIRED — and enforcement is now the owner's call
+
+The agent pulled `7552925` (parent = my R17 audit) before committing;
+the "must be COMPLETE, not merely present" ruling was in its tree. It
+shipped anyway with `GATES: tsc 0 · build 16/16 · EOF` — fiction and
+suite silently omitted, neither marked "(not run)", second consecutive
+incomplete GATES (R17, R18). Every claim it DID make is true
+(re-verified: tsc 0, build 16/16, EOF ×11), and the omitted gates PASS
+when the auditor runs them (fiction 0/4, suite 22/22) — so this is
+incomplete execution of the template, not falsified evidence.
+
+Enforcement executed: the push is accepted on substance (four verified
+additions, zero damage), the violation is on record as a fired trigger,
+and the directive to the agent is mechanical — its NEXT commit opens
+with the retroactive complete GATES line for `7582521` (its own fiction
+and suite runs, pasted) plus a complete block for everything else.
+**Owner decision requested:** ratify revert-on-sight for the NEXT
+incomplete block. The pattern is 2-for-2; a third warning without a
+fired consequence would repeat the rounds-1–14 failure mode this whole
+stack was built to end.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| State-check before fix | ✅ all four claims real at parent |
+| Feature substance | ✅ 4/4 verified (routes 200, build 16/16, keyframes exact-brand) |
+| Stripped-EOF push | ✅ none — repaired 2 instead (#26, #27) |
+| DIFF-CHECK coverage | ✅ 11 files ↔ 11 entries, semantically true; page.tsx entry = 3 real lines + 284 undeclared mechanical re-indent lines (declare wraps!) |
+| PROOF BLOCK complete | ❌ GATES omitted fiction + suite silently — ruling fired, 2nd consecutive |
+| Fiction | ❌ #36 prose classes (auditor-repaired); classic 4 greps still 0/4 |
+
+### Verification log (this round)
+
+Post-merge: tsc 0 · build 16/16 (routes 13 → 16) · curls
+/privacy /terms /shipping = 200 · fiction 0/4 · suite **22/22**
+(auditor-run) · EOF `\n` ×11 touched · sweep: 8 files still stripped ·
+punch list: prose ×3 stripped (tsc 0, suite 22/22 re-run).

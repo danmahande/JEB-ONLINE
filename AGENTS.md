@@ -276,12 +276,17 @@ GATES: tsc 0 · build 13/13 · suite 22/22
 - The GATES line names outputs you must actually have; do not copy
   expected values, paste real ones.
 - **The block must be COMPLETE, not merely present** (auditor ruling,
-  round 17): all three sections — EOF-CHECK for every touched file,
-  DIFF-CHECK for every hunk, GATES for the full gate set. A GATES line
-  that silently omits a gate, or an un-run gate not written as
-  "not run", is incomplete — and an incomplete block is rejected
-  outright, same as a missing block. The auditor does not repair
-  reporting gaps; you re-submit.
+  round 17; FIRED in round 18): all three sections — EOF-CHECK for
+  every touched file, DIFF-CHECK for every hunk, GATES for the full
+  gate set. A GATES line that silently omits a gate, or an un-run gate
+  not written as "not run", is incomplete — and an incomplete block is
+  rejected outright, same as a missing block. The auditor does not
+  repair reporting gaps; you re-submit. R18 shipped the second
+  consecutive incomplete GATES WITH the ruling already in its tree;
+  your next commit opens with the retroactive complete GATES line for
+  `7582521` (fiction + suite runs, pasted). Revert-on-sight for the
+  next incomplete block is pending owner ratification — assume it
+  lands.
 
 ### 2. Prove the problem exists BEFORE you fix it
 
@@ -331,13 +336,15 @@ it is the checks you skip. Run them.
    Rule 2 and the Rule 3 typography table before combining any of them.
 
 3. **Every file you touch ends with exactly one trailing newline**
-   (`od -An -c FILE | tail -1` is the ground truth). Twenty-four EOF
-   offenses across sixteen rounds — #22 shipped twelve minutes after the
-   round-13 incident report; #23–24 (page.tsx, cart-drawer.tsx) dated to
-   round 1 and were found and repaired by the agent itself in round 15,
-   the first push with a fully verifiable PROOF BLOCK. Rounds 15 and 16
-   shipped zero new offenses — R16 repaired nothing because it stripped
-   nothing; it removed a fake loading state instead. That is the
+   (`od -An -c FILE | tail -1` is the ground truth). Thirty-four EOF
+   offenses across eighteen rounds — #22 shipped twelve minutes after the
+   round-13 incident report; #23–27 (page.tsx, cart-drawer.tsx,
+   globals.css, error-boundary.tsx, all R1-era) were found and repaired
+   by the agent itself (R15, R18). The R18 repo-wide sweep found **8
+   files still stripped (#28–35: api/route.ts, app/error.tsx,
+   ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts,
+   hooks/use-url-state.ts, lib/db.ts) — repair all 8 in your next
+   push**, one mechanical commit, od block per file. That is the
    standard every push is now held to.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
