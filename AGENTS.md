@@ -275,6 +275,13 @@ GATES: tsc 0 · build 13/13 · suite 22/22
   you name; the block is verified line by line.
 - The GATES line names outputs you must actually have; do not copy
   expected values, paste real ones.
+- **The block must be COMPLETE, not merely present** (auditor ruling,
+  round 17): all three sections — EOF-CHECK for every touched file,
+  DIFF-CHECK for every hunk, GATES for the full gate set. A GATES line
+  that silently omits a gate, or an un-run gate not written as
+  "not run", is incomplete — and an incomplete block is rejected
+  outright, same as a missing block. The auditor does not repair
+  reporting gaps; you re-submit.
 
 ### 2. Prove the problem exists BEFORE you fix it
 
