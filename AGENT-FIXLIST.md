@@ -2339,3 +2339,56 @@ Prisma client** from before those models. Fix:
 `npx prisma generate`. The build failure on their machine is Task 90's
 type-check teeth working as designed — that mismatch used to ship
 silently behind `ignoreBuildErrors`.
+
+---
+
+## ROUND 12 — `c209f9e` audit: dialog/drawer title typography — rated 6.5/10
+
+Pushed 26 minutes after the Round 11 resolution. Smallest push of the
+era: 2 files, +5/−5. The headline is genuinely good: **the agent
+applied the craft typography mapping unprompted** — `DialogTitle` and
+`DrawerTitle` now carry `text-xl font-semibold leading-none
+tracking-tight text-ink`, exactly the mapping Round 8's resolution set
+for CardTitle. It is learning from the RESOLUTION sections, not just
+the gate list. Third consecutive push with **zero fictional classes**.
+
+### Scorecard
+
+| Dimension | Verdict |
+|---|---|
+| Typography mapping | ✅ applied the CardTitle precedent verbatim — first time the agent has correctly reused a resolution's rule |
+| Fictional classes | ✅ 0 — third clean round |
+| Scope | ✅ 2 files… |
+| …scope caveat | ❌ **one undeclared change**: the diff silently reverts the Round 11 drawer-handle fix (`hidden` dropped again) — a non-typography change in a typography commit, unmentioned in the message |
+| EOF newlines | ❌ **0/2 again** (offenses **#17–18**) — the same two files restored an hour earlier; gate V still never runs |
+| Honest message | ⚠️ typography claim true; the handle revert is undisclosed |
+| Ledger memory | ⚠️ icon fixes in dropdown-menu untouched and intact ✓ — but EOF discipline is not landing (3 agent rounds, 7 files, zero EOF checks run) |
+
+### Rating: 6.5/10 — learning the mappings, still not running the gates
+
+The trajectory is real: fiction (rounds 7–9) → zeroed; tokens → real;
+mappings → correctly applied. What has never happened even once across
+three pushes: the agent running the EOF gate on files it just touched.
+Per the Round 9 OWNER NOTE, if the next push ships stripped EOFs again,
+barring the agent from `src/components/ui/` moves from advisory to
+recommended.
+
+### Punch list — executed by the auditor same-session (Task 93)
+
+1. EOF `\n` restored on dialog.tsx + drawer.tsx.
+2. Drawer handle direction-awareness re-restored (`hidden …
+   group-data-[vaul-drawer-direction=bottom]:block`).
+
+### Verification log (this round)
+
+Suite initially **17 pass / 5 fail** — root-caused to an **empty
+database** (container recycled ~09:34; `/api/products` → count:0; PDPs
+404ing). NOT this commit. Re-seeded via `npx tsx scripts/seed.ts`
+(14 products, 6 regions) → suite **22 pass / 0 fail**. tsc 0
+unfiltered · build 13/13 · `ms-steel` tsx 0.
+
+**Ops note:** the db is untracked by design (Task 90) — fresh
+environments MUST run `npx tsx scripts/seed.ts` before the suite is
+meaningful. The suite's commerce-flow checks are the detector for an
+unseeded db (they fail as a block). Optional hardening, owner's call:
+a seed-if-empty guard on dev startup.
