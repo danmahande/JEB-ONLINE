@@ -2095,3 +2095,30 @@ on all three touched files.
 - The craft-standards test for the agent is now whether it can produce a
   push like this one *itself*: prescribed remedy, no invention, honest
   message, gates re-run. Next audit scores against that bar.
+
+### P2 BACKLOG — partially closed (owner: "close it yourself", executed 2026-09-30)
+
+Two of the standing P2 items are closed; the audit caveats that came
+with them are dead too.
+
+1. **`ignoreBuildErrors` REMOVED (next.config.ts).** The prime
+   directive's loophole is shut: `next build` now type-checks for real.
+   Prerequisite closed first: `skills/` (sandbox tooling, gitignored,
+   0 imports from `src/`) was excluded in tsconfig.json — it carried 2
+   pre-existing type errors that made the blanket flag look necessary.
+   Gate proof: `tsc --noEmit` exits **0 unfiltered** for the first time;
+   build passes 13/13 **with type checking enforced**.
+2. **Runtime db artifact untracked.** `db/custom.db` (SQLite, churned
+   every dev write) removed from tracking; `/db/` gitignored. Fresh
+   clones recreate it via the tracked `scripts/seed.ts`.
+3. **Gate script made durable.** The 22-check browser suite was wiped
+   with the container (it lived only as a gitignored local file). It is
+   rebuilt from the documented check list, re-verified **22 pass /
+   0 fail** against the live app (flow ground truth re-established:
+   tile ADD TO CART -> quick-view -> add -> header cart pill -> drawer;
+   multi-variant PDPs carry the true-800 `.ms-weight-toggle`), and is
+   now tracked via `!/scripts/verify-round7-fix.js`. Gate scripts must
+   never again live only untracked.
+
+Still open (owner-scale, unchanged): Postgres migration, money tests,
+order lifecycle tests. Dormant primitives remain advisory-frozen.
