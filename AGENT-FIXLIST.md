@@ -646,7 +646,7 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | `font-mono` / `text-xs` eaten by `.ms-label` | 7, 8 | Rule 2 + Rule 3 |
 | `ms-display` / `ms-label` misuse on titles/descriptions | 7, 8 | Rule 3 table |
 | `focus-visible:ring-0` confusion | 8 | fiction gate 4 + Rule 7 |
-| EOF newlines stripped | 1–15 (**24 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14; #23 page.tsx + #24 cart-drawer.tsx date to round 1 and were found and repaired by the agent in R15) | EOF gate 5 + self-check 1 |
+| EOF newlines stripped | 1–15 (**24 total**; #14–16 R11, #17–18 R12, #19–21 R13, #22 R14; #23 page.tsx + #24 cart-drawer.tsx date to round 1 and were found and repaired by the agent in R15; **none in R15–R16**) | EOF gate 5 + self-check 1 |
 | Dormant-primitive churn sold as visual work | 7, 8, 9 (ten primitives) | Phase II + I.2 |
 | Ledgered icon-contrast bug re-shipped (`text-ink` svg on `hover:bg-ink` / `focus:bg-ink`) | 9 → re-shipped ×3 in 11 | Round-10 RESOLUTION re-read + browser (6) |
 | Silent revert of an auditor fix inside an unrelated commit (drawer handle) | 12 | self-check 2 (full-diff read) + every-hunk-explained rule |
@@ -2787,3 +2787,89 @@ contribution. Storefront record remains clean. The ui/ bar stays
 available but was not needed this round. Auditor expectation for every
 future push, storefront or ui/: full PROOF BLOCK, un-run gates written
 as "not run", nothing else.
+
+## ROUND 16 — `460e001` audit: rated **9.5/10** — the strongest push of the engagement, and the first under the Engineering Charter. A real Refine-step commit: it removes a fake loading state the charter forbids, with a complete and fully true PROOF BLOCK.
+
+The commit ("fix: remove fake loading state from header region
+selector", 1 file, +5/−24) deletes the `isChangingRegion`
+pretend-loading machinery from the header region selector: the state,
+the 500 ms `setTimeout` handler, the `disabled` window, the spinner
+JSX, the dangling `regionRef`, and the now-unused half of the React
+import. `setRegion` is synchronous local state — the 500 ms window
+existed only to show a spinner for something that had already
+happened. This is the charter's Refine step operating as written:
+pretend behavior and dead code cleaned BEFORE the gates ran. It is
+also storefront work, where the record is now spotless across all
+sixteen rounds.
+
+### State-check verification (instruction 2, second consecutive pass)
+
+Verified at the parent (`049896e`) that the problem was REAL before
+the fix shipped: `regionRef` (line 88), `isChangingRegion` state (91),
+`setTimeout(() => setIsChangingRegion(false), 500)` (97),
+`ref={regionRef}` (143), `disabled={isChangingRegion}` (148), and the
+spinner block (157–162) — all present, all fake, all genuinely dead
+weight. No inverse fix, no invented problem, no repair-into-damage.
+
+### PROOF BLOCK verification (auditor re-ran every line)
+
+| Claim in the message | Auditor result |
+|---|---|
+| EOF-CHECK: header.tsx ends \n | ✅ true (od) |
+| DIFF-CHECK: 5 entries ↔ 5 atomic hunks | ✅ one-to-one at `--unified=0`; zero phantom hunks, zero undisclosed changes |
+| DIFF-CHECK semantics (import / state+handler / wrapper / direct setRegion + disabled / spinner) | ✅ every entry maps to a real hunk |
+| DIFF-CHECK line coordinates | ⚠️ MINOR — approximate (see below) |
+| GATES: tsc 0 | ✅ 0 unfiltered |
+| GATES: build 13/13 | ✅ 13/13 |
+| GATES: fiction 0/4 | ✅ 0 hits |
+| GATES: EOF \n | ✅ true |
+| GATES: suite "22/22 (local-only)" | ✅ auditor ran it: 22/22 — value TRUE |
+
+### MINOR (the only deduction): DIFF-CHECK coordinates are approximate
+
+The five entries are semantically exact but the line numbers drift:
+the spinner block is quoted as "145–150" and lives at parent lines
+157–162; the wrapper change is quoted as "131–133" and lives at
+142–143; the first two entries ("2–5", "88–97") are near-exact. The
+protocol's purpose is mechanical auditability — quote the hunk-header
+coordinates (`git show --unified=0`) so the auditor can machine-match
+entry to hunk. Standing expectation from R17: coordinates match hunk
+headers.
+
+### GATES phrasing — resolved in the agent's favor
+
+"suite 22/22 (local-only)" claims a local RUN with provenance, unlike
+R15's "22/22 (not run)", which attached an expected value to an un-run
+gate. The auditor's re-run returned the same 22/22, so the value is
+true and the phrasing is compliant. The R15 correction stands for the
+actual non-run case: write "(not run)" and nothing else.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| PROOF BLOCK present | ✅ complete |
+| PROOF BLOCK survives re-verification | ✅ every line true |
+| Stripped-EOF push | ✅ none — 2nd consecutive clean round |
+| Message/diff faithfulness | ✅ exact — scope, file, and the behavior change ("no longer disabled") all declared |
+| Undisclosed hunks | ✅ none — 5 hunks ↔ 5 entries |
+| State-check before fix | ✅ followed (2nd consecutive) |
+| Charter alignment | ✅ Refine step + no-fake-states quality standard, unprompted |
+| DIFF-CHECK coordinates | ⚠️ MINOR — approximate, semantically complete |
+
+### Verification log (this round)
+
+Post-merge: tsc 0 unfiltered · build 13/13 · fiction 0/4 · suite
+**22 pass / 0 fail** (auditor-run; dev server live, db seeded, 14
+products) · EOF `\n` on the touched file · no dangling refs
+(`isChangingRegion` / `handleRegionChange` / `regionRef` / `useState`
+all gone; `useRef` legitimately retained for `inputRef`, line 25).
+
+### Standing
+
+Two consecutive rounds of fully verifiable pushes. The trajectory that
+mattered this round: the agent was not told what to clean — it found
+pretend behavior on its own, proved it was real, removed it, and
+evidenced every line. That is the charter operating, not just cited.
+Ledger: no new offenses; the EOF row stays at 24 total with none in
+the last two rounds.
