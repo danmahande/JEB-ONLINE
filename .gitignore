@@ -63,6 +63,7 @@ server.log
 /Caddyfile
 /worklog.md
 /scripts/*
+!/scripts/verify-round7-fix.js
 !/scripts/seed.ts
 # purged from tracking (Task 44) — old ERP source + design source photos
 /kwanza-erp-src/
@@ -70,3 +71,6 @@ server.log
 /farm-*.jpg
 /wh-*.jpg
 /wh-*.png
+
+# runtime db artifact (recreate via: npx tsx scripts/seed.ts)
+/db/
