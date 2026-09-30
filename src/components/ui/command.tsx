@@ -168,7 +168,7 @@ function CommandShortcut({
         className
       )}
       {...props}
-    />
+    ></span>
   )
 }
 
