@@ -8,17 +8,23 @@ them before your first edit, not after your first push.
 
 ## READ BEFORE YOUR FIRST EDIT
 
-**`AGENT-FIXLIST.md`** — read top to bottom. Three sections are binding for
+**`AGENT-FIXLIST.md`** — read top to bottom. Four sections are binding for
 every commit:
 
 1. **THE REASONING CONSTITUTION** — the thinking layer (owner-adopted):
    understand before acting, separate facts from assumptions, verify
    before claiming, calibrated confidence, no invented APIs or class
    names, arithmetic shown not done in your head.
-2. **THE OPERATING PLAYBOOK** — the working loop: THINK → PLAN → CODE →
+2. **THE ENGINEERING CHARTER** — the quality bar (owner-adopted):
+   production-grade means correct, fast, accessible, secure, and
+   visually deliberate; make decisions, not defaults; fix root causes;
+   verify before claiming; report limitations honestly. Where it names
+   a decision this repo already made (typeface, palette, design
+   direction), the existing decision is the answer.
+3. **THE OPERATING PLAYBOOK** — the working loop: THINK → PLAN → CODE →
    VERIFY → REPORT, plus the six pre-push gates with exact commands and
    expected outputs.
-3. **THE CRAFT STANDARDS (C1–C11)** — TypeScript / React / zustand /
+4. **THE CRAFT STANDARDS (C1–C11)** — TypeScript / React / zustand /
    accessibility / Next.js / CSS rules, each traced to a real incident in
    this repo, plus the reference implementations to imitate
    (cart-drawer.tsx, src/lib/format.ts, use-url-state.ts, quick-view.tsx).
