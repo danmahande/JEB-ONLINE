@@ -2272,3 +2272,70 @@ with them are dead too.
 
 Still open (owner-scale, unchanged): Postgres migration, money tests,
 order lifecycle tests. Dormant primitives remain advisory-frozen.
+
+---
+
+## ROUND 11 — `2058c86` audit: dialog/drawer/dropdown-menu restyle — rated 6/10
+
+Pushed **14 minutes** after THE REASONING CONSTITUTION landed (07:06 UTC
+vs 06:52 UTC) — the bootstrap is still being read same-session. Scope
+discipline held (exactly 3 files, +22/−22). For the second consecutive
+push: **zero fictional class names** — every token used is real
+(`text-ink`, `text-hush`, `border-line`, `bg-white`). The fiction era
+that ran rounds 7–9 appears to be over.
+
+### Scorecard
+
+| Dimension | Verdict |
+|---|---|
+| Fictional classes (offense #1) | ✅ 0 — second clean round in a row |
+| Token reality | ✅ all swaps legit (`bg-background`→`bg-white`, `text-muted-foreground`→`text-hush`, etc.) |
+| `cn()` className merges | ✅ preserved on every edited block |
+| Focus ownership | ✅ dialog close dropped `focus:ring-2` — site outline rule owns focus now; correct per Round 7 standing rule |
+| Scope discipline | ✅ 3 files, no drive-bys |
+| EOF newlines | ❌ **0/3** — dialog, drawer, dropdown-menu all stripped (offenses **#14–16**); gate V skipped |
+| Ledger memory | ❌ repeated Round 9 MINOR 2 exactly: `[&_svg:not([class*='text-'])]:text-ink` pinned + `hover:bg-ink`/`focus:bg-ink` = invisible icons — in Item, CheckboxItem AND RadioItem |
+| Direction-awareness | ❌ drawer handle lost `hidden` — renders in top/left/right drawers too |
+| Dormant contract | ❌ drawer + dropdown-menu are dormant (0 usages); commit lacks the required "dormant, zero usages" label |
+| Honest commit message | ✅ claims match the diff |
+
+### LIVE impact
+
+**dialog.tsx is live** — the quick-view sheet renders through it. Its
+changes (`border-line`, `text-ink`, cleaner close-button focus) are
+visible in production and all pass the suite. drawer.tsx and
+dropdown-menu.tsx are dormant: zero user-facing effect.
+
+### Rating: 6/10 — the fiction era is over; the ledger era hasn't started
+
+Two steps forward (no fiction, right tokens, right focus model, tight
+scope), three steps back (EOF ×3 = gate V skipped, a fixed-and-ledgered
+contrast bug re-committed ×3, contract label missing). Reading the
+constitution in 14 minutes is real progress; re-reading the ledger
+before writing `hover:bg-ink` next to a pinned `text-ink` svg is the
+step that hasn't happened yet.
+
+### Punch list — executed by the auditor same-session (Task 92)
+
+1. EOF `\n` restored ×3 (od-verified).
+2. Icon contrast: added `focus:[&_svg:not([class*='text-'])]:text-white`
+   and `hover:[&_svg:not([class*='text-'])]:text-white` to Item,
+   CheckboxItem, RadioItem.
+3. Drawer handle: restored `hidden … group-data-[vaul-drawer-direction=bottom]:block`
+   (kept the h-1.5 restyle).
+
+### Verification log (this round)
+
+tsc exit 0 unfiltered · build 13/13 · suite **22 pass / 0 fail** ·
+`ms-steel` tsx 0 · Amazon Ember / `var(--font-display` /
+`focus-visible:ring-0` 0 · EOF `\n` ×3.
+
+### Side note — owner's local TS2339 errors (4×) were NOT this commit
+
+`restockNotify` / `newsletterSubscriber` exist in `prisma/schema.prisma`
+since round 5 (`988c794`, `c5b7058`) and `postinstall: prisma generate`
+is configured. The owner's Windows checkout has a **stale generated
+Prisma client** from before those models. Fix:
+`npx prisma generate`. The build failure on their machine is Task 90's
+type-check teeth working as designed — that mismatch used to ship
+silently behind `ignoreBuildErrors`.
