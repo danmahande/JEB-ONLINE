@@ -5,7 +5,7 @@ import Image from "next/image";
 /* The storefront lives in permanent daylight (Task 58 — the day/night
    machinery was removed with its footer control): one fixed greeting
    line, no tint layers, no stars. */
-const HERO_LINE = "UGANDA ORIGIN — EXPORTING ACROSS THE EAC & WORLDWIDE";
+const HERO_LINE = "UGANDA-ORIGIN SUPPLY FOR EAST AFRICA";
 
 /* Option A (user decision): the hero is a display window, not a search
    surface. Exactly ONE search lives on the page — the header channel —
@@ -34,7 +34,7 @@ export default function Hero({
           {/* HD composite: maize field dissolving into a warehouse — the LCP
               element, so it preloads through the optimizer */}
           <Image
-            src="/products/__hero.png"
+            src="/products/__hero.jpg"
             alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
             fill
             priority
@@ -52,24 +52,26 @@ export default function Hero({
 
           {/* signage + keys, mounted on the glass */}
           <div className="absolute inset-0 z-10 flex flex-col items-start gap-2 md:gap-2.5 p-4 md:p-6">
-            <p className="ms-label text-white/85">{HERO_LINE}</p>
-            <p className="ms-display text-xl md:text-2xl leading-none tracking-tight text-white">
-              ESSENTIAL GOODS YOU CAN TRUST
+            <p className="ms-label text-white/80">{HERO_LINE}</p>
+            <p className="ms-display text-2xl md:text-4xl text-white leading-none tracking-[-0.04em]">
+              Trusted grains and hardware,
+              <br className="hidden sm:block" />
+              shipped from Kampala.
               <span
-                className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle"
+                className="ml-1.5 inline-block h-2.5 w-2.5 bg-brand align-middle"
                 aria-hidden="true"
               />
             </p>
             <div className="flex flex-wrap items-center gap-2.5 md:gap-3">
               <button
                 onClick={onShop}
-                className="ms-label bg-brand text-white px-6 md:px-8 py-3.5 hover:bg-brand-dark transition-colors"
+                className="ms-label bg-brand text-white px-5 md:px-7 py-3 hover:bg-brand-dark transition-colors"
               >
-                ENTER CATALOG ↓
+                SHOP THE RACK ↓
               </button>
               <button
                 onClick={onTrack}
-                className="ms-label border border-white/70 text-white px-5 md:px-6 py-3.5 hover:border-white hover:bg-white/10 transition-colors"
+                className="ms-label border border-white/70 text-white px-5 md:px-6 py-3 hover:border-white hover:bg-white/10 transition-colors"
               >
                 TRACK ORDER
               </button>

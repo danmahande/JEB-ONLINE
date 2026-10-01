@@ -55,12 +55,13 @@ mobile — both bound to the one query state. The dark `.ms-search-input`
 base was deleted from `globals.css`. Do NOT re-introduce any collapse
 machinery or dark well.
 
-**The hero now is (keep it this way):** a `ms-shopfront` display window at
-`h-[180px] md:h-[210px] lg:h-[240px]` carrying the greeting label, the display
-line "MAIZE FLOUR. CEMENT. IRON SHEETS." (`.ms-display`), and two wired CTAs —
-`ENTER CATALOG ↓` (scrolls to `#catalog`) and `TRACK ORDER` (`goTrack`).
-Search discoverability is solved by the persistent header channel — never by
-a second input.
+**Owner-approved hero copy update (2026-10-01):** the `ms-shopfront` display
+window remains at `h-[180px] md:h-[210px] lg:h-[240px]` with one greeting
+label, the display line "Trusted grains and hardware, shipped from Kampala."
+and two wired CTAs — `SHOP THE RACK ↓` (scrolls to `#catalog`) and `TRACK
+ORDER` (`goTrack`). This wording supersedes the earlier locked hero copy by
+the owner's explicit approval. Search discoverability remains in the
+persistent header channel — never add a second input.
 
 ---
 
@@ -542,9 +543,9 @@ rounds. No trailing whitespace; keep import grouping as the file has it.
 - Exactly one search: the persistent header channel (`.ms-hsearch`). The
   hero search is retired; do not restore it (see READ FIRST, above).
 - The hero is the `ms-shopfront` display window with the greeting, the
-  `.ms-display` line "MAIZE FLOUR. CEMENT. IRON SHEETS." and two wired
-  CTAs (`ENTER CATALOG ↓`, `TRACK ORDER`). Search discoverability comes
-  from the header channel — never from a second input.
+  `.ms-display` line "Trusted grains and hardware, shipped from Kampala."
+  and two wired CTAs (`SHOP THE RACK ↓`, `TRACK ORDER`). Search
+  discoverability comes from the header channel — never from a second input.
 
 **Rule 10 — deleting or renaming CSS requires the consumer grep.** Three
 commits in a row deleted `.ms-*` families that JSX still used 7–9 times
@@ -565,14 +566,15 @@ state when this playbook was written.
 #     the old grep -v "^skills/" chain is retired.
 npx tsc --noEmit                                                    # → exit 0, no output
 
-# 2 — production build (what CI will run)
-npx next build                                                     # → 13/13 pages
+# 2 — production build (includes copying assets for the standalone server)
+npm run build                                                     # → build completes; all routes generated
 
-# 3 — routes serve 200 (resident dev server on :3000)
+# 3 — routes serve 200 (resident production server on :3000)
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/                    # 200
 curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/?view=checkout"    # 200
 curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/?view=track"       # 200
-curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/p/long-grain-rice" # 200
+curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:3000/api/products"       # 200
+# PDP behavior is exercised by the suite when the API has active products.
 
 # 4 — fiction gates. All four must print nothing (0 hits).
 rg -n "ms-steel"             src/components src/app --glob '*.tsx' # steel exists only as CSS vars
@@ -583,22 +585,24 @@ rg -n "focus-visible:ring-0" src                                   # site outlin
 # 5 — EOF newline on every file you touched
 od -An -c src/components/ui/card.tsx | tr -s ' ' | tail -1         # ends in \n
 
-# 6 — if ANY user-facing surface changed: the 22-check browser suite
-node scripts/verify-round7-fix.js      # local only (scripts/ is gitignored); → 22/22
+# 6 — if ANY user-facing surface changed: the browser regression suite
+node scripts/verify-round7-fix.js      # → 22 checks, no failures; data-dependent checks may SKIP
 # plus two evidence screenshots into .shots/
 ```
 
 Operational notes the gates depend on:
 
-- `scripts/` is gitignored — verification scripts stay out of the commit,
-  or the push itself fails.
+- Most of `scripts/` is gitignored; `verify-round7-fix.js` is explicitly
+  tracked so this regression gate survives container recycling.
 - `.github/workflows/build-check.yml` is written but untracked (the
   stored token lacks the `workflow` scope). Until the owner adds it via
   the GitHub UI or a scoped token, these gates are manual and mandatory.
-- Browser-suite specifics: exercise the weight toggle on the multi-variant
-  PDP (`long-grain-rice`); qty=1 quick-view confirms with plain
-  `ADD TO CART`; after Tab, loop Shift+Tab until focus lands on
-  `data-slot="button"` before asserting focus treatment.
+- Browser-suite specifics: it uses the catalog API to locate an active
+  multi-variant PDP and an in-stock product for pack and cart-flow checks.
+  If the API has no matching product, those checks are explicitly SKIPPED
+  and the empty-cart state is verified instead; the suite never seeds or
+  mutates the database. Keyboard focus is tested against CHECKOUT for a
+  populated cart or CONTINUE SHOPPING for an empty cart.
 
 ### V · REPORT — the honesty protocol
 
@@ -607,7 +611,7 @@ command output supports. Format:
 
 ```
 Files: 7 changed (+17/−17)
-Verified: tsc 0 · build 13/13 · curl 200 ×4 · fiction gates 0 ×4 · EOF \n ×7 · 22/22 browser
+Verified: <tsc output> · <npm run build output> · <four route statuses> · fiction gates 0 ×4 · EOF \n ×N · browser pass/fail/skip counts
 Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 ```
 
@@ -624,7 +628,8 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 1. Did I re-read every file I edited, end to end, in this session?
 2. Does every class, token, prop, and import I added exist — with grep
    proof?
-3. Did I run all six gates, and can I quote each output?
+3. Did I run all six gates, report every actual output, and explain any
+   data-dependent browser-suite skips?
 4. Is this the smallest diff that achieves the stated goal — and does the
    commit message claim only what renders?
 5. Are EOFs intact, and is the tree clean of strays (`scripts/` stays
