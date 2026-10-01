@@ -496,9 +496,18 @@ Round 7). Use the right tool for each job:
 |---|---|---|
 | hero / display line (≥32px) | `.ms-display` | `.ms-display` below 32px — 0.95 leading + forced uppercase crushes a 20px title (Round 8 CardTitle) |
 | card / section titles (~20px) | `text-xl font-semibold leading-none tracking-tight text-ink` | `.ms-display` |
-| descriptions / body text | `text-sm text-hush` | `.ms-label` (that is 10px caps — Round 8 CardDescription) |
-| genuine micro-labels (10px caps) | `.ms-label` | any font/size utility on top of it — they die (Rule 2) |
+| descriptions / body text | `text-sm text-hush` | `.ms-label` (that is 11px caps — Round 8 CardDescription; was 10px, see primitive note below) |
+| genuine micro-labels (11px caps) | `.ms-label` | any font/size utility on top of it — they die (Rule 2) |
 | numerals, data, tooltip values | `font-mono tabular-nums` | wrapping in `.ms-label` |
+
+> **Auditor note (R20, 2026-10-02):** commit `3b477ae` (merged `daf2a35`)
+> changed two design-system primitives: `.ms-label` 10px→**11px**, letter-spacing
+> 0.14em→**0.1em**; `.ms-display` 700→**800**, −0.01em→**−0.04em**, line-height
+> 0.95→**0.92**; `.ms-shopfront` padding 10px→8px, bevel values tweaked. The
+> suite was aligned to these values but this living table was not — that drift
+> is offense #39. The values above now reflect the shipped CSS (globals.css:228).
+> These primitive rewrites ride on the same claimed owner approval as the hero
+> copy — flagged for owner ratification in ROUND 20.
 
 **Rule 4 — one source of truth for money and levies.** The order API
 re-prices every line server-side and applies `BORDER_LEVIES` there
@@ -2226,7 +2235,10 @@ and now R9. The ledger row is updated; the gate exists in `AGENTS.md`.
 ### MAJOR 2 — `.ms-label` added beside the exact utilities it kills (5 strings)
 
 `.ms-label` (globals.css:228) is unlayered: 10px / 700 / 0.14em /
-uppercase. It beats every layered utility on the same element (Playbook
+uppercase. *(R20 note: values as of R9; since `3b477ae` it is 11px /
+700 / 0.1em — the R9 finding itself, an unlayered primitive beating
+layered utilities, still holds. See the R20 auditor note at the
+design-system table.)* It beats every layered utility on the same element (Playbook
 Rule 2 — "text-xs eaten by .ms-label" is a *named casualty* in the
 ledger). This commit adds ms-label next to those utilities anyway:
 
@@ -3119,3 +3131,133 @@ Directive to the second agent (and any future contributor): read
 AGENTS.md READ FIRST before your next commit — the PROOF BLOCK,
 state-check, and gate rules are repo law, not biography. If your
 sandbox needs a database, seed it; never commit one.
+
+## ROUND 20 — merge `daf2a35` (+ `c9282df` direct to main) audit: rated **8.5/10** — the second agent's best work and its first fully-verifiable push: every GATES claim tested true, the R19 advisory's hero finding resolved exactly (310,794-byte JPEG restored), and the merge preserved all four auditor repairs. Deductions: it merged over an explicit do-NOT-merge-yet advisory without the requested pre-merge suite audit (now performed post-merge — the rewrite survives it), one new offense (#39 doc-contract drift on design primitives), and one claim only the owner can ratify.
+
+Three commits reviewed as one unit: `c9282df` (checkout steel surfaces,
+direct to main), branch `8d9e6e4` (artifact removal + hero asset fix),
+branch `f944971` (suite rewrite, 261 lines), and merge `daf2a35` — all
+four carrying the second agent's first complete PROOF BLOCKs, including
+on a merge commit and a direct-to-main push.
+
+### What landed, item by item
+
+| Change | Verdict |
+|---|---|
+| `c9282df` checkout.tsx: 7 hunks, ad-hoc `rounded-lg border border-line bg-white/bg-mist` wrappers → existing `ms-tile`/`ms-field` primitives | ✅ mechanical, resolvable classes (R18 rule), coordinates in DIFF-CHECK match hunks; `.shots/` evidence follows the tracked-since-t57 practice |
+| `8d9e6e4` hero asset: 2.45MB `__hero.png` deleted, original 310,794-byte JPEG restored as `__hero.jpg`, hero.tsx:37 repointed | ✅ resolves the R19 advisory finding exactly — file size verified byte-for-byte; "8× LCP cost" concern closed by reverting to the source JPEG |
+| `8d9e6e4` `.gitignore` + `prisma/db/` | ✅ syncs the branch with the auditor's R19 #38 repair; merge kept both `/db/` and `prisma/db/` rules as claimed |
+| `8d9e6e4` removes `prisma/db/custom.db` from branch | ✅ aligns branch with post-R19 main |
+| `8d9e6e4` rewrites the locked hero contract ("MAIZE FLOUR. CEMENT. IRON SHEETS." → "Trusted grains and hardware, shipped from Kampala.", `ENTER CATALOG ↓` → `SHOP THE RACK ↓`) citing "owner's explicit approval (2026-10-01)" | ⚠️ documented precisely with a date, applied consistently in hero.tsx and both contract locations — but an owner approval is not something the auditor can verify. **Owner ratification requested** (see Standing) |
+| `f944971` AGENT-FIXLIST.md playbook edits (npm run build, API-discovered PDP, skip reporting, actual-output reporting) | ✅ aligns the playbook with the auditor's R19 repairs; touches the playbook section, not audit history |
+| `f944971` suite rewrite 261 lines | ✅ passes the line-by-line audit (below) — no criterion weakened; several checks strengthened |
+| `8d9e6e4` suite tweaks (synthetic drawer click, removes Escape/reopen before focus loop) | ✅ acceptable with notes (below) |
+| `3b477ae` (merged) design primitives: `.ms-label` 10px→11px / 0.14em→0.1em, `.ms-display` 700→800 / −0.01em→−0.04em / 0.95→0.92, `.ms-shopfront` padding/bevel | ❌ **offense #39** — the living design-system table (§IV Rule 3 area) was left saying 10px/0.14em while CSS and suite say 11px/0.1em: doc-contract drift, the exact thing the doc exists to prevent. Auditor repaired the table + added a dated note; the R9 history section keeps its period values with a pointer note. The primitive changes themselves ride on the same claimed owner approval — ratification requested |
+| merge `daf2a35` conflict resolution (.gitignore, package.json +playwright) | ✅ all four R19 auditor repairs intact (build/start scripts, `/scripts/*` allowlist ×4 exceptions); playwright correctly in devDependencies; lock in sync |
+
+### The promised suite audit — performed line-by-line (post-merge)
+
+The R19 advisory required this before merge; the agent merged without
+it. It is done now, against `daf2a35`, and the rewrite holds:
+
+- **No assertion was silently deleted.** All structural gates remain:
+  JSON-LD, skip link, #main-content, Inter incl. ::placeholder, true-800
+  pack toggle, tile→quick-view→cart flow, drawer money, rounded-md 3.1px,
+  aria-invalid in served CSS, keyboard focus traversal (40-tab bound),
+  :focus-visible brand treatment (2px rgb(255,107,53) verified live),
+  404 keeper, OG/robots/sitemap. Check count identical: 22 active checks
+  before and after.
+- **Retired assertions were replaced, not dropped**: the old hero-copy
+  check (text that no longer exists) became a composite check that ALSO
+  adds image-load verification (`naturalWidth > 0`), desktop/mobile
+  header-search visibility, and `heroSearchCount === 0` — the
+  single-search contract is now enforced programmatically for the first
+  time. The 10px label assertion became 11px (tracking the #39 primitive
+  change — consistent with shipped CSS, which is why the doc and not the
+  suite was wrong).
+- **Strengthenings**: fixed `waitForTimeout` sleeps replaced by
+  state-driven waits (`waitForFunction` on the cart aria-label);
+  `document.fonts.ready` before typography assertions; API-count
+  consistency check (`count === products.length`); explicit skip
+  accounting that cannot mask a failure (`process.exit(2)` on suite
+  error — a drawer that never opens crashes the run loudly instead of
+  printing a tautological pass).
+- **Every new selector cross-referenced against component source** and
+  all exist: `choose pack and quantity` (product-grid.tsx:438),
+  `Open cart (N items)` format (header.tsx:216), `EMPTY` exact text
+  (cart-drawer.tsx:72), all four hero strings (hero.tsx:8,57,70,76).
+- **Advisory notes (not offenses)**: (1) the composite mega-check packs
+  ~10 sub-conditions into one check — a failure will pass but diagnosis
+  gets harder; (2) `drawerOpen = true` after a throwing `waitFor` makes
+  that one check tautological — the real gate moved to the crash path,
+  acceptable but worth splitting someday; (3) `page.evaluate`-driven
+  synthetic clicks bypass Playwright actionability checks — the drawer
+  flow is still verified end-to-end (drawer visible, money, focus),
+  but the click is less user-realistic than the role-based click it
+  replaced.
+
+### Auditor gate run — with an auditor-side incident, disclosed
+
+All gates re-run by the auditor against the merged tree: **tsc 0**;
+**`npm run build` 16/16 + both copy-standalone-assets lines** (the
+merge's own "build NOT RUN — dev server owns .next" declaration was
+properly reasoned, so the auditor supplied the missing gate); **fiction
+0/4**; **prose regression 0**; **EOF \n on all 10 touched text files**;
+`git diff --check HEAD~3..HEAD` clean; **suite 22 pass / 0 fail /
+0 skipped** against the standalone production server on :3000 (my own
+R19 `start-prod.js`, re-validated by use).
+
+Disclosed: two earlier suite runs this round were **void** — an
+orphaned `next-server` from the pre-merge build survived a pkill and
+kept port :3000, so one run tested the old build (printing old
+assertion names — which is how the auditor caught it) and one crashed
+on a deleted-directory server. Every environment-dependent gate result
+in this section comes from the clean re-run after killing the ghost
+(pid 3111, cwd `→ .next/standalone (deleted)`). Lesson recorded: when a
+suite prints assertion names that don't match the tree under test,
+stop and check what is actually serving :3000.
+
+### Ledger corrections
+
+- **#28 withdrawn (auditor error, R18 sweep)**: `api/products/route.ts`
+  ends `\n` today and no commit between the sweep and now touched it —
+  the R18 sweep mis-recorded it. EOF ledger: 34 → **33 recorded
+  offenses**, outstanding directive 8 → **7 files** (#29–35:
+  app/error.tsx, ui/input.tsx, ui/toast.tsx, ui/toaster.tsx,
+  hooks/use-toast.ts, hooks/use-url-state.ts, lib/db.ts). AGENTS.md
+  non-negotiable 3 corrected accordingly.
+- **#39 (new)**: doc-contract drift — living design-system table left
+  stale by the #3b477ae primitive changes. Repaired by auditor this
+  round; class: documentation integrity, not code fiction.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| PROOF BLOCK complete (EOF + DIFF-CHECK w/ coordinates + GATES) | ✅ all three commits + the merge — first time for this agent |
+| Every GATES claim verified by auditor | ✅ tsc/build/routes/fiction/EOF/suite/asset-byte-size all reproduce |
+| State-check before fix | ✅ n/a (feature work, no repair claim), hero advisory item resolved with proof |
+| Advisory respected | ❌ merged over do-NOT-merge-yet without the pre-merge suite audit (mitigated: clean post-hoc audit, owner in the loop per agent's claim) |
+| Doc contracts updated when reality changes | ❌ #39 — primitives changed, living table stale (auditor repaired) |
+| Store green after merge | ✅ full gate battery on the merged tree |
+
+### Standing
+
+1. **Owner ratification requested (two items, one root)**: the hero
+   copy/CTA override and the `.ms-label`/`.ms-display`/`.ms-shopfront`
+   primitive changes both cite owner approval this auditor cannot
+   verify. If the owner approved: the contract rewrite in this doc is
+   legitimate and #39 stands only as a documentation-discipline slip.
+   If not: hero.tsx and the three CSS primitives revert, and rewriting
+   a locked contract without approval becomes a severity-one offense.
+2. **Suite rewrite: ratified** on the line-by-line audit above. The
+   three advisory notes (composite check, tautological drawerOpen,
+   synthetic clicks) are quality debt, not blockers.
+3. **Process note**: `c9282df` went straight to main rather than
+   through the review branch + PR the second agent used before. The
+   PROOF BLOCK was complete and the work clean, so this is an
+   advisory — but the review-branch flow exists precisely so pushes
+   like `59ac7e6` (R19, 3/10) can be caught pre-merge. Use it for
+   multi-file work.
+4. Unchanged directive: **7 EOF files (#29–35) still owed** by the
+   round-1–18 author, one mechanical commit, od block per file.

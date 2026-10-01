@@ -344,7 +344,13 @@ it is the checks you skip. Run them.
    files still stripped (#28–35: api/route.ts, app/error.tsx,
    ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts,
    hooks/use-url-state.ts, lib/db.ts) — repair all 8 in your next
-   push**, one mechanical commit, od block per file. That is the
+   push**, one mechanical commit, od block per file. *(R20 correction
+   by auditor: re-test shows `api/products/route.ts` ends `\n` and no
+   commit between sweeps touched it — #28 was mis-recorded in the R18
+   sweep. Outstanding count is **7 files (#29–35)**: app/error.tsx,
+   ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts,
+   hooks/use-url-state.ts, lib/db.ts — repair all 7 in your next
+   push.)* That is the
    standard every push is now held to.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
