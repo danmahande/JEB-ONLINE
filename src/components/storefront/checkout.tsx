@@ -201,7 +201,7 @@ export default function Checkout({
 
         {/* Step 1: Customer details */}
         {step === 1 && (
-          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+          <div className="ms-tile p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">DELIVERY DETAILS</h2>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -329,12 +329,12 @@ export default function Checkout({
 
         {/* Step 2: Review */}
         {step === 2 && (
-          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+          <div className="ms-tile p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">REVIEW ORDER</h2>
 
             <div className="mb-8">
               <h3 className="ms-label mb-4 text-hush">DELIVERY ADDRESS</h3>
-              <div className="rounded-lg border border-line bg-mist p-4">
+              <div className="ms-field p-4">
                 <p className="font-medium">{customer.name}</p>
                 <p>{customer.company || "Individual"}</p>
                 <p>{customer.address}</p>
@@ -346,7 +346,7 @@ export default function Checkout({
 
             <div className="mb-8">
               <h3 className="ms-label mb-4 text-hush">ORDER ITEMS</h3>
-              <div className="rounded-lg border border-line divide-y">
+              <div className="ms-field divide-y">
                 {lines.map((l, i) => (
                   <div key={`${l.productId}-${l.variantLabel}`} className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-4">
@@ -372,7 +372,7 @@ export default function Checkout({
               </div>
             </div>
 
-            <div className="rounded-lg border border-line bg-mist p-4 md:p-6">
+            <div className="ms-field p-4 md:p-6">
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span>SUBTOTAL</span>
@@ -407,10 +407,10 @@ export default function Checkout({
 
         {/* Step 3: Pay */}
         {step === 3 && (
-          <div className="rounded-lg border border-line bg-white p-6 md:p-8">
+          <div className="ms-tile p-6 md:p-8">
             <h2 className="ms-display mb-6 text-2xl">COMPLETE PAYMENT</h2>
 
-            <div className="rounded-lg border border-line bg-mist p-6">
+            <div className="ms-field p-6">
               <div className="mb-6 flex items-center gap-4">
                 <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-ink text-white">
                   {displayRegion.currency}
