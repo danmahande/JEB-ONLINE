@@ -53,7 +53,7 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 | Framework | Next.js 16 (App Router, Turbopack) + React 19 + TypeScript |
 | Styling | Tailwind CSS 4, shadcn/ui (Radix primitives), custom design system in `globals.css` |
 | State | Zustand (cart, region), TanStack Query (catalog fetching) |
-| Data | Prisma 6 + SQLite (`db/custom.db`) |
+| Data | Prisma 6 + PostgreSQL (Neon serverless adapter) |
 | Validation | Zod |
 | Motion | Framer Motion + CSS keyframes |
 | Icons | Lucide |
@@ -66,19 +66,20 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 # 1. install dependencies
 bun install
 
-# 2. point Prisma at the shipped SQLite database (creates .env)
-echo DATABASE_URL=file:../db/custom.db > .env
+# 2. configure PostgreSQL in the project-root .env
+# DATABASE_URL is the pooled/runtime URL; DATABASE_URL_UNPOOLED is for Prisma migrations.
 
-# 3. verify the database link (should say "already in sync")
-bun run db:push
+# 3. apply committed migrations and seed the initial catalog/regions
+bun run db:deploy
+bun run db:seed
 
 # 4. start the dev server
 bun run dev
 ```
 
-Open http://localhost:3000. A seeded database (`db/custom.db`) ships with the repo, so the storefront has products, regions and FX rates out of the box.
+Open http://localhost:3000. The seed script inserts the 14 catalog products and 6 destination regions. It does not create customers or orders. Run it once for an empty database; it resets seeded product stock to the seed values when re-run.
 
-> **Windows:** everything above works the same in PowerShell — with `npm` instead of Bun (`npm install`, `npm run db:push`, `npm run dev`).
+> **Windows:** everything above works the same in PowerShell — with `npm` instead of Bun (`npm install`, `npm run db:deploy`, `npm run db:seed`, `npm run dev`).
 
 ### Scripts
 
@@ -88,20 +89,23 @@ Open http://localhost:3000. A seeded database (`db/custom.db`) ships with the re
 | `bun run build` | Production build (standalone output) |
 | `bun run start` | Serve the standalone production build |
 | `bun run lint` | ESLint |
-| `bun run db:push` | Push the Prisma schema to SQLite |
+| `bun run db:push` | Push the Prisma schema directly (development only; prefer migrations) |
+| `bun run db:deploy` | Apply committed PostgreSQL migrations |
 | `bun run db:generate` | Regenerate the Prisma client |
+| `bun run db:seed` | Seed catalog and region configuration into an empty database |
 | `bun run db:migrate` | Create/apply a dev migration |
 | `bun run db:reset` | Reset the database |
 
 ### Environment
 
-`.env` at the project root (not committed — create it once after cloning):
+`.env` at the project root (not committed — create it once after cloning). Use a PostgreSQL database locally; Vercel's Neon integration supplies the production values:
 
 ```
-DATABASE_URL=file:../db/custom.db
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
+DATABASE_URL_UNPOOLED="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 ```
 
-Prisma resolves SQLite paths relative to `prisma/schema.prisma`, so `../db/custom.db` points at the seeded database in the project root — on any OS, no absolute paths needed.
+`DATABASE_URL` is the pooled connection for application queries. `DATABASE_URL_UNPOOLED` is the direct connection used by Prisma Migrate; keep both out of source control.
 
 ---
 
@@ -166,45 +170,36 @@ scripts/seed.ts           # catalog seed data
 
 The production build outputs a standalone Node server (`.next/standalone/server.js`).
 
-### VPS (recommended)
+### Vercel (Neon Postgres)
 
-SQLite keeps ops simple — run it on any VPS with Node 20+ or Bun:
+Install **Neon Postgres** from the Vercel Marketplace and connect it to this project for Development, Preview, and Production. The Vercel-managed integration injects `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` (direct) into the selected environments.
+
+On Vercel, the application uses Prisma's Neon serverless adapter with the pooled `DATABASE_URL`; local development uses Prisma's standard driver with a direct PostgreSQL URL. The `DATABASE_URL_UNPOOLED` connection is reserved for Prisma Migrate. The Vercel build command in `vercel.json` applies committed migrations before building. On the first deployment, connect Neon before deploying so both database variables are available. After the first successful deployment, seed the production catalog and destination configuration exactly once by running `npm run db:seed` against the production database. Do not point the seed command at an existing business database: rerunning it resets seeded product stock.
+
+Vercel's free tier and the database's free tier have separate usage limits; review both dashboards before launch. Configure a production backup/restore plan before accepting real orders.
+
+### VPS
+
+The same PostgreSQL schema and migrations can be used on a VPS. Set `DATABASE_URL` and `DATABASE_URL_UNPOOLED` to its pooled and direct PostgreSQL URLs respectively, then run:
 
 ```bash
-bun install
-bun run db:push
-bun run build
-bun run start          # serves on :3000
+npm ci
+npm run db:deploy
+npm run db:seed       # once, only when creating an empty database
+npm run build
+npm run start
 ```
 
-Keep the process alive with systemd:
-
-```ini
-[Service]
-WorkingDirectory=/srv/meridian
-ExecStart=/usr/local/bin/bun .next/standalone/server.js
-Restart=always
-User=www-data
-Environment=NODE_ENV=production
-Environment=DATABASE_URL=file:/srv/meridian/db/custom.db
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Then reverse-proxy :3000 behind Nginx or Caddy for TLS. **Persist `db/custom.db`** (and `public/products/`) across deploys — it holds the catalog, orders and region config.
-
-### Vercel / serverless
-
-The app deploys, but serverless filesystems are ephemeral — a SQLite file won't survive. Before shipping there, swap the Prisma datasource to a hosted database (e.g. Postgres on Neon/Supabase, or Turso for a SQLite-compatible edge DB): change the `provider` in `prisma/schema.prisma`, update `DATABASE_URL`, and re-run `db:push`.
+The previous SQLite schema and initial migration are retained under `prisma/migrations-sqlite/` for reference only. The active schema and migrations now target PostgreSQL. The existing local SQLite database is not modified or copied by these changes.
 
 ## Contributing
 
 1. Fork and create a feature branch (`feat/your-change`).
-2. `bun install && bun run db:push && bun run dev`.
+2. `bun install && bun run db:deploy && bun run db:seed && bun run dev`.
 3. Keep visual work consistent with the design system (see above): navy ink / brand orange, uppercase letterspaced labels, and the hardware interaction contract — all depth is drawn with inset shadows, nothing floats, and motion must respect `prefers-reduced-motion`.
 4. Run `bun run lint` before opening your PR and keep commits small and descriptive.
 
 ## Notes
 
-- Orders, stock levels and tracking events are demo data intended for demonstration and further development — wire them to a payment provider and fulfillment pipeline before production use.
+- The seed script is for initializing catalog and region configuration only. It does not seed customer/order records and resets stock values for the products it upserts; run it only against a new database.
+- Existing local SQLite data is intentionally not copied during the PostgreSQL migration. The database migration is schema-only; seed the new Neon database with catalog and region configuration after connecting it.
