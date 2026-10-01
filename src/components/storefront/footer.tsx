@@ -59,7 +59,7 @@ function NewsletterSignup() {
         htmlFor="footer-newsletter-email"
         className="ms-label mb-3 block text-white/60"
       >
-        JOIN THE LIST
+        GET FIRST-ARRIVAL NOTES
       </label>
       {status.kind === "done" ? (
         <p
@@ -98,7 +98,7 @@ function NewsletterSignup() {
             </p>
           )}
           <p className="ms-label mt-2 text-[10px] text-white/40">
-            STOCK ARRIVALS AND PRICE NOTES. NO SPAM.
+            FIRST ARRIVALS AND PRICE NOTES. NO SPAM.
           </p>
         </form>
       )}

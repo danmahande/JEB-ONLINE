@@ -216,9 +216,9 @@ body {
 /* Massive display type — same Amazon-style family as everything else */
 .ms-display {
   font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 0.95;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
   text-transform: uppercase;
 }
 .ms-display.normal-case {
@@ -227,9 +227,9 @@ body {
 
 .ms-label {
   font-family: var(--font-body), "Helvetica Neue", Arial, sans-serif;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -838,10 +838,10 @@ body {
   border-radius: 6px;
   /* frame steel — warm mid-grey, what shows through the grid gaps as mullions */
   background-image: linear-gradient(180deg, #828078 0%, #6e6d65 55%, #5a5951 100%);
-  padding: 10px;
+  padding: 8px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32);
 }
 
 /* The pane — glass over the goods. Layers, front to back:

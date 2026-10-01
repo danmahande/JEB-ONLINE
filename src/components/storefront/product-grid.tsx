@@ -148,14 +148,14 @@ export default function ProductGrid({
           {/* the rack counter — replays the greeting swap whenever the count moves */}
           <p key={loading ? "loading" : error ? "error" : `${tab}|${q}|${filtered.length}`} className="ms-label ms-fade-swap mb-1.5 text-hush">
             {loading
-              ? "CHECKING THE RACK…"
+              ? "LIVE STOCK"
               : error
-                ? "RACK OFFLINE — FEED FAILED"
-                : `${filtered.length} ${filtered.length === 1 ? "LINE" : "LINES"} ON THE RACK`}
+                ? "RACK OFFLINE"
+                : `${filtered.length} ${filtered.length === 1 ? "ITEM" : "ITEMS"} IN VIEW`}
           </p>
-          <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-tight">
+          <h2 className="ms-display text-2xl md:text-3xl leading-none tracking-[-0.04em]">
             CATALOG
-            <span className="ml-1.5 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
+            <span className="ml-1.5 inline-block h-2.5 w-2.5 bg-brand align-middle" aria-hidden="true" />
           </h2>
         </div>
         <div className="flex overflow-hidden rounded-[4px] border border-line" role="tablist" aria-label="Category filter">
