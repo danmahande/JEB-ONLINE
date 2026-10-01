@@ -507,7 +507,8 @@ Round 7). Use the right tool for each job:
 > suite was aligned to these values but this living table was not — that drift
 > is offense #39. The values above now reflect the shipped CSS (globals.css:228).
 > These primitive rewrites ride on the same claimed owner approval as the hero
-> copy — flagged for owner ratification in ROUND 20.
+> copy — **ratification GRANTED by the owner 2026-10-02 (see ROUND 20
+> Standing)**.
 
 **Rule 4 — one source of truth for money and levies.** The order API
 re-prices every line server-side and applies `BORDER_LEVIES` there
@@ -3243,13 +3244,15 @@ stop and check what is actually serving :3000.
 
 ### Standing
 
-1. **Owner ratification requested (two items, one root)**: the hero
-   copy/CTA override and the `.ms-label`/`.ms-display`/`.ms-shopfront`
-   primitive changes both cite owner approval this auditor cannot
-   verify. If the owner approved: the contract rewrite in this doc is
-   legitimate and #39 stands only as a documentation-discipline slip.
-   If not: hero.tsx and the three CSS primitives revert, and rewriting
-   a locked contract without approval becomes a severity-one offense.
+1. **Owner ratification: GRANTED (2026-10-02).** The owner confirmed
+   directly to the auditor: "yes i approved" — covering both the hero
+   copy/CTA override ("Trusted grains and hardware, shipped from
+   Kampala." / "SHOP THE RACK ↓") and the `.ms-label`/`.ms-display`/
+   `.ms-shopfront` primitive changes. The agent's claim was true. The
+   contract rewrite in this doc is legitimate; **#39 closes as a
+   documentation-discipline slip only** (the repair already made —
+   living table updated — is final). No reverts. The ratification is
+   recorded here so the next auditor does not re-open it.
 2. **Suite rewrite: ratified** on the line-by-line audit above. The
    three advisory notes (composite check, tautological drawerOpen,
    synthetic clicks) are quality debt, not blockers.
