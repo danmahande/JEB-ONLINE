@@ -65,6 +65,8 @@ server.log
 /scripts/*
 !/scripts/verify-round7-fix.js
 !/scripts/seed.ts
+!/scripts/copy-standalone-assets.js
+!/scripts/start-prod.js
 # purged from tracking (Task 44) — old ERP source + design source photos
 /kwanza-erp-src/
 /examples/
@@ -74,3 +76,6 @@ server.log
 
 # runtime db artifact (recreate via: npx tsx scripts/seed.ts)
 /db/
+
+# agent-sandbox db artifacts (runtime artifact — recreate via npx tsx scripts/seed.ts)
+prisma/db/

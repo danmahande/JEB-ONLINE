@@ -655,6 +655,8 @@ Not verified: <say so explicitly, e.g. "checkout POST — no test order placed">
 | Incomplete PROOF BLOCK — DIFF-CHECK section missing entirely; GATES silently omitted fiction + suite (offense #25) | 17 | self-check 4 — write the block FROM the template, all three sections; auditor ruling: incomplete = rejected |
 | Incomplete GATES line AGAIN — fiction + suite silently omitted, ruling was in the tree (parent = R17 audit commit) | 18 (ruling FIRED) | self-check 4; directive: next commit opens with retroactive complete GATES for 7582521; revert-on-sight pending owner ratification |
 | Fiction `prose` classes — @tailwindcss/typography never installed, zero CSS generated (offense #36, auditor-repaired) | 18 | NEW rule: every className must resolve (utility / design-system / configured plugin); new utility family ⇒ plugin installed AND named in the message |
+| Broken references — package.json build/start repointed at `scripts/copy-standalone-assets.js` + `scripts/start-prod.js` that were NEVER committed (anywhere, incl. its own branch); `npm run build` and `npm run start` threw MODULE_NOT_FOUND on main (offense #37, auditor-repaired) | 19 (second agent, PR #2 squash) | run `npm run build`/`start` before pushing; every referenced path must exist in the SAME commit |
+| Binary runtime artifact committed — empty SQLite db at `prisma/db/custom.db` (0 products / 0 orders; sandbox `db push` artifact, wrong path, violates the seed contract) (offense #38, auditor-removed) | 19 (second agent) | never `git add` db files; runtime artifacts are recreated via `npx tsx scripts/seed.ts` |
 
 Every row above was mechanically catchable before it shipped. That is the
 entire point of this document.
@@ -3049,3 +3051,66 @@ Post-merge: tsc 0 · build 16/16 (routes 13 → 16) · curls
 /privacy /terms /shipping = 200 · fiction 0/4 · suite **22/22**
 (auditor-run) · EOF `\n` ×11 touched · sweep: 8 files still stripped ·
 punch list: prose ×3 stripped (tsc 0, suite 22/22 re-run).
+
+## ROUND 19 — `59ac7e6` audit: rated **3/10** — a SECOND agent enters (PR #2, squash "Agent Host changes"), and its landing breaks `npm run build` and `npm run start` on main by referencing two scripts it never committed, plus a committed empty SQLite binary. Auditor repaired both. Two of its three branch commits remain unmerged (advisory inside).
+
+This round is the first push from an agent OTHER than the round-1–18
+author: a squash merge of `agents/jeb-online-project-review` (PR #2,
+one-line message, no PROOF BLOCK, no state-check evidence). The
+governance stack applies to every agent working in this repo — the
+READ FIRST block, the PROOF BLOCK, and the gates are not personal
+to one contributor.
+
+### What landed, item by item
+
+| Change | Verdict |
+|---|---|
+| AGENTS.md +10: `<!-- BEGIN:nextjs-agent-rules -->` block | ✅ legitimate — framework-written by `next dev` (generate-agent-files.js); committing it is the block's own instruction |
+| package-lock −52 (ajv, fast-uri, json-schema-traverse, require-from-string pruned) | ✅ valid — `npm ci --dry-run` exit 0; lock stays in sync; different npm pruned optional transitive entries |
+| package.json build/start repointed at `scripts/copy-standalone-assets.js` + `scripts/start-prod.js` | ❌ **offense #37 — neither script exists in ANY commit, including its own branch.** `npm run build` and `npm run start` both threw MODULE_NOT_FOUND on main. New failure class: references without artifacts |
+| `prisma/db/custom.db` (172KB SQLite) committed | ❌ **offense #38 — empty database (0 products / 0 orders / 0 counters)**, a sandbox `db push` artifact at a non-canonical path (README: runtime db lives at `db/custom.db`, recreated via seed). Binary artifacts do not belong in git |
+
+### Auditor repairs (main restored to green)
+
+- Wrote the two missing scripts as cross-platform Node (the agent's
+  stated Windows-compatibility direction, honored): `fs.cpSync` for the
+  standalone asset copy; `start-prod.js` spawns the standalone server
+  with `NODE_ENV=production` and tees output to `server.log`.
+- Proof: full `npm run build` end-to-end (16/16 + both copy lines),
+  and a live prod-server smoke test (PORT=3111 → 200).
+- `git rm --cached prisma/db/custom.db` + `prisma/db/` gitignored.
+- Gates after repair: tsc 0 · fiction 0/4 · suite **22/22** (after
+  reseeding — fresh container had an empty db, the R12 signature;
+  5 transient suite failures during a `.next` dev/build contention
+  window were environmental, not from this commit, which never touched
+  `src/`).
+
+### Unmerged branch work — advisory, do NOT merge yet
+
+Two commits sit on `agents/jeb-online-project-review` beyond the
+squash: `3b477ae` (storefront polish + "Windows build compatibility")
+and `f944971` (verify-suite rewrite, 261 lines, adds a `skipped`
+counter — pass/fail semantics NOT weakened in the criteria checked).
+Flags: the hero image grows 310KB → **2.4MB** (8× — LCP cost that
+needs justification or compression); the "Windows build compatibility"
+commit depends on the same missing scripts (fixed now on main by the
+auditor); the suite rewrite touches the engagement's regression proof
+and needs a line-by-line audit before merge.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| PROOF BLOCK | ❌ none — one-line squash message |
+| State-check before fix | ❌ no evidence any check ran |
+| Referenced artifacts exist | ❌ #37 — build/start broken on main |
+| No binary artifacts | ❌ #38 — empty db committed |
+| Legitimate content | ✅ framework block + lock prune valid |
+| Store green after auditor repair | ✅ build end-to-end, prod smoke 200, suite 22/22 |
+
+### Standing
+
+Directive to the second agent (and any future contributor): read
+AGENTS.md READ FIRST before your next commit — the PROOF BLOCK,
+state-check, and gate rules are repo law, not biography. If your
+sandbox needs a database, seed it; never commit one.
