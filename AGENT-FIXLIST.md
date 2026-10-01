@@ -55,12 +55,13 @@ mobile — both bound to the one query state. The dark `.ms-search-input`
 base was deleted from `globals.css`. Do NOT re-introduce any collapse
 machinery or dark well.
 
-**The hero now is (keep it this way):** a `ms-shopfront` display window at
-`h-[180px] md:h-[210px] lg:h-[240px]` carrying the greeting label, the display
-line "MAIZE FLOUR. CEMENT. IRON SHEETS." (`.ms-display`), and two wired CTAs —
-`ENTER CATALOG ↓` (scrolls to `#catalog`) and `TRACK ORDER` (`goTrack`).
-Search discoverability is solved by the persistent header channel — never by
-a second input.
+**Owner-approved hero copy update (2026-10-01):** the `ms-shopfront` display
+window remains at `h-[180px] md:h-[210px] lg:h-[240px]` with one greeting
+label, the display line "Trusted grains and hardware, shipped from Kampala."
+and two wired CTAs — `SHOP THE RACK ↓` (scrolls to `#catalog`) and `TRACK
+ORDER` (`goTrack`). This wording supersedes the earlier locked hero copy by
+the owner's explicit approval. Search discoverability remains in the
+persistent header channel — never add a second input.
 
 ---
 
@@ -542,9 +543,9 @@ rounds. No trailing whitespace; keep import grouping as the file has it.
 - Exactly one search: the persistent header channel (`.ms-hsearch`). The
   hero search is retired; do not restore it (see READ FIRST, above).
 - The hero is the `ms-shopfront` display window with the greeting, the
-  `.ms-display` line "MAIZE FLOUR. CEMENT. IRON SHEETS." and two wired
-  CTAs (`ENTER CATALOG ↓`, `TRACK ORDER`). Search discoverability comes
-  from the header channel — never from a second input.
+  `.ms-display` line "Trusted grains and hardware, shipped from Kampala."
+  and two wired CTAs (`SHOP THE RACK ↓`, `TRACK ORDER`). Search
+  discoverability comes from the header channel — never from a second input.
 
 **Rule 10 — deleting or renaming CSS requires the consumer grep.** Three
 commits in a row deleted `.ms-*` families that JSX still used 7–9 times

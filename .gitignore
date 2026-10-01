@@ -74,3 +74,5 @@ server.log
 
 # runtime db artifact (recreate via: npx tsx scripts/seed.ts)
 /db/
+# agent-sandbox db artifacts (runtime artifact — recreate via npx tsx scripts/seed.ts)
+prisma/db/

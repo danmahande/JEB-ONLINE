@@ -34,7 +34,7 @@ export default function Hero({
           {/* HD composite: maize field dissolving into a warehouse — the LCP
               element, so it preloads through the optimizer */}
           <Image
-            src="/products/__hero.png"
+            src="/products/__hero.jpg"
             alt="Maize field in the hills blending into a warehouse stacked with goods and a forklift"
             fill
             priority

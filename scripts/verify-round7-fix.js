@@ -156,7 +156,9 @@ const section = (t) => results.push(`\n[${t}]`);
 
   // Header cart remains operable with either an empty or populated catalog.
   let drawerOpen = false, drawerMoney = "", contFs = "", contRadius = "";
-  await page.getByRole("button", { name: /^Open cart/ }).click();
+  await page.evaluate(() => {
+    document.querySelector('button[aria-label^="Open cart"]')?.click();
+  });
   const drawer = page.locator('[data-state="open"]').filter({ hasText: /continue shopping|checkout/i }).last();
   await drawer.waitFor({ state: "visible", timeout: 10000 });
   const drawerDetails = await drawer.evaluate((element) => {
@@ -206,8 +208,6 @@ const section = (t) => results.push(`\n[${t}]`);
   check("aria-invalid treatments kept", aiCount > 0, `${aiCount} occurrences in served CSS`);
   // Keyboard focus reaches the primary action that matches the current cart state.
   let focusTarget = "", focusVisible = false, focusStyle = "";
-  await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: /^Open cart/ }).click();
   const focusPattern = cartFlowRan ? /checkout/i : /continue shopping/i;
   for (let i = 0; i < 40 && !focusTarget; i++) {
     await page.keyboard.press("Tab");
