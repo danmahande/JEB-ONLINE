@@ -6,6 +6,7 @@ const PASSWORD_SCRYPT_BLOCK_SIZE = 8;
 const PASSWORD_SCRYPT_PARALLELIZATION = 1;
 const PASSWORD_SCRYPT_MAX_MEMORY = 32 * 1024 * 1024;
 export const MINIMUM_ADMIN_PASSWORD_LENGTH = 14;
+export const MINIMUM_CUSTOMER_PASSWORD_LENGTH = 12;
 const PASSWORD_HASH_PATTERN = new RegExp(
   `^[a-f0-9]{${PASSWORD_KEY_LENGTH * 2}}$`,
   "i"
@@ -30,9 +31,9 @@ export function isAdminPasswordHashValid(value: string): boolean {
   return parsePasswordHash(value) !== null;
 }
 
-export function createAdminPasswordHash(password: string): string {
-  if (password.length < MINIMUM_ADMIN_PASSWORD_LENGTH || password.length > 1024) {
-    throw new Error("Admin passwords must be between 14 and 1024 characters.");
+function createPasswordHash(password: string, minimumLength: number, label: string): string {
+  if (password.length < minimumLength || password.length > 1024) {
+    throw new Error(`${label} passwords must be between ${minimumLength} and 1024 characters.`);
   }
 
   const salt = randomBytes(16).toString("hex");
@@ -46,8 +47,12 @@ export function createAdminPasswordHash(password: string): string {
   return `${salt}:${hash.toString("hex")}`;
 }
 
-export function verifyAdminPassword(password: string, passwordHash: string): boolean {
-  if (password.length < MINIMUM_ADMIN_PASSWORD_LENGTH || password.length > 1024) {
+function verifyPassword(
+  password: string,
+  passwordHash: string,
+  minimumLength: number
+): boolean {
+  if (password.length < minimumLength || password.length > 1024) {
     return false;
   }
 
@@ -62,4 +67,20 @@ export function verifyAdminPassword(password: string, passwordHash: string): boo
   });
 
   return timingSafeEqual(actual, parsed.hash);
+}
+
+export function createAdminPasswordHash(password: string): string {
+  return createPasswordHash(password, MINIMUM_ADMIN_PASSWORD_LENGTH, "Admin");
+}
+
+export function verifyAdminPassword(password: string, passwordHash: string): boolean {
+  return verifyPassword(password, passwordHash, MINIMUM_ADMIN_PASSWORD_LENGTH);
+}
+
+export function createCustomerPasswordHash(password: string): string {
+  return createPasswordHash(password, MINIMUM_CUSTOMER_PASSWORD_LENGTH, "Customer");
+}
+
+export function verifyCustomerPassword(password: string, passwordHash: string): boolean {
+  return verifyPassword(password, passwordHash, MINIMUM_CUSTOMER_PASSWORD_LENGTH);
 }

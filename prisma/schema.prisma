@@ -114,10 +114,24 @@ model OrderProcessing {
 
   lineItems OrderLineItem[]
   events    OrderEvent[]
+  customerAccountId String?
+  customerAccount   CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
 
   @@index([customerId])
+  @@index([customerAccountId, createdAt])
   @@index([status])
   @@index([orderDate])
+}
+
+model CustomerAccount {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders OrderProcessing[]
 }
 
 /// Upstream ERP OrderLineItem model
@@ -210,5 +224,11 @@ model Counter {
 model AdminLoginAttempt {
   id             String   @id
   attempts       Int      @default(0)
+  windowStartedAt DateTime @default(now())
+}
+
+model CustomerLoginAttempt {
+  id              String   @id
+  attempts        Int      @default(0)
   windowStartedAt DateTime @default(now())
 }

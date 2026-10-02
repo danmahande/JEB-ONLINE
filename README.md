@@ -124,7 +124,9 @@ The private product manager is at `/admin`. It uses the existing NextAuth depend
 4. In the Vercel project, add `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `NEXTAUTH_SECRET` to the Production environment (and Development/Preview only if you will use admin there). Keep them private and redeploy after saving.
 5. Open `https://jeb-online.vercel.app/admin` and sign in. Sessions expire after eight hours.
 
-The product form accepts a local image path such as `/products/maize.png`. Add the image file to `public/products/` first; uploads and external image hosting are not configured in this first version. Opening stock can be set only when a product is created. It is deliberately read-only while editing, so inventory changes cannot bypass a future stock-movement audit trail.
+Customer accounts are optional; guests can continue browsing and checking out. Customers can create an account and sign in immediately (email verification is not configured). Orders appear in account history only when the customer was signed in at checkout; older guest orders remain available through the existing order-number tracking flow. There is no password-reset email flow yet, so customers should use an address they can access and keep their password safe.
+
+To enable product-image uploads, create a **public** Vercel Blob store from the Vercel project's Storage section and connect it to this project. Include the generated `BLOB_READ_WRITE_TOKEN` in Production and any Preview/Development environments where image uploads are needed, then redeploy. The admin product form can crop and preview JPEG, PNG, or WebP files before uploading them; original files must be under 10 MB and cropped uploads under 4.5 MB. Uploaded product images are converted to WebP and their Blob URL is saved in the product form. Existing `/products/...` paths continue to work. Opening stock can be set only when a product is created. It is deliberately read-only while editing, so inventory changes cannot bypass a future stock-movement audit trail.
 
 ---
 
@@ -140,7 +142,9 @@ src/
     api/
       products/route.ts   # GET   catalog with variants + stock
       admin/products/     # owner-only product CRUD and soft deactivation
-      auth/[...nextauth]/ # single-admin credentials session
+      admin/product-images/ # owner-authenticated Vercel Blob image upload
+      account/register/   # create customer account
+      auth/[...nextauth]/ # owner and customer credentials sessions
       fx/route.ts         # GET   region configs: currency, FX rate, duty, VAT, freight
       orders/route.ts     # GET   track order (by number) · POST place order
   components/storefront/
@@ -168,7 +172,8 @@ scripts/seed.ts           # catalog seed data
 |---|---|
 | `Product` | Catalog item: label, category, unit, pricing, stock, HS code, origin country, JSON variants (weight packs) |
 | `Customer` | Checkout customers |
-| `OrderProcessing` | Placed orders: destination region, totals, status |
+| `CustomerAccount` | Optional sign-in profile; account password hashes are stored separately from checkout customer records |
+| `OrderProcessing` | Placed orders: destination region, totals, status, and optional signed-in account owner |
 | `OrderLineItem` | Per-product order lines (pack, qty, unit price) |
 | `OrderEvent` | Order timeline events used by tracking |
 | `RegionConfig` | Per-destination trade config: currency, FX rate, duty rate, VAT rate, freight base + per-kg, ETA, EAC flag |
@@ -181,6 +186,7 @@ scripts/seed.ts           # catalog seed data
 | GET | `/api/fx` | Region configs (currency, rates, duties, VAT, freight) |
 | GET | `/api/orders` | Track an order by number |
 | POST | `/api/orders` | Place an order (creates customer, order, lines, first event) |
+| POST | `/api/account/register` | Create a customer account; no email verification is configured |
 | GET | `/api/admin/products` | List products for the signed-in admin |
 | POST | `/api/admin/products` | Create a product with opening stock |
 | PATCH | `/api/admin/products/:id` | Edit product details, publish, or hide (stock is not editable) |

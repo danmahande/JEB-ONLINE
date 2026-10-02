@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProductVariant } from "@/lib/types";
+import { ProductImageField } from "./product-image-field";
 
 type ManagedProduct = {
   id: string;
@@ -133,6 +134,7 @@ export function AdminProducts() {
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -203,6 +205,7 @@ export function AdminProducts() {
   }
 
   function beginEdit(product: ManagedProduct) {
+    if (imageUploading) return;
     setEditingId(product.id);
     setDraft(draftFromProduct(product));
     setError("");
@@ -215,6 +218,7 @@ export function AdminProducts() {
   }
 
   function cancelEdit() {
+    if (imageUploading) return;
     setEditingId(null);
     setDraft(emptyDraft);
     setError("");
@@ -246,6 +250,7 @@ export function AdminProducts() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (imageUploading) return;
     setError("");
     setNotice("");
     setSaving(true);
@@ -408,7 +413,7 @@ export function AdminProducts() {
             </h2>
           </div>
           {editingId ? (
-            <Button onClick={cancelEdit} type="button" variant="secondary">
+            <Button disabled={imageUploading} onClick={cancelEdit} type="button" variant="secondary">
               Cancel edit
             </Button>
           ) : null}
@@ -710,24 +715,11 @@ export function AdminProducts() {
 
           <fieldset className="grid gap-5 border-t border-line pt-6 sm:grid-cols-2">
             <legend className="sr-only">Product description and image</legend>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-ink" htmlFor="product-image">
-                Product image path
-              </label>
-              <Input
-                autoComplete="off"
-                id="product-image"
-                maxLength={240}
-                onChange={(event) => updateDraft("image", event.target.value)}
-                placeholder="/products/maize-flour.png"
-                type="text"
-                value={draft.image}
-              />
-              <p className="text-xs leading-5 text-hush">
-                Add the image file to public/products first. Uploads and external image
-                hosting are not configured yet.
-              </p>
-            </div>
+            <ProductImageField
+              onChange={(image) => updateDraft("image", image)}
+              onUploadingChange={setImageUploading}
+              value={draft.image}
+            />
             <div className="space-y-2">
               <label className="block text-sm font-medium text-ink" htmlFor="product-description">
                 Product description
@@ -752,8 +744,8 @@ export function AdminProducts() {
                 {error}
               </p>
             ) : null}
-            <Button className="mt-5" disabled={saving} type="submit">
-              {saving ? "Saving..." : editingId ? "Save product" : "Add product"}
+            <Button className="mt-5" disabled={saving || imageUploading} type="submit">
+              {saving ? "Saving..." : imageUploading ? "Uploading image..." : editingId ? "Save product" : "Add product"}
             </Button>
           </div>
         </form>
@@ -848,6 +840,7 @@ export function AdminProducts() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
+                        disabled={imageUploading}
                         onClick={() => beginEdit(product)}
                         type="button"
                         variant="secondary"

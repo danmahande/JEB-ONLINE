@@ -143,6 +143,12 @@ export default function Header({
                    >
                      TRACK ORDER
                    </button>
+                   <Link
+                     href="/account"
+                     className="block w-full ms-label p-2 rounded hover:bg-line"
+                   >
+                     ACCOUNT
+                   </Link>
                  </DropdownMenuContent>
                </DropdownMenu>
              </div>
@@ -170,6 +176,9 @@ export default function Header({
 
           {/* Right section */}
           <div className="flex items-center gap-4">
+            <Link href="/account" className="ms-label hidden md:inline-flex">
+              ACCOUNT
+            </Link>
             {/* Region selector */}
             <div className="relative">
               <select

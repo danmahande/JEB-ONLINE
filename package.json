@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "admin:hash": "tsx scripts/hash-admin-password.ts",
-    "test:admin": "tsx --test src/lib/admin-auth.test.ts src/lib/admin-login-rate-limit.test.ts src/lib/admin-products-schema.test.ts"
+    "test:admin": "tsx --test src/lib/admin-auth.test.ts src/lib/login-rate-limit.test.ts src/lib/admin-products-schema.test.ts src/lib/customer-account-schema.test.ts"
   },
   "prisma": {
     "seed": "tsx scripts/seed.ts"
@@ -58,6 +58,7 @@
     "@reactuses/core": "^6.0.5",
     "@tanstack/react-query": "^5.82.0",
     "@tanstack/react-table": "^8.21.3",
+    "@vercel/blob": "^2.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -74,6 +75,7 @@
     "react": "^19.0.0",
     "react-day-picker": "^9.8.0",
     "react-dom": "^19.0.0",
+    "react-easy-crop": "^6.2.3",
     "react-hook-form": "^7.60.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.3",

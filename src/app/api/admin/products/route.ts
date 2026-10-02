@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { adminProductCreateSchema } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import { isSameOriginRequest } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -26,18 +27,6 @@ function invalidJsonResponse() {
     { success: false, error: "Request body must be valid JSON." },
     { status: 400 }
   );
-}
-
-function isSameOrigin(req: NextRequest): boolean {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  if (!origin || !host) return false;
-
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
 }
 
 export async function GET() {
@@ -72,7 +61,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isSameOrigin(req)) {
+  if (!isSameOriginRequest(req)) {
     return NextResponse.json(
       { success: false, error: "Request origin could not be verified." },
       { status: 403 }

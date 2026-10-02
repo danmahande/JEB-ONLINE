@@ -36,7 +36,7 @@ describe("admin product validation", () => {
     assert.equal(result.data.openingStock, 120);
   });
 
-  it("rejects negative stock, invalid origin codes, and non-local image paths", () => {
+  it("rejects negative stock, invalid origin codes, and unapproved image paths", () => {
     assert.equal(
       adminProductCreateSchema.safeParse({ ...validProduct, openingStock: -1 }).success,
       false
@@ -58,6 +58,22 @@ describe("admin product validation", () => {
         image: "/products/white-maize.png",
       }).success,
       true
+    );
+    assert.equal(
+      adminProductCreateSchema.safeParse({
+        ...validProduct,
+        image:
+          "https://store123.public.blob.vercel-storage.com/product-images/123e4567-e89b-12d3-a456-426614174000.webp",
+      }).success,
+      true
+    );
+    assert.equal(
+      adminProductCreateSchema.safeParse({
+        ...validProduct,
+        image:
+          "https://store123.public.blob.vercel-storage.com/other-folder/123e4567-e89b-12d3-a456-426614174000.webp",
+      }).success,
+      false
     );
   });
 

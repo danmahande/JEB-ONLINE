@@ -6,26 +6,15 @@ import {
   adminProductSnapshotSchema,
 } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import { isSameOriginRequest } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
-
-function isSameOrigin(req: NextRequest): boolean {
-  const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  if (!origin || !host) return false;
-
-  try {
-    return new URL(origin).host.toLowerCase() === host.toLowerCase();
-  } catch {
-    return false;
-  }
-}
 
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  if (!isSameOrigin(req)) {
+  if (!isSameOriginRequest(req)) {
     return NextResponse.json(
       { success: false, error: "Request origin could not be verified." },
       { status: 403 }

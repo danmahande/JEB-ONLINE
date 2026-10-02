@@ -3,6 +3,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
 import { leviesFor } from "@/lib/levies";
+import { getCustomerSession } from "@/lib/admin-auth";
 
 type CartLine = { productId: string; variantLabel?: string; qty: number };
 
@@ -64,6 +65,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
+    const customerSession = await getCustomerSession();
     const body = await req.json();
     const {
       customerName,
@@ -299,6 +301,7 @@ export async function POST(req: NextRequest) {
             shippingAmount: Math.round(shippingAmount * 100) / 100,
             totalWeightKg: Math.round(totalWeightKg * 100) / 100,
             notes: notes?.trim() || null,
+            customerAccountId: customerSession?.user.id ?? null,
             lineItems: {
               create: resolved.map((l) => ({
                 orderNumber,

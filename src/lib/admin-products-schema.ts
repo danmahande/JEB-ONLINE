@@ -16,6 +16,22 @@ const nullableText = (maxLength: number) =>
     .nullable() // stored rows carry real NULLs (e.g. the legacy `variant` column) — R21 auditor fix
     .transform((value) => value || null);
 
+function isAllowedProductImageUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      /^[a-z0-9-]+\.public\.blob\.vercel-storage\.com$/.test(url.hostname) &&
+      !url.port &&
+      !url.search &&
+      !url.hash &&
+      /^\/product-images\/[0-9a-f-]{36}\.webp$/i.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 const productImagePath = z
   .string()
   .trim()
@@ -27,8 +43,9 @@ const productImagePath = z
       value === null ||
       /^\/products\/(?:[a-z0-9][a-z0-9._-]*\/)*[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp|avif)$/i.test(
         value
-      ),
-    "Use an image file in public/products (PNG, JPG, WebP, or AVIF)."
+      ) ||
+      isAllowedProductImageUrl(value),
+    "Use an image in public/products or an uploaded Vercel product image."
   );
 
 const productFieldsSchema = z

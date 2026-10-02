@@ -3,17 +3,17 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
-  ADMIN_LOGIN_MAX_ATTEMPTS,
-  isAdminLoginRateLimited,
-  getAdminLoginWindowCutoff,
-  isAdminLoginWindowExpired,
-  ADMIN_LOGIN_WINDOW_MS,
-} from "@/lib/admin-login-rate-limit";
+  LOGIN_MAX_ATTEMPTS,
+  isLoginRateLimited,
+  getLoginWindowCutoff,
+  isLoginWindowExpired,
+} from "@/lib/login-rate-limit";
 import {
   isAdminPasswordHashValid,
   MINIMUM_ADMIN_PASSWORD_LENGTH,
   verifyAdminPassword,
 } from "@/lib/admin-password";
+import { authorizeCustomer } from "@/lib/customer-auth";
 
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -71,13 +71,13 @@ export const authOptions: NextAuthOptions = {
         }
 
         const now = new Date();
-        const windowCutoff = getAdminLoginWindowCutoff(now);
+        const windowCutoff = getLoginWindowCutoff(now);
         let existingAttempt = await db.adminLoginAttempt.findUnique({
           where: { id: "owner" },
         });
         if (
           existingAttempt &&
-          isAdminLoginWindowExpired(existingAttempt.windowStartedAt, now)
+          isLoginWindowExpired(existingAttempt.windowStartedAt, now)
         ) {
           const reset = await db.adminLoginAttempt.updateMany({
             where: {
@@ -97,7 +97,7 @@ export const authOptions: NextAuthOptions = {
 
         if (
           existingAttempt &&
-          isAdminLoginRateLimited(existingAttempt.attempts)
+          isLoginRateLimited(existingAttempt.attempts)
         ) {
           return null;
         }
@@ -112,8 +112,8 @@ export const authOptions: NextAuthOptions = {
           update: { attempts: { increment: 1 } },
         });
         if (
-          isAdminLoginRateLimited(attempt.attempts) &&
-          attempt.attempts > ADMIN_LOGIN_MAX_ATTEMPTS
+          isLoginRateLimited(attempt.attempts) &&
+          attempt.attempts > LOGIN_MAX_ATTEMPTS
         ) {
           return null;
         }
@@ -126,19 +126,65 @@ export const authOptions: NextAuthOptions = {
           id: configuredEmail.toLowerCase(),
           email: configuredEmail,
           name: "Meridian Store Admin",
+          role: "admin",
         };
       },
     }),
+    CredentialsProvider({
+      id: "customer",
+      name: "Customer",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      authorize: authorizeCustomer,
+    }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.role = user.role;
+      else if (
+        !token.role &&
+        token.email?.toLowerCase() === process.env.ADMIN_EMAIL?.trim().toLowerCase()
+      ) {
+        token.role = "admin";
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (
+        session.user &&
+        typeof token.sub === "string" &&
+        (token.role === "admin" || token.role === "customer")
+      ) {
+        session.user.id = token.sub;
+        session.user.role = token.role;
+      }
+      return session;
+    },
+  },
 };
 
 export async function getAdminSession() {
   if (!isAdminConfigured()) return null;
   const session = await getServerSession(authOptions);
   const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  return session?.user?.email?.toLowerCase() === configuredEmail ? session : null;
+  return session?.user?.role === "admin" &&
+    session.user.email?.toLowerCase() === configuredEmail
+    ? session
+    : null;
 }
 
 export async function isAdminAuthenticated(): Promise<boolean> {
   return Boolean(await getAdminSession());
+}
+
+export function isCustomerAccountsConfigured(): boolean {
+  return Boolean(process.env.NEXTAUTH_SECRET && process.env.NEXTAUTH_SECRET.length >= 32);
+}
+
+export async function getCustomerSession() {
+  if (!isCustomerAccountsConfigured()) return null;
+  const session = await getServerSession(authOptions);
+  return session?.user?.role === "customer" && session.user.id ? session : null;
 }
