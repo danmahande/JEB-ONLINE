@@ -86,4 +86,28 @@ describe("admin product validation", () => {
     );
     assert.equal(adminProductPatchSchema.safeParse({ isActive: false }).success, true);
   });
+
+  it("accepts stored rows whose nullable columns are real NULLs (R21 regression)", async () => {
+    const { adminProductSnapshotSchema } = await import("./admin-products-schema");
+    const storedRow = {
+      productId: "GRN-MAIZE-001",
+      productLabel: "Maize Flour (Posho)",
+      description: "Grade 1 sifted maize flour.",
+      brand: "MERIDIAN MILLS",
+      variant: null, // legacy column is NULL for every seeded row
+      category: "GRAINS",
+      unit: "BAG",
+      weight: null,
+      minStock: 10,
+      unitCost: 18.5,
+      unitSellingPrice: 22,
+      image: null,
+      hsCode: null,
+      originCountry: "UG",
+      variants: [{ label: "25KG BAG", priceDelta: 0, weightKg: 25 }],
+      isActive: true,
+    };
+    const result = adminProductSnapshotSchema.safeParse(storedRow);
+    assert.equal(result.success, true);
+  });
 });

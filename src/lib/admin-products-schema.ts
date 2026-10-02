@@ -13,12 +13,14 @@ const nullableText = (maxLength: number) =>
     .string()
     .trim()
     .max(maxLength)
+    .nullable() // stored rows carry real NULLs (e.g. the legacy `variant` column) — R21 auditor fix
     .transform((value) => value || null);
 
 const productImagePath = z
   .string()
   .trim()
   .max(240)
+  .nullable() // R21 auditor fix — same NULL-from-stored-row case as nullableText
   .transform((value) => value || null)
   .refine(
     (value) =>

@@ -3264,3 +3264,103 @@ stop and check what is actually serving :3000.
    multi-file work.
 4. Unchanged directive: **7 EOF files (#29–35) still owed** by the
    round-1–18 author, one mechanical commit, od block per file.
+
+## ROUND 21 — `200b1df` + `70b51bc` audit: rated **7.5/10** — the boldest push of the engagement (SQLite → Neon PostgreSQL + a protected owner dashboard with NextAuth), near-flawless infra proven against a real Postgres, but the dashboard's headline path was broken for every seeded product and the auditor had to repair it live. Two new offenses (#40, #41); the long-standing 8-file EOF directive is finally EXECUTED — and the auditor's own R20 withdrawal of #28 is withdrawn (it was the auditor testing the wrong path).
+
+Two commits reviewed: `200b1df` (Postgres migration + portable seed +
+EOF directive execution) and `70b51bc` (owner product management:
+NextAuth credentials, admin dashboard, CRUD API, validation, tests).
+Both carry complete PROOF BLOCKs; every GATES claim the auditor could
+reproduce was TRUE.
+
+### What landed, item by item
+
+| Change | Verdict |
+|---|---|
+| Prisma datasource sqlite→postgresql; SQLite migrations archived to `prisma/migrations-sqlite/`; new `20261001175000_init_postgresql` (9 tables) + `20261002120000_admin_login_attempts` | ✅ chain proven on a REAL Postgres (embedded, port 5433): `migrate deploy` applied both migrations to a fresh database without a baseline error |
+| `db.ts`: Neon adapter on Vercel/`-pooler.` hosts, standard driver direct; throws without `DATABASE_URL`; dev singleton preserved | ✅ read + reasoned; adapter path exercised only by tsc/build locally (needs Neon to run) — noted, not testable in this container |
+| Portable seed: catalog + regions ONLY, no customer/order copy; `db:seed` routes through Prisma CLI for `.env` loading | ✅ live: 14 products / 6 regions / 0 customers / 0 orders — exactly as declared |
+| README rewritten (Neon provisioning, pooled vs direct URLs, Vercel env, VPS Postgres steps, seed scope warning) | ✅ coherent; placeholders only — **no secrets committed** (scanned both diffs: no connection strings, no passwords; `launch-password-2026` is a unit-test fixture in a `.test.ts` that never ships) |
+| `vercel.json`: `npx prisma migrate deploy && npm run build` | ✅ deploy-before-build is the correct Vercel order |
+| EOF directive: all 8 stripped files repaired in `200b1df` | ✅ EXECUTED — see ledger correction below |
+| NextAuth credentials (single owner via env), JWT 8h, secret ≥32 enforced, session email re-checked against env | ✅ code review clean; live E2E below |
+| scrypt hashing (N=2^14, r=8, 64-byte key, per-hash salt, `timingSafeEqual`, 14–1024 length bounds) | ✅ OWASP-aligned; `admin:hash` CLI reads hidden input |
+| DB-backed login throttle (5 attempts / 15 min, single row, no email/IP stored) | ✅ proven live: 5 wrong passwords → 6th attempt with the CORRECT password rejected pre-verification, no session, `attempts=5` row persists |
+| Admin CRUD API (GET/POST/PATCH), zod strict schemas, snapshot-validate-then-merge, P2002/P2025 mapping, no-store, same-origin check, `currentStock` structurally un-editable | ✅ verified live: anon 401, cross-origin PATCH 403, stock-edit PATCH 400, session flows 200 |
+| `/admin` pages: auth-gated, request-time, robots `disallow: /admin`, sitemap force-dynamic | ✅ `/admin` 307s anonymous users; build shows all admin routes ƒ dynamic |
+| `admin-products.tsx` (920 lines) | ✅ classes all standard utilities (R18 rule); searchable table + forms; stock shown read-only on edit |
+| 3 test files (8 unit tests) | ✅ 8/8 as claimed (+1 auditor regression test after the fix below → 9/9) |
+| **PATCH on any seeded product** | ❌ **offense #40 — every PATCH returned 409.** `nullableText()` transformed empty strings to null but rejected real NULLs; the legacy `variant` column is NULL for ALL 14 seeded rows, so `adminProductSnapshotSchema` failed on every existing product. The dashboard could not edit ANY existing catalog item. Unit tests passed because fixtures never used null variants — a new failure class: **unit-tested but never integration-exercised against real data** |
+| **bun.lock** | ❌ **offense #41 — lockfile drift.** `@prisma/adapter-neon`, `tsx`, `playwright` in package.json/package-lock.json but ABSENT from bun.lock — a `bun install` workspace cannot build, seed (no tsx), or verify (no playwright). Auditor regenerated the lockfile (+83/−10, versions match package.json) |
+
+### Auditor repairs this round
+
+1. `src/lib/admin-products-schema.ts`: `.nullable()` added to
+   `nullableText()` and `productImagePath` (2-line fix, commented) —
+   after the fix, all 14 stored rows pass snapshot validation and a
+   live same-value owner PATCH returns 200.
+2. `src/lib/admin-products-schema.test.ts`: regression test
+   ("accepts stored rows whose nullable columns are real NULLs") —
+   suite now 9/9.
+3. `bun.lock` regenerated via `bun install --lockfile-only`.
+
+### Auditor gate run (Postgres embedded in container; ICU 60 fetched
+for the Postgres binary; all commands carried explicit `DATABASE_URL`/
+`DATABASE_URL_UNPOOLED` because this container exports a stale SQLite
+URL that overrides `.env` — environment quirk, not an agent issue)
+
+- tsc **0** · `npm run build` **15/15 static + 21 routes** (admin
+  surface all ƒ) + both copy-standalone-assets lines · fiction **0/4**
+  · prose regression 0 · EOF `\n` on **all 36 touched files** ·
+  `git diff --check` clean · suite **22 pass / 0 fail / 0 skipped**
+  against the standalone prod server · migrate deploy clean on fresh
+  Postgres · seed 14/6/0/0 · admin tests **9/9** (post-fix).
+- Auth E2E (auditor scripts, gitignored): anonymous 401; 5 failed
+  logins → correct-password 6th attempt **blocked**; wrong-credential
+  sessions never issued; session flows (list 14, PATCH 200, /admin/
+  products 200) green; cross-origin 403; stock-edit 400.
+
+### Ledger corrections
+
+- **EOF #28 reinstated, then closed**: R20's withdrawal ("mis-recorded")
+  was itself the auditor's error — the R18 sweep meant
+  `src/app/api/route.ts`, the auditor re-tested `api/products/route.ts`.
+  Ground truth at parent `3dc03ca`: `src/app/api/route.ts` WAS stripped.
+  The agent repaired all 8 files (#28–35) in `200b1df` (od block per
+  file present in its DIFF-CHECK). **EOF ledger: 33 recorded offenses,
+  0 outstanding — the directive opened in R18 is CLOSED.** Bundled into
+  a feature commit instead of the instructed standalone mechanical
+  commit: acceptable deviation, outcome correct.
+- **#40 (new)**: integration gap — schema rejected the data the app
+  actually stores; unit green, real path broken. Auditor-repaired.
+- **#41 (new)**: partial lockfile sync (bun.lock vs package.json).
+  Auditor-repaired.
+
+### Scorecard
+
+| Trigger | Result |
+|---|---|
+| PROOF BLOCK complete | ✅ both commits (17-file and 24-file EOF blocks, hunk-coordinated DIFF-CHECKs, full GATES) |
+| GATES claims reproduce | ✅ every stated claim (tsc/build/curl/fiction/EOF/suite/tests/migration/seed) reproduced true by auditor |
+| Feature works on real data | ❌ #40 — edit path 409 on all seeded rows (auditor repaired) |
+| Lockfiles in sync | ❌ #41 — bun.lock drift (auditor repaired) |
+| Secrets hygiene | ✅ none committed; placeholder docs; hidden-input hash CLI |
+| EOF directive (#28–35) | ✅ executed — ledger closed |
+| Store green after fixes | ✅ full battery above |
+
+### Standing
+
+1. **Directive to the second agent: add one integration gate to your
+   own protocol** — before claiming a data-path feature works, exercise
+   it once against real seeded data (a PATCH, a POST, whatever the
+   feature is), and say so in GATES. Unit tests + build + storefront
+   suite did not see #40 and would not have.
+2. **Lockfile rule**: every dependency added to package.json must land
+   in BOTH package-lock.json and bun.lock in the same commit (#41).
+3. Advisory (not offenses): the login callback returns 500 (NextAuth
+   NO_SECRET) when env is unconfigured — the UI guards this with a
+   setup notice, but a 503-style explicit response would be kinder to
+   API probes; the Neon-adapter runtime branch remains deploy-time-only
+   verified in this container; no DELETE endpoint exists (hide via
+   isActive only) — confirm that is the intended owner workflow.
+4. EOF ledger stands CLOSED (33 recorded, 0 outstanding).

@@ -336,21 +336,20 @@ it is the checks you skip. Run them.
    Rule 2 and the Rule 3 typography table before combining any of them.
 
 3. **Every file you touch ends with exactly one trailing newline**
-   (`od -An -c FILE | tail -1` is the ground truth). Thirty-four EOF
-   offenses across eighteen rounds — #22 shipped twelve minutes after the
+   (`od -An -c FILE | tail -1` is the ground truth). Thirty-three EOF
+   offenses across twenty-one rounds — #22 shipped twelve minutes after the
    round-13 incident report; #23–27 (page.tsx, cart-drawer.tsx,
    globals.css, error-boundary.tsx, all R1-era) were found and repaired
    by the agent itself (R15, R18). The R18 repo-wide sweep found **8
    files still stripped (#28–35: api/route.ts, app/error.tsx,
    ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts,
-   hooks/use-url-state.ts, lib/db.ts) — repair all 8 in your next
-   push**, one mechanical commit, od block per file. *(R20 correction
-   by auditor: re-test shows `api/products/route.ts` ends `\n` and no
-   commit between sweeps touched it — #28 was mis-recorded in the R18
-   sweep. Outstanding count is **7 files (#29–35)**: app/error.tsx,
-   ui/input.tsx, ui/toast.tsx, ui/toaster.tsx, hooks/use-toast.ts,
-   hooks/use-url-state.ts, lib/db.ts — repair all 7 in your next
-   push.)* That is the
+   hooks/use-url-state.ts, lib/db.ts)**. *(R21: the second agent
+   repaired ALL 8 in commit `200b1df`, od block per file — **the
+   directive is CLOSED; 33 recorded, 0 outstanding**. History of the
+   count: R20's auditor "withdrawal" of #28 was itself an error — the
+   wrong path (`api/products/route.ts`) was re-tested; R21 ground
+   truth confirmed `api/route.ts` stripped at the R20 parent and the
+   repair landed.)* That is the
    standard every push is now held to.
 
 ## BEFORE EVERY PUSH — the six gates (Playbook §IV)
