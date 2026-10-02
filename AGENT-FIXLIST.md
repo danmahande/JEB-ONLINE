@@ -3364,3 +3364,97 @@ URL that overrides `.env` — environment quirk, not an agent issue)
    verified in this container; no DELETE endpoint exists (hide via
    isActive only) — confirm that is the intended owner workflow.
 4. EOF ledger stands CLOSED (33 recorded, 0 outstanding).
+
+## ROUND 22 — `88b6913` audit: rated **7.5/10** — the most security-mature push of the engagement (optional customer accounts + owner WebP image uploads + additive Postgres migration), with the best PROOF BLOCK yet — but the headline new data path shipped with a 500-on-duplicate-email that ONE manual double-submit would have caught, and the failure class from #40 repeated despite the explicit R21 directive. One new offense (#42, auditor-repaired across five sites); the lockfile directive (#41) was FOLLOWED this time.
+
+One commit reviewed: `88b6913` "feat: customer accounts and product image
+uploads" (+1603/−121, 35 files, co-authored with Copilot), pushed
+directly on top of the auditor's R21 ratification `f0375dc`.
+
+### What the push contains
+
+| Piece | Verdict |
+|---|---|
+| `prisma/migrations/20261003120000_customer_accounts` | ✅ genuinely additive — 2 new tables, nullable `customerAccountId` FK with `ON DELETE SET NULL`, composite index; auditor applied the full chain on a fresh embedded Postgres (3/3 migrations) with zero errors — exactly what the Vercel deploy-before-build will run |
+| Customer auth (`customer-auth.ts`) | ✅ NEXTAUTH_SECRET ≥32 enforced; zod-normalized email; **HMAC-derived attempt id** (raw email never stored — verified in the DB: attempt row id is a hex digest); **dummy-hash scrypt verify when account missing** (anti-enumeration, mirrors admin); role hardcoded `"customer"` |
+| Rate-limit consolidation | ✅ `admin-login-rate-limit.ts` + test deleted, identical policy (5/15min) moved to shared `login-rate-limit.ts`; the replacement test carries the SAME two assertions — rename, not weakening. `test:admin` script updated in the same commit |
+| Role separation | ✅ audited for confusion — `getAdminSession` requires `role === "admin"` (stricter than R21's email-only check); `getCustomerSession` requires `role === "customer"`; JWT `role` set from the provider user object, the email back-fill branch only fires when `!token.role`; a customer account registered with the owner's email CANNOT escalate (traced: role arrives at sign-in before any back-fill). Token tampering blocked by signed JWT + secret length floor |
+| `POST /api/account/register` | ❌→✅ **offense #42 — duplicate email returned 500 "Account sign-up failed. Please try again." instead of the intended 409** (proven live, P2002 visible in the server log with `instanceof` failing across bundle chunks). Auditor-repaired (see below) — now 409 |
+| `POST /api/admin/product-images` | ✅ auth checked TWICE (route + `onBeforeGenerateToken`), pathname locked to `product-images/[0-9a-f-]{36}.webp` (no traversal), `allowedContentTypes: ["image/webp"]`, 4.5 MB cap at Blob, strict zod on the handleUpload body; live matrix: anon 401, customer session 401, admin+no-BLOB-token 503. Client-side crop mirrors every server cap (10 MB source, 2048px, WebP 0.9, `bitmap.close()` in `finally`, object-URL revoked) |
+| `next.config.ts` images | ✅ `remotePatterns` locked to `https://*.public.blob.vercel-storage.com/product-images/**` with `search: ""`; admin-products schema gained the equivalent URL allow-list with positive AND negative tests added |
+| Orders ↔ accounts | ✅ `POST /api/orders` attaches `customerAccountId` from the session, guests stay `null`; `/account/orders` scopes `where: { customerAccountId: session.user.id }` (no IDOR), take 50, noindex, force-dynamic; `/account` redirects by session; robots.txt disallows `/account` |
+| Lockfile discipline (#41) | ✅ `@vercel/blob` + `react-easy-crop` present in package.json AND package-lock.json AND bun.lock, same commit — the R21 directive was followed |
+| Secrets | ✅ scan of the full diff clean; README documents Blob setup and honestly discloses NO email verification and NO password-reset flow |
+
+### Auditor E2E on real seeded data (embedded Postgres :5433, migrate
+deploy 3/3, seed 14/6 — the thing GATES skipped)
+
+- register → 201 · duplicate → **500 before repair / 409 after** ·
+  cross-origin → 403 · 9-char password → 400 with field errors
+- customer login: 5 wrong passwords then the CORRECT one 6th → **no
+  session issued, attempts=5 row persists** (policy proven per-account);
+  fresh account first-attempt login → session
+- signed-in order DS100001 → `customerAccountId` = B's id at DB level;
+  guest order DS100002 → `null`; B's `/account/orders` shows DS100001
+  and NOT DS100002; anon `/account/orders` → 307 to login
+- admin duplicate productId create → **500 before repair / 409 after**
+- suite on the REPAIRED build: **22 pass / 0 fail / 0 skipped**; unit
+  tests 13/13 (11 prior + 2 new prisma-error tests); tsc 0; build exit 0
+
+### OFFENSE #42 — `instanceof PrismaClientKnownRequestError` is dead
+code under the production bundle (the #40 failure class repeated)
+
+`error instanceof PrismaClientKnownRequestError` is FALSE at runtime:
+Next.js chunking resolves the class through more than one module
+instance, so the prototype check fails across the chunk boundary while
+the error itself logs `code: 'P2002'`. Five sites, five dead catches:
+
+1. `api/account/register` (NEW in this push) — duplicate email 500
+   instead of 409 — the headline path of the push
+2. `api/admin/products` POST — duplicate productId 500 instead of 409
+   (proven live; pattern pre-existing, now promoted into new-feature
+   territory by the push's own E2E claims)
+3. `api/admin/products/[id]` PATCH — P2002→409 dead AND P2025→404 dead
+4. `api/orders` POST — the orderNumber/orderId sequence-conflict RETRY
+   LOOP never retried: a concurrent-checkout collision would 500 the
+   checkout instead of self-healing. Most serious site; latent since
+   the pattern landed, and the only thing that ever exercised it was
+   the suite's single-threaded happy path
+
+**Auditor repair (5 files):** new `src/lib/prisma-error.ts` —
+duck-typed `prismaErrorCode()` / `isPrismaUniqueConstraintError()` /
+`isPrismaRecordNotFoundError()` (the `code` field is the bundling-safe
+contract) — plus per-site swaps and `+src/lib/prisma-error.test.ts`
+(unit 13/13) and one `.gitignore` line for the auditor's Postgres data
+dir. Live 409/409 re-verified after rebuild; suite 22/0/0 after.
+
+The pattern was pre-existing in two files — but the agent COPIED it
+into a brand-new route, and the R21 directive ("exercise each new data
+path once against real seeded data and say so in GATES") was the exact
+test that would have caught it: register twice, read the status. Not
+done, not claimed. The class repeats; it is now in AGENTS.md as a
+standing gate.
+
+### GATES accuracy
+
+| Claim | Verdict |
+|---|---|
+| tsc 0 · build exit 0 · homepage 200 · ms-steel 0 · fiction 0/4 · EOF 33/33 · admin tests 11/11 · Prisma validate | ✅ all reproduce |
+| suite "22/22 from prior run; not rerun (local DATABASE_URL invalid)" | ⚠️ honest skip, but the claim is env-specific: the auditor reran it green twice (pre- and post-repair) with a valid URL — the suite is runnable here |
+| "static pages 20/20" | ❌ not reproducible — the manifest shows 10 static routes (28 total). No obvious metric maps to 20. Precision defect, not a false pass |
+| customer data paths | ❌ absent from GATES (directive) — and two were broken |
+
+### Standing
+
+1. **NEW GATE (binding, in AGENTS.md as gate 7):** every new or changed
+   data path gets exercised once against real data in your own session
+   and the result goes in GATES. Register twice. PATCH a seeded row.
+   Checkout two concurrent orders. The suite does not know your
+   feature exists.
+2. Advisories (not offenses): no rate limit on `register` (DB-fill
+   spam; consider the same 5/15 shim); `ADMIN_EMAIL` is not reserved
+   against customer registration (traced harmless today — no
+   escalation — but reserve it before it becomes a support ticket);
+   registration 409 is an accepted enumeration trade-off (login side
+   is dummy-hash protected) — keep it documented.
+3. Ledger: 34 recorded, 0 outstanding after the #42 repair.

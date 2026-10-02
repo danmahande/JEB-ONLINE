@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
 import { leviesFor } from "@/lib/levies";
 import { getCustomerSession } from "@/lib/admin-auth";
+import { prismaErrorCode } from "@/lib/prisma-error";
 
 type CartLine = { productId: string; variantLabel?: string; qty: number };
 
@@ -351,12 +351,16 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         // orderNumber and orderId are both @unique and both derive from the
         // same sequence — a P2002 on either means another checkout claimed it.
+        // (R22 auditor repair: instanceof failed under the production bundle —
+        // see src/lib/prisma-error.ts — so the retry below never fired.)
+        const target =
+          typeof error === "object" && error !== null
+            ? (error as { meta?: { target?: unknown } }).meta?.target
+            : undefined;
         const isSequenceConflict =
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === "P2002" &&
-          Array.isArray(error.meta?.target) &&
-          (error.meta.target.includes("orderNumber") ||
-            error.meta.target.includes("orderId"));
+          prismaErrorCode(error) === "P2002" &&
+          Array.isArray(target) &&
+          (target.includes("orderNumber") || target.includes("orderId"));
         if (!isSequenceConflict || attempt >= 2) throw error;
       }
     }

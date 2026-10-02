@@ -363,6 +363,15 @@ od -An -c <EVERY touched file> | tr -s ' ' | tail -1               # ends in \n
 node scripts/verify-round7-fix.js                                  # → 22/22
 ```
 
+**Gate 7 (binding since Round 22): exercise every new or changed data
+path once against real seeded data, in your own session, and put the
+result in GATES.** Unit tests + build + the storefront suite do not
+know your feature exists. Offense #40 (a PATCH that 409'd on every
+seeded row) and #42 (a register that 500'd on a duplicate email, and a
+checkout retry loop that never retried) were both invisible to every
+gate except this one. Register twice. PATCH a seeded row. Place an
+order. Read the status code, not the absence of an exception.
+
 The build now type-checks for real (`ignoreBuildErrors` was removed in
 Task 90) — but a green build is still just one gate. `tsc` unfiltered is
 the type proof; the suite is the regression proof.

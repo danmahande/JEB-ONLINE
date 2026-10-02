@@ -1,4 +1,3 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
@@ -6,6 +5,10 @@ import {
   adminProductSnapshotSchema,
 } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import {
+  isPrismaRecordNotFoundError,
+  isPrismaUniqueConstraintError,
+} from "@/lib/prisma-error";
 import { isSameOriginRequest } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
@@ -131,19 +134,13 @@ export async function PATCH(
       { headers: { "Cache-Control": "private, no-store" } }
     );
   } catch (error) {
-    if (
-      error instanceof PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isPrismaUniqueConstraintError(error)) {
       return NextResponse.json(
         { success: false, error: "That product ID is already in use." },
         { status: 409 }
       );
     }
-    if (
-      error instanceof PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (isPrismaRecordNotFoundError(error)) {
       return NextResponse.json(
         { success: false, error: "Product not found." },
         { status: 404 }

@@ -1,9 +1,9 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextRequest, NextResponse } from "next/server";
 import { customerAccountRegistrationSchema } from "@/lib/customer-account-schema";
 import { isCustomerAccountsConfigured } from "@/lib/admin-auth";
 import { createCustomerPasswordHash } from "@/lib/admin-password";
 import { db } from "@/lib/db";
+import { isPrismaUniqueConstraintError } from "@/lib/prisma-error";
 import { isSameOriginRequest } from "@/lib/request-origin";
 
 export async function POST(request: NextRequest) {
@@ -56,10 +56,7 @@ export async function POST(request: NextRequest) {
       { status: 201, headers: { "Cache-Control": "private, no-store" } }
     );
   } catch (error) {
-    if (
-      error instanceof PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isPrismaUniqueConstraintError(error)) {
       return NextResponse.json(
         { success: false, error: "An account already exists for this email." },
         { status: 409 }

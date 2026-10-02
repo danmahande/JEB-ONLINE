@@ -1,8 +1,8 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { adminProductCreateSchema } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import { isPrismaUniqueConstraintError } from "@/lib/prisma-error";
 import { isSameOriginRequest } from "@/lib/request-origin";
 
 export const dynamic = "force-dynamic";
@@ -115,10 +115,7 @@ export async function POST(req: NextRequest) {
       { status: 201, headers: { "Cache-Control": "private, no-store" } }
     );
   } catch (error) {
-    if (
-      error instanceof PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isPrismaUniqueConstraintError(error)) {
       return NextResponse.json(
         {
           success: false,
