@@ -205,3 +205,10 @@ model Counter {
   name  String @unique
   value Int    @default(0)
 }
+
+/// Single-row throttle for the owner credentials endpoint; stores no email or IP.
+model AdminLoginAttempt {
+  id             String   @id
+  attempts       Int      @default(0)
+  windowStartedAt DateTime @default(now())
+}

@@ -67,6 +67,7 @@ server.log
 !/scripts/seed.ts
 !/scripts/copy-standalone-assets.js
 !/scripts/start-prod.js
+!/scripts/hash-admin-password.ts
 # purged from tracking (Task 44) — old ERP source + design source photos
 /kwanza-erp-src/
 /examples/

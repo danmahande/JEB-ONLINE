@@ -44,6 +44,11 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 - Restock alert signup on out-of-stock products
 - Kampala clock and a day-part "living sky" — the light (dawn / golden hour / night) follows real time of day across the whole page, not just the hero
 
+**Store administration**
+- Private owner sign-in and a product catalog for adding, editing, searching, and hiding products
+- Product pricing, variants, origin/customs details, opening stock, and low-stock thresholds
+- Product edits cannot change current stock; audited stock receipts and adjustments are a separate workflow
+
 ---
 
 ## Tech stack
@@ -95,6 +100,8 @@ Open http://localhost:3000. The seed script inserts the 14 catalog products and 
 | `bun run db:seed` | Seed catalog and region configuration into an empty database |
 | `bun run db:migrate` | Create/apply a dev migration |
 | `bun run db:reset` | Reset the database |
+| `npm run admin:hash` | Generate a hidden-input scrypt hash for the single admin password |
+| `npm run test:admin` | Test admin authentication and product input validation |
 
 ### Environment
 
@@ -107,6 +114,18 @@ DATABASE_URL_UNPOOLED="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
 `DATABASE_URL` is the pooled connection for application queries. `DATABASE_URL_UNPOOLED` is the direct connection used by Prisma Migrate; keep both out of source control.
 
+### Owner admin login
+
+The private product manager is at `/admin`. It uses the existing NextAuth dependency with one configured owner account; no separate backend repository or admin-user table is needed. Five failed sign-in attempts are allowed in a 15-minute window; the attempt counter is a single database row and stores no email or IP address.
+
+1. Choose an admin email and a password of at least 14 characters.
+2. In a local terminal run `npm run admin:hash` and enter the password when prompted. Input is hidden; copy the printed `ADMIN_PASSWORD_HASH` value into Vercel, not into this repository.
+3. Generate a session secret with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"`.
+4. In the Vercel project, add `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `NEXTAUTH_SECRET` to the Production environment (and Development/Preview only if you will use admin there). Keep them private and redeploy after saving.
+5. Open `https://jeb-online.vercel.app/admin` and sign in. Sessions expire after eight hours.
+
+The product form accepts a local image path such as `/products/maize.png`. Add the image file to `public/products/` first; uploads and external image hosting are not configured in this first version. Opening stock can be set only when a product is created. It is deliberately read-only while editing, so inventory changes cannot bypass a future stock-movement audit trail.
+
 ---
 
 ## Project structure
@@ -117,8 +136,11 @@ src/
     page.tsx              # storefront shell: shop / checkout / confirmation / track views
     layout.tsx            # fonts (Space Grotesk + Inter), global chrome
     globals.css           # design system (steel-tile catalog, motion, labels)
+    admin/                # private owner product manager
     api/
       products/route.ts   # GET   catalog with variants + stock
+      admin/products/     # owner-only product CRUD and soft deactivation
+      auth/[...nextauth]/ # single-admin credentials session
       fx/route.ts         # GET   region configs: currency, FX rate, duty, VAT, freight
       orders/route.ts     # GET   track order (by number) · POST place order
   components/storefront/
@@ -159,6 +181,9 @@ scripts/seed.ts           # catalog seed data
 | GET | `/api/fx` | Region configs (currency, rates, duties, VAT, freight) |
 | GET | `/api/orders` | Track an order by number |
 | POST | `/api/orders` | Place an order (creates customer, order, lines, first event) |
+| GET | `/api/admin/products` | List products for the signed-in admin |
+| POST | `/api/admin/products` | Create a product with opening stock |
+| PATCH | `/api/admin/products/:id` | Edit product details, publish, or hide (stock is not editable) |
 
 ## Design system
 

@@ -13,7 +13,9 @@
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "admin:hash": "tsx scripts/hash-admin-password.ts",
+    "test:admin": "tsx --test src/lib/admin-auth.test.ts src/lib/admin-login-rate-limit.test.ts src/lib/admin-products-schema.test.ts"
   },
   "prisma": {
     "seed": "tsx scripts/seed.ts"

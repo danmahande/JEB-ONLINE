@@ -1,0 +1,144 @@
+import { getServerSession, type NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import {
+  ADMIN_LOGIN_MAX_ATTEMPTS,
+  isAdminLoginRateLimited,
+  getAdminLoginWindowCutoff,
+  isAdminLoginWindowExpired,
+  ADMIN_LOGIN_WINDOW_MS,
+} from "@/lib/admin-login-rate-limit";
+import {
+  isAdminPasswordHashValid,
+  MINIMUM_ADMIN_PASSWORD_LENGTH,
+  verifyAdminPassword,
+} from "@/lib/admin-password";
+
+const credentialsSchema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(MINIMUM_ADMIN_PASSWORD_LENGTH).max(1024),
+});
+
+export function isAdminConfigured(): boolean {
+  const email = process.env.ADMIN_EMAIL?.trim();
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+  const secret = process.env.NEXTAUTH_SECRET;
+
+  return Boolean(
+    email &&
+      z.string().email().safeParse(email).success &&
+      passwordHash &&
+      isAdminPasswordHashValid(passwordHash) &&
+      secret &&
+      secret.length >= 32
+  );
+}
+
+export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+    maxAge: 8 * 60 * 60,
+  },
+  jwt: {
+    maxAge: 8 * 60 * 60,
+  },
+  pages: {
+    signIn: "/admin/login",
+  },
+  providers: [
+    CredentialsProvider({
+      name: "Store owner",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!isAdminConfigured()) return null;
+
+        const parsed = credentialsSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+
+        const configuredEmail = process.env.ADMIN_EMAIL?.trim();
+        const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+        if (
+          !configuredEmail ||
+          !passwordHash ||
+          parsed.data.email.toLowerCase() !== configuredEmail.toLowerCase()
+        ) {
+          return null;
+        }
+
+        const now = new Date();
+        const windowCutoff = getAdminLoginWindowCutoff(now);
+        let existingAttempt = await db.adminLoginAttempt.findUnique({
+          where: { id: "owner" },
+        });
+        if (
+          existingAttempt &&
+          isAdminLoginWindowExpired(existingAttempt.windowStartedAt, now)
+        ) {
+          const reset = await db.adminLoginAttempt.updateMany({
+            where: {
+              id: "owner",
+              windowStartedAt: { lte: windowCutoff },
+            },
+            data: {
+              attempts: 0,
+              windowStartedAt: now,
+            },
+          });
+          existingAttempt =
+            reset.count > 0
+              ? { ...existingAttempt, attempts: 0, windowStartedAt: now }
+              : await db.adminLoginAttempt.findUnique({ where: { id: "owner" } });
+        }
+
+        if (
+          existingAttempt &&
+          isAdminLoginRateLimited(existingAttempt.attempts)
+        ) {
+          return null;
+        }
+
+        const attempt = await db.adminLoginAttempt.upsert({
+          where: { id: "owner" },
+          create: {
+            id: "owner",
+            attempts: 1,
+            windowStartedAt: now,
+          },
+          update: { attempts: { increment: 1 } },
+        });
+        if (
+          isAdminLoginRateLimited(attempt.attempts) &&
+          attempt.attempts > ADMIN_LOGIN_MAX_ATTEMPTS
+        ) {
+          return null;
+        }
+
+        if (!verifyAdminPassword(parsed.data.password, passwordHash)) return null;
+
+        await db.adminLoginAttempt.deleteMany({ where: { id: "owner" } });
+
+        return {
+          id: configuredEmail.toLowerCase(),
+          email: configuredEmail,
+          name: "Meridian Store Admin",
+        };
+      },
+    }),
+  ],
+};
+
+export async function getAdminSession() {
+  if (!isAdminConfigured()) return null;
+  const session = await getServerSession(authOptions);
+  const configuredEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  return session?.user?.email?.toLowerCase() === configuredEmail ? session : null;
+}
+
+export async function isAdminAuthenticated(): Promise<boolean> {
+  return Boolean(await getAdminSession());
+}
