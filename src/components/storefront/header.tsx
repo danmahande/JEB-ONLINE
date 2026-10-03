@@ -312,16 +312,37 @@ export default function Header({
             />
 
             {/* Account — Amazon-pattern entry: small greeting over the label,
-                menu carries what is relevant to the session state */}
+                menu carries what is relevant to the session state. Round 25:
+                the entry must LOOK like a control — pointer cursor, hover
+                pill, and a caret that rotates while the menu is open. Radix
+                stamps data-state="open" on the trigger; the caret answers
+                through the group variant. Same chevron the region select
+                uses, same hover family as the hamburger. */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="hidden md:block text-left leading-tight"
+                  className="group hidden md:flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 -mx-2 text-left leading-tight hover:bg-line"
                   aria-label="Account menu"
                 >
-                  <span className="ms-label block text-[10px] opacity-70">{greeting}</span>
-                  <span className="ms-label block">ACCOUNT</span>
+                  <span>
+                    <span className="ms-label block text-[10px] opacity-70">{greeting}</span>
+                    <span className="ms-label block">ACCOUNT</span>
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    className="shrink-0 text-ink transition-transform duration-200 group-data-[state=open]:rotate-180"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px] p-2">

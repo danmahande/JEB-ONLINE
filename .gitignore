@@ -81,3 +81,6 @@ server.log
 # agent-sandbox db artifacts (runtime artifact — recreate via npx tsx scripts/seed.ts)
 prisma/db/
 .pgdata*/
+
+# standalone-server runtime env recovered between rounds (DB URLs, NEXTAUTH_SECRET, admin hash) — NEVER committable
+/.server-env

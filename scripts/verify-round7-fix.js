@@ -1,5 +1,5 @@
 /**
- * Round 7+ standing regression suite — 33 checks (session checks skip
+ * Round 7+ standing regression suite — 36 checks (session checks skip
  * without a customer-capable backend).
  *
  * REBUILT 2026-09-30 (Task 90): the original script was lost with the
@@ -193,6 +193,8 @@ const section = (t) => results.push(`\n[${t}]`);
   // Round 23 put ACCOUNT rightmost; Round 24 moved to the Amazon order —
   // ACCOUNT (greeting + menu) BEFORE the cart, cart keeps the extreme right
   // with extra spacing, and the entry greets Amazon-style (HELLO, …).
+  // Round 25: the entry must LOOK like a control — pointer cursor, hover
+  // treatment, and a caret that visibly rotates while the menu is open.
   section("header order & account entry");
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
@@ -235,17 +237,71 @@ const section = (t) => results.push(`\n[${t}]`);
     !!greetingText && greetingText.includes("HELLO,") && greetingText.includes("ACCOUNT"),
     (greetingText || "").replace(/\s+/g, " ").trim().slice(0, 40)
   );
+  // Clickability you can SEE, not guess: pointer cursor + hover pill + a
+  // caret that is actually on screen (Round 25 owner ask).
+  const afford = await page.evaluate(() => {
+    const t = document.querySelector('button[aria-label="Account menu"]');
+    if (!t) return null;
+    const caret = t.querySelector("svg");
+    return {
+      cursor: getComputedStyle(t).cursor,
+      hoverClass: t.className.includes("hover:bg-line"),
+      caretVisible: !!caret && caret.getClientRects().length > 0,
+    };
+  });
+  check(
+    "ACCOUNT entry reads as clickable (pointer cursor + hover treatment)",
+    !!afford && afford.cursor === "pointer" && afford.hoverClass,
+    afford ? `cursor=${afford.cursor} hover=${afford.hoverClass}` : "trigger missing"
+  );
+  check(
+    "ACCOUNT entry carries a visible caret",
+    !!afford && afford.caretVisible,
+    afford ? `caretVisible=${afford.caretVisible}` : "trigger missing"
+  );
   await page.locator('button[aria-label="Account menu"]').click();
   let anonMenu = false;
+  let openAfford = { state: "", rotated: false };
   try {
     const menu = page.getByRole("menu");
     await menu.getByText("SIGN IN", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
     anonMenu = await menu.getByText("CREATE ACCOUNT", { exact: true }).isVisible();
+    openAfford = await page.evaluate(() => {
+      const t = document.querySelector('button[aria-label="Account menu"]');
+      const caret = t?.querySelector("svg");
+      if (!caret) return { state: t?.getAttribute("data-state") || "", rotated: false };
+      const s = getComputedStyle(caret);
+      // Tailwind v4 rotate-* uses the native CSS rotate property; accept
+      // either that or a transform matrix so the check survives engines.
+      return {
+        state: t?.getAttribute("data-state") || "",
+        rotated: (s.rotate && s.rotate !== "none") || s.transform !== "none",
+      };
+    });
   } catch {
     anonMenu = false;
   }
   await page.keyboard.press("Escape");
+  await page.waitForTimeout(350); // caret transition (200ms) settles before the reset read
+  const closedAfford = await page.evaluate(() => {
+    const t = document.querySelector('button[aria-label="Account menu"]');
+    const caret = t?.querySelector("svg");
+    if (!caret) return { state: t?.getAttribute("data-state") || "", rotated: true };
+    const s = getComputedStyle(caret);
+    return {
+      state: t?.getAttribute("data-state") || "",
+      rotated: (s.rotate && s.rotate !== "none") || s.transform !== "none",
+    };
+  });
   check("anonymous account menu offers SIGN IN + CREATE ACCOUNT", anonMenu);
+  check(
+    "caret rotates while the menu is open and resets on close",
+    openAfford.state === "open" &&
+      openAfford.rotated === true &&
+      closedAfford.state === "closed" &&
+      closedAfford.rotated === false,
+    `open=${openAfford.state}/rot=${openAfford.rotated} closed=${closedAfford.state}/rot=${closedAfford.rotated}`
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator("header .md\\:hidden button").first().click();
   let mobileAccount = false;

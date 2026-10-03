@@ -3569,3 +3569,31 @@ One commit: header rework (+1 suite section rewrite) on `ebc1abc`.
 
 1. The R23 suite assertion "ACCOUNT is the rightmost control" is superseded by design — the owner moved the target. The suite change is part of the same commit so the suite never asserts a stale contract.
 2. Ledger unchanged: 35 recorded / 0 outstanding (no agent push audited this round; no new offenses).
+
+---
+
+## ROUND 25 — owner feedback on the R24 account entry: "let there be a visible drop down on account right now you cant even tell if its clickable". No agent push this round — the auditor repairs its own R24 output. The owner is right: the R24 dropdown was real (Radix menu, session-correct contents) but the trigger rendered as two lines of text — no caret, no hover state, and Tailwind v4 preflight gives buttons `cursor: default`, so nothing on screen signaled interactivity until you already knew to click.
+
+One commit: header trigger affordance + suite 33 → 36 checks.
+
+### What was built (owner ask → implementation)
+
+| Ask | Verdict |
+|---|---|
+| "visible drop down on account" | ✅ the trigger carries a chevron caret — the SAME polyline the region select uses (family consistency), 14px, `text-ink` |
+| "you cant even tell if its clickable" | ✅ three affordances stacked: `cursor-pointer` (correcting the Tailwind v4 preflight default), a `hover:bg-line` pill (same hover family as the hamburger button), and the caret ROTATES 180° while the menu is open — Radix stamps `data-state="open"` on the trigger, the caret answers through `group-data-[state=open]:rotate-180` with `transition-transform duration-200`, and resets on close. Keyboard reach already covered by the site-wide `:focus-visible` outline |
+| Geometry guarded | ✅ `px-2 py-1.5 -mx-2` keeps the text at the same x (left alignment vs. region select preserved); ACCOUNT→CART gap still passes the ≥24px suite assertion (measured 34px post-change, cart still maxRight) |
+
+### Gates (all re-run this session)
+
+- `tsc --noEmit` → 0 unfiltered; `npm run build` → exit 0, 28 routes, `/account` still ƒ (R23 force-dynamic repair intact)
+- fiction 0×4; EOF `\n` on all touched files; `git diff --check` clean
+- unit `test:admin` → 13/0
+- suite 33 → **36 checks**: + pointer cursor & hover treatment (computed live, not class-sniffing), + visible caret on screen, + caret rotation cycle (open → rotated, Escape → reset). Live run **36/0/0** on standalone prod :3000 (server restarted on the fresh build; fresh seeded DB 14/6)
+- Gate 7 re-run green through the new trigger: register → customer-provider login → `HELLO, SUITE` → menu → real SIGN OUT click → `/api/auth/session` → `{}` → anon `/account` → login
+
+### Notes
+
+1. First suite run FAILED the new caret check (`open=open/none`) — auditor assertion bug, not an app bug: Tailwind v4 `rotate-180` emits the native CSS `rotate` property, NOT a `transform` matrix, and the check read `transform`. Probed live before changing what the check measures: computed styles were `state=open rotate=180deg transform=none` (open) and `state=closed rotate=none` (reset) — the caret was rotating the whole time. The check now reads `rotate` (accepting either property so it survives engine differences).
+2. `.server-env` (the standalone server's runtime env: DB URLs, NEXTAUTH_SECRET, admin hash — recovered from the old PID's `/proc` environ at restart) is now gitignored explicitly; `.env*` did not cover the name.
+3. Ledger unchanged: 35 recorded / 0 outstanding — no agent push audited this round; the defect was the auditor's own R24 output and is repaired under the same protocol as any agent defect.
