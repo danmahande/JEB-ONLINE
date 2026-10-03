@@ -1,5 +1,5 @@
 /**
- * Round 7+ standing regression suite — 22 checks.
+ * Round 7+ standing regression suite — 25 checks.
  *
  * REBUILT 2026-09-30 (Task 90): the original script was lost with the
  * container (it was gitignored under /scripts/*). This rebuild covers the
@@ -123,6 +123,70 @@ const section = (t) => results.push(`\n[${t}]`);
   } else {
     skip("PDP pack toggle uses true 800", "catalog API has no active multi-variant product");
   }
+
+  // ---------- [2b] ticker strip — served countries + live FX ----------
+  // Round 23 restoration: the ticker renders SERVING (countries) and
+  // LIVE FX (1 USD ≈ corridor rates) from /api/fx. This is a data-path
+  // check (Gate 7): the numbers on screen must equal the API's numbers.
+  section("ticker strip — countries + live FX");
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  const fxRes = await req("/api/fx");
+  const fxOk = fxRes.ok();
+  const fxData = fxOk ? await fxRes.json().catch(() => null) : null;
+  const fxRegions = fxData?.success && Array.isArray(fxData.regions) ? fxData.regions : [];
+  if (!fxOk || fxRegions.length === 0) {
+    skip("ticker shows served countries from /api/fx", "fx feed unavailable or empty");
+    skip("ticker reflects live FX rates from /api/fx", "fx feed unavailable or empty");
+  } else {
+    let trackText = "";
+    try {
+      await page.waitForFunction(
+        () => (document.querySelector(".ms-marquee-track")?.textContent || "").includes("LIVE FX"),
+        undefined,
+        { timeout: 10000 }
+      );
+      trackText = await page.textContent(".ms-marquee-track");
+    } catch {
+      trackText = await page.textContent(".ms-marquee-track").catch(() => "");
+    }
+    const countries = fxRegions.map((r) => r.countryName);
+    check(
+      "ticker shows served countries from /api/fx",
+      trackText.includes("SERVING") && countries.every((c) => trackText.includes(c)),
+      `${countries.join(" · ")}`
+    );
+    const expectedRates = fxRegions
+      .filter((r) => r.currency !== "USD" && r.rateToUsd > 0)
+      .map((r) => `${r.currency} ${Math.round(r.rateToUsd).toLocaleString("en-US")}`)
+      .join(" · ");
+    check(
+      "ticker reflects live FX rates from /api/fx",
+      trackText.includes("LIVE FX — 1 USD ≈") && trackText.includes(expectedRates),
+      expectedRates
+    );
+  }
+  const collapse = await page.evaluate(async () => {
+    const strip = document.querySelector("header > div");
+    const styleOf = () => {
+      const s = getComputedStyle(strip);
+      return { maxHeight: s.maxHeight, opacity: s.opacity };
+    };
+    window.scrollTo(0, 400);
+    await new Promise((r) => setTimeout(r, 600));
+    const scrolled = styleOf();
+    window.scrollTo(0, 0);
+    await new Promise((r) => setTimeout(r, 600));
+    const top = styleOf();
+    return { scrolled, top };
+  });
+  check(
+    "ticker collapses on scroll and re-expands at top",
+    collapse.scrolled.maxHeight === "0px" &&
+      collapse.scrolled.opacity === "0" &&
+      collapse.top.maxHeight !== "0px" &&
+      collapse.top.opacity === "1",
+    `scrolled=${collapse.scrolled.maxHeight}/${collapse.scrolled.opacity} top=${collapse.top.maxHeight}/${collapse.top.opacity}`
+  );
 
   // ---------- [3] drawer flow & money ----------
   section("drawer flow & money");

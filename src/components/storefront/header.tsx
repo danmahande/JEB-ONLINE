@@ -1,13 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
 import KampalaClock from "@/components/storefront/kampala-clock";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import type { RegionConfig } from "@/lib/types";
+
+/* Owner-directed restoration (Round 23): the navy ticker strip above the
+   bar lived here from 59c01c2 until 8477ce5 deleted it as a drive-by while
+   fixing the CartDrawer. Two of its lines are owner-mandated and now LIVE:
+   - SERVING: the served countries, derived from the RegionConfig rows the
+     storefront already fetches from /api/fx (never a hardcoded list — a
+     corridor joins the ticker the moment it joins the DB).
+   - LIVE FX: 1 USD ≈ each corridor currency, from the same feed. /api/fx
+     refreshes rateToUsd from open.er-api.com on a 6h TTL (src/lib/fx.ts),
+     so these numbers are the real market rates the checkout charges.
+   The strip collapses on scroll and carries the Kampala clock masked into
+   its right edge — both verbatim from the original design. */
 
 /* The store's single search (Option A) — PERSISTENT: always open,
    no grip button, no collapse choreography. One component, two
@@ -88,6 +100,15 @@ export default function Header({
   const region = useRegion((s) => s.region || '');
   const setRegion = useRegion((s) => s.setRegion);
   const hydrated = useRegion((s) => s.hasHydrated);
+  const [scrolled, setScrolled] = useState(false);
+
+  // header compresses on scroll: ticker collapses, main bar stays sticky
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSearchSubmit = () => {
     if (!query.trim()) return;
@@ -98,8 +119,51 @@ export default function Header({
     }
   };
 
+  // duty-free lane scoped to the corridors that actually quote 0% — the DRC
+  // corridor is transitional and carries an estimated duty (Task 61)
+  const tickerItems = [
+    ...(regions.length > 0
+      ? [`SERVING ${regions.map((r) => r.countryName).join(" · ")}`]
+      : []),
+    ...(regions.length > 0
+      ? [
+          `LIVE FX — 1 USD ≈ ${regions
+            .filter((r) => r.currency !== "USD" && r.rateToUsd > 0)
+            .map(
+              (r) =>
+                `${r.currency} ${Math.round(r.rateToUsd).toLocaleString("en-US")}`
+            )
+            .join(" · ")}`,
+        ]
+      : []),
+    "EAC ORIGIN — 0% IMPORT DUTY ACROSS KE · TZ · RW",
+    "GRAINS MILLED & SORTED IN UGANDA",
+    "CROSS-BORDER FREIGHT QUOTED AT CHECKOUT",
+    "BULK & WHOLESALE WELCOME",
+  ];
+  const ticker = [...tickerItems, ...tickerItems];
+
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-white">
+      {/* ticker — served countries + live FX from /api/fx; collapses on scroll */}
+      <div
+        className={`relative overflow-hidden bg-ink text-white transition-all duration-300 ${
+          scrolled ? "max-h-0 py-0 opacity-0" : "max-h-12 py-1.5 opacity-100"
+        }`}
+      >
+        <div className="ms-marquee-track" aria-hidden="true">
+          {ticker.map((t, i) => (
+            <span key={i} className="ms-label mx-8 inline-block">
+              {t} <span className="ml-8 text-brand">●</span>
+            </span>
+          ))}
+        </div>
+        {/* live HQ clock — masked into the right edge of the marquee */}
+        <div className="absolute inset-y-0 right-0 flex items-center pl-10 pr-4 md:pr-8 bg-gradient-to-r from-transparent via-ink to-ink">
+          <KampalaClock />
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between gap-4 py-3">
 {/* Brand */}
@@ -174,11 +238,9 @@ export default function Header({
              </nav>
            </div>
 
-          {/* Right section */}
+          {/* Right section — ACCOUNT sits at the extreme right (owner-directed,
+              the position most online stores give the account entry point) */}
           <div className="flex items-center gap-4">
-            <Link href="/account" className="ms-label hidden md:inline-flex">
-              ACCOUNT
-            </Link>
             {/* Region selector */}
             <div className="relative">
               <select
@@ -252,8 +314,9 @@ export default function Header({
               )}
             </button>
 
-            {/* Clock */}
-            <KampalaClock />
+            <Link href="/account" className="ms-label hidden md:inline-flex">
+              ACCOUNT
+            </Link>
           </div>
         </div>
 
