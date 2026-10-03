@@ -3540,3 +3540,32 @@ already ƒ dynamic — `/account` was the only baked one.
    reserved against customer registration. Both unchanged, both
    documented in R22.
 3. Ledger: 35 recorded, 0 outstanding after the #43 repair.
+
+---
+
+## ROUND 24 — owner-directed header rework, implemented by the auditor: the Amazon pattern. The owner's directives: cart AFTER account, more space between them, and "copy some of the account implementation like amazon where there is relevance". No agent push this round — `main` stood at the auditor's `ebc1abc`; this is an owner→auditor implementation round with the full gate battery anyway.
+
+One commit: header rework (+1 suite section rewrite) on `ebc1abc`.
+
+### What was built (owner directive → implementation)
+
+| Directive | Verdict |
+|---|---|
+| "put the cart after account" | ✅ right cluster now reads region · search · ACCOUNT · CART — the Amazon order; CART keeps the extreme right (verified geometrically: cart=1164 = maxRight, acct=1054) |
+| "increase the space between them" | ✅ cart carries `md:ml-8` on top of the cluster gap — measured 41px between ACCOUNT and CART; suite asserts ≥ 24px so a future regression can't silently close it |
+| "copy some of the account implementation like amazon" | ✅ the entry is now a two-line block — small `HELLO, …` greeting over the ACCOUNT label — with a dropdown menu carrying what is RELEVANT to the session state: anon sees SIGN IN / CREATE ACCOUNT; a signed-in customer is greeted BY NAME (first name, uppercased), sees YOUR ORDERS / YOUR ACCOUNT / SIGN OUT; CART gains its name beside the icon (md+), Amazon-style. All in Ms. Steel tokens (ms-label, bg-line hover, existing DropdownMenu primitive) — zero new CSS families |
+| Session plumbing | ✅ header fetches `/api/auth/session` on mount (`role === "customer"` gate — an admin session on the storefront gets the signed-out look, consistent with role separation); `signOut({ callbackUrl: "/" })` from next-auth/react, the pattern already used in `/account/orders` and `/admin/products` — no SessionProvider needed |
+| Hydration safety | ✅ `customer` state starts `undefined` → the signed-out look renders on SSR and first paint (same wait-for-hydration behavior as the cart badge); no SSR/client mismatch possible |
+
+### Gates (all re-run this session)
+
+- `tsc --noEmit` → 0 unfiltered; `npm run build` → exit 0, 28 routes
+- fiction 0×4 (`ms-steel` tsx / `Amazon Ember` / `var(--font-display` / `prose prose-`); EOF `\n` on both touched files; `git diff --check` clean
+- unit `test:admin` → fail 0
+- suite rewritten 29 → **33 checks**: the R23 "ACCOUNT rightmost" check is REPLACED by the new contract (cart rightmost + widened gap + greeting + anon menu), and four new checks cover the signed-in state — greeting by name (`HELLO, SUITE` from the registered "Suite Gate"), menu carries YOUR ORDERS + SIGN OUT, **SIGN OUT actually ends the session** (`/api/auth/session` → `{}` after the click — a real Gate 7 exercise of the new data path), anon menu contents. Live run: **33/0/0** on standalone prod :3000
+- Gate 7 extras: register 201 → customer login 302 → greeting/menu/sign-out exercised through the real browser path (client `signOut()`, full navigation, cookie cleared server-side)
+
+### Notes
+
+1. The R23 suite assertion "ACCOUNT is the rightmost control" is superseded by design — the owner moved the target. The suite change is part of the same commit so the suite never asserts a stale contract.
+2. Ledger unchanged: 35 recorded / 0 outstanding (no agent push audited this round; no new offenses).

@@ -1,6 +1,6 @@
 /**
- * Round 7+ standing regression suite — 29 checks (1 skips without a
- * customer-capable backend).
+ * Round 7+ standing regression suite — 33 checks (session checks skip
+ * without a customer-capable backend).
  *
  * REBUILT 2026-09-30 (Task 90): the original script was lost with the
  * container (it was gitignored under /scripts/*). This rebuild covers the
@@ -189,35 +189,63 @@ const section = (t) => results.push(`\n[${t}]`);
     `scrolled=${collapse.scrolled.maxHeight}/${collapse.scrolled.opacity} top=${collapse.top.maxHeight}/${collapse.top.opacity}`
   );
 
-  // ---------- [2c] account entry placement (owner-directed, Round 23) ----------
-  // The owner moved ACCOUNT to the extreme right of the header bar — the
-  // position most online stores give it. Guard the geometry: on desktop the
-  // inline ACCOUNT link must be the rightmost interactive element in the
-  // header bar, and the mobile hamburger menu must still carry an entry.
-  section("account entry placement");
+  // ---------- [2c] header order & account entry (owner-directed) ----------
+  // Round 23 put ACCOUNT rightmost; Round 24 moved to the Amazon order —
+  // ACCOUNT (greeting + menu) BEFORE the cart, cart keeps the extreme right
+  // with extra spacing, and the entry greets Amazon-style (HELLO, …).
+  section("header order & account entry");
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  const placement = await page.evaluate(() => {
+  await page.waitForFunction(
+    () => !!document.querySelector('button[aria-label="Account menu"]'),
+    undefined,
+    { timeout: 10000 }
+  );
+  const order = await page.evaluate(() => {
     const bar = document.querySelector("header .container");
     if (!bar) return { ok: false, why: "header bar not found" };
     const interactive = [...bar.querySelectorAll("button, a, select, input")].filter(
       (el) => el.getClientRects().length > 0 && !el.closest('[role="menu"]')
     );
-    const inlineAccount = [...bar.querySelectorAll('a[href="/account"]')].find(
-      (l) => l.getClientRects().length > 0 && !l.closest('[role="menu"]')
-    );
-    if (!inlineAccount) return { ok: false, why: "no visible inline ACCOUNT link" };
-    const acctRight = inlineAccount.getBoundingClientRect().right;
+    const cart = bar.querySelector('button[aria-label^="Open cart"]');
+    const account = bar.querySelector('button[aria-label="Account menu"]');
+    if (!cart || !account) return { ok: false, why: "cart or account trigger missing" };
+    const cartBox = cart.getBoundingClientRect();
+    const acctBox = account.getBoundingClientRect();
     const maxRight = interactive.length
       ? Math.max(...interactive.map((el) => el.getBoundingClientRect().right))
       : -Infinity;
-    return { ok: Math.abs(maxRight - acctRight) < 2, why: `account=${Math.round(acctRight)} maxRight=${Math.round(maxRight)} els=${interactive.length}` };
+    const gap = cartBox.left - acctBox.right;
+    return {
+      ok:
+        Math.abs(maxRight - cartBox.right) < 2 &&
+        acctBox.right <= cartBox.left &&
+        gap >= 24,
+      why: `cart=${Math.round(cartBox.right)} acct=${Math.round(acctBox.right)} gap=${Math.round(gap)} els=${interactive.length}`,
+    };
   });
   check(
-    "ACCOUNT is the rightmost control in the desktop header bar",
-    placement.ok,
-    placement.why || ""
+    "CART is rightmost, ACCOUNT sits before it with widened spacing",
+    order.ok,
+    order.why || ""
   );
+  const greetingText = await page.textContent('button[aria-label="Account menu"]');
+  check(
+    "account entry greets Amazon-style (HELLO, … / ACCOUNT)",
+    !!greetingText && greetingText.includes("HELLO,") && greetingText.includes("ACCOUNT"),
+    (greetingText || "").replace(/\s+/g, " ").trim().slice(0, 40)
+  );
+  await page.locator('button[aria-label="Account menu"]').click();
+  let anonMenu = false;
+  try {
+    const menu = page.getByRole("menu");
+    await menu.getByText("SIGN IN", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
+    anonMenu = await menu.getByText("CREATE ACCOUNT", { exact: true }).isVisible();
+  } catch {
+    anonMenu = false;
+  }
+  await page.keyboard.press("Escape");
+  check("anonymous account menu offers SIGN IN + CREATE ACCOUNT", anonMenu);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator("header .md\\:hidden button").first().click();
   let mobileAccount = false;
@@ -268,6 +296,48 @@ const section = (t) => results.push(`\n[${t}]`);
       "signed-in /account routes to /account/orders (not the baked login 307)",
       acctRes.status() === 307 && acctLoc.endsWith("/account/orders"),
       `status=${acctRes.status()} loc=${acctLoc || "none"}`
+    );
+
+    // The header greets the signed-in customer by name and offers the
+    // relevant menu; SIGN OUT must actually end the session (Gate 7).
+    await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+    let greetOk = false, menuOk = false;
+    try {
+      await page.waitForFunction(
+        () => (document.querySelector('button[aria-label="Account menu"]')?.textContent || "").includes("HELLO, SUITE"),
+        undefined,
+        { timeout: 10000 }
+      );
+      greetOk = true;
+    } catch { greetOk = false; }
+    if (greetOk) {
+      const menu = page.getByRole("menu");
+      await page.locator('button[aria-label="Account menu"]').click();
+      try {
+        await menu.getByText("YOUR ORDERS", { exact: true }).waitFor({ state: "visible", timeout: 5000 });
+        menuOk = await menu.getByText("SIGN OUT", { exact: true }).isVisible();
+      } catch { menuOk = false; }
+      if (menuOk) {
+        await menu.getByText("SIGN OUT", { exact: true }).click();
+        await page.waitForURL(`${BASE}/`, { timeout: 15000 });
+        await page.waitForFunction(
+          () => (document.querySelector('button[aria-label="Account menu"]')?.textContent || "").includes("HELLO, SIGN IN"),
+          undefined,
+          { timeout: 10000 }
+        ).catch(() => {});
+      }
+    }
+    check(
+      "signed-in header greets by name and offers YOUR ORDERS + SIGN OUT",
+      greetOk && menuOk,
+      greetOk ? (menuOk ? "menu shown" : "menu missing items") : "greeting never showed name"
+    );
+    const afterSignout = await page.request.get(`${BASE}/api/auth/session`);
+    const sessionBody = (await afterSignout.text()).trim();
+    check(
+      "SIGN OUT ends the customer session",
+      sessionBody === "{}" || sessionBody === "",
+      `session=${sessionBody.slice(0, 60)}`
     );
   }
   // page.request shares the browser context's cookie jar — drop the session

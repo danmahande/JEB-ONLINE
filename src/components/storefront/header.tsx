@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { signOut } from "next-auth/react";
 import { useCart, useRegion } from "@/lib/store";
 import { usePathname } from "next/navigation";
 import { clsx } from "clsx";
@@ -101,6 +102,10 @@ export default function Header({
   const setRegion = useRegion((s) => s.setRegion);
   const hydrated = useRegion((s) => s.hasHydrated);
   const [scrolled, setScrolled] = useState(false);
+  // Amazon-pattern account entry: greeting + menu need the customer session.
+  // undefined = not yet fetched (render the signed-out look; the cart badge
+  // waits for hydration the same way), null = confirmed anonymous.
+  const [customer, setCustomer] = useState<{ name?: string | null } | null | undefined>(undefined);
 
   // header compresses on scroll: ticker collapses, main bar stays sticky
   useEffect(() => {
@@ -109,6 +114,31 @@ export default function Header({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // the storefront greets its customer the way Amazon does — small hello,
+  // then the account label. /api/auth/session needs no SessionProvider.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((s) => {
+        if (!alive) return;
+        if (s?.user?.role === "customer") setCustomer(s.user);
+        else setCustomer(null);
+      })
+      .catch(() => {
+        if (alive) setCustomer(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const greeting = (() => {
+    if (!customer) return "HELLO, SIGN IN";
+    const first = (customer.name ?? "").trim().split(/\s+/)[0];
+    return first ? `HELLO, ${first.toUpperCase()}` : "HELLO";
+  })();
 
   const handleSearchSubmit = () => {
     if (!query.trim()) return;
@@ -238,8 +268,9 @@ export default function Header({
              </nav>
            </div>
 
-          {/* Right section — ACCOUNT sits at the extreme right (owner-directed,
-              the position most online stores give the account entry point) */}
+          {/* Right section — Amazon order: ACCOUNT (greeting + menu) comes
+              before the CART, which keeps the extreme right; the extra ml-8
+              opens the space between the two (owner-directed, Round 24) */}
           <div className="flex items-center gap-4">
             {/* Region selector */}
             <div className="relative">
@@ -280,10 +311,65 @@ export default function Header({
               className="hidden md:flex w-[clamp(200px,20vw,320px)]"
             />
 
-            {/* Cart */}
+            {/* Account — Amazon-pattern entry: small greeting over the label,
+                menu carries what is relevant to the session state */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="hidden md:block text-left leading-tight"
+                  aria-label="Account menu"
+                >
+                  <span className="ms-label block text-[10px] opacity-70">{greeting}</span>
+                  <span className="ms-label block">ACCOUNT</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px] p-2">
+                {customer ? (
+                  <>
+                    <Link
+                      href="/account/orders"
+                      className="block w-full ms-label p-2 rounded hover:bg-line"
+                    >
+                      YOUR ORDERS
+                    </Link>
+                    <Link
+                      href="/account"
+                      className="block w-full ms-label p-2 rounded hover:bg-line"
+                    >
+                      YOUR ACCOUNT
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void signOut({ callbackUrl: "/" })}
+                      className="block w-full text-left ms-label p-2 rounded hover:bg-line"
+                    >
+                      SIGN OUT
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/account/login"
+                      className="block w-full ms-label p-2 rounded hover:bg-line"
+                    >
+                      SIGN IN
+                    </Link>
+                    <Link
+                      href="/account/signup"
+                      className="block w-full ms-label p-2 rounded hover:bg-line"
+                    >
+                      CREATE ACCOUNT
+                    </Link>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Cart — extreme right, with its name beside it (md+) */}
             <button
               onClick={onOpenCart}
-              className="relative"
+              className="relative flex items-center gap-2 md:ml-8"
               aria-label={`Open cart (${cartCount} items)`}
             >
               <svg
@@ -312,11 +398,9 @@ export default function Header({
               {hydrated && cartCount > 0 && (
                 <span className="ms-cart-live absolute -top-1 -right-1 w-7 h-7 rounded-full opacity-0" />
               )}
-            </button>
 
-            <Link href="/account" className="ms-label hidden md:inline-flex">
-              ACCOUNT
-            </Link>
+              <span className="ms-label hidden md:inline">CART</span>
+            </button>
           </div>
         </div>
 
