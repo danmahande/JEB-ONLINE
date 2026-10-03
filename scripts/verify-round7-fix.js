@@ -1,5 +1,6 @@
 /**
- * Round 7+ standing regression suite — 25 checks.
+ * Round 7+ standing regression suite — 29 checks (1 skips without a
+ * customer-capable backend).
  *
  * REBUILT 2026-09-30 (Task 90): the original script was lost with the
  * container (it was gitignored under /scripts/*). This rebuild covers the
@@ -186,6 +187,97 @@ const section = (t) => results.push(`\n[${t}]`);
       collapse.top.maxHeight !== "0px" &&
       collapse.top.opacity === "1",
     `scrolled=${collapse.scrolled.maxHeight}/${collapse.scrolled.opacity} top=${collapse.top.maxHeight}/${collapse.top.opacity}`
+  );
+
+  // ---------- [2c] account entry placement (owner-directed, Round 23) ----------
+  // The owner moved ACCOUNT to the extreme right of the header bar — the
+  // position most online stores give it. Guard the geometry: on desktop the
+  // inline ACCOUNT link must be the rightmost interactive element in the
+  // header bar, and the mobile hamburger menu must still carry an entry.
+  section("account entry placement");
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  const placement = await page.evaluate(() => {
+    const bar = document.querySelector("header .container");
+    if (!bar) return { ok: false, why: "header bar not found" };
+    const interactive = [...bar.querySelectorAll("button, a, select, input")].filter(
+      (el) => el.getClientRects().length > 0 && !el.closest('[role="menu"]')
+    );
+    const inlineAccount = [...bar.querySelectorAll('a[href="/account"]')].find(
+      (l) => l.getClientRects().length > 0 && !l.closest('[role="menu"]')
+    );
+    if (!inlineAccount) return { ok: false, why: "no visible inline ACCOUNT link" };
+    const acctRight = inlineAccount.getBoundingClientRect().right;
+    const maxRight = interactive.length
+      ? Math.max(...interactive.map((el) => el.getBoundingClientRect().right))
+      : -Infinity;
+    return { ok: Math.abs(maxRight - acctRight) < 2, why: `account=${Math.round(acctRight)} maxRight=${Math.round(maxRight)} els=${interactive.length}` };
+  });
+  check(
+    "ACCOUNT is the rightmost control in the desktop header bar",
+    placement.ok,
+    placement.why || ""
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator("header .md\\:hidden button").first().click();
+  let mobileAccount = false;
+  try {
+    await page
+      .getByRole("menu")
+      .getByText("ACCOUNT", { exact: true })
+      .waitFor({ state: "visible", timeout: 5000 });
+    mobileAccount = true;
+  } catch {
+    mobileAccount = false;
+  }
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 1280, height: 720 });
+  check("mobile hamburger menu still carries ACCOUNT", mobileAccount);
+
+  // /account is a session-dependent redirect (signed-in -> /account/orders,
+  // anon -> /account/login). It must render DYNAMICALLY: a static prerender
+  // bakes the no-session branch and signed-in customers can never reach
+  // their orders (Round 23 offense #43). Exercise both branches over HTTP
+  // with a real customer session — this is the click-through of the header
+  // ACCOUNT link, the owner-directed entry point.
+  const authed = await (async () => {
+    const email = `suite-${Date.now()}@test.example`;
+    const password = "SuiteGate23!x";
+    const reg = await page.request.post(`${BASE}/api/account/register`, {
+      data: { email, password, name: "Suite Gate" },
+      headers: { Origin: BASE },
+    });
+    if (!reg.ok() && reg.status() !== 409) return null;
+    const csrfRes = await page.request.get(`${BASE}/api/auth/csrf`);
+    const csrf = (await csrfRes.json().catch(() => null))?.csrfToken;
+    if (!csrf) return null;
+    const login = await page.request.post(`${BASE}/api/auth/callback/customer`, {
+      form: { csrfToken: csrf, email, password },
+      headers: { Origin: BASE },
+      maxRedirects: 0,
+    });
+    if (login.status() !== 302) return null;
+    return email;
+  })();
+  if (!authed) {
+    skip("signed-in /account routes to /account/orders", "customer register/login unavailable");
+  } else {
+    const acctRes = await page.request.get(`${BASE}/account`, { maxRedirects: 0 });
+    const acctLoc = acctRes.headers().location || "";
+    check(
+      "signed-in /account routes to /account/orders (not the baked login 307)",
+      acctRes.status() === 307 && acctLoc.endsWith("/account/orders"),
+      `status=${acctRes.status()} loc=${acctLoc || "none"}`
+    );
+  }
+  // page.request shares the browser context's cookie jar — drop the session
+  // cookie so the anonymous branch is genuinely anonymous.
+  await page.context().clearCookies();
+  const anonAcct = await page.request.get(`${BASE}/account`, { maxRedirects: 0 });
+  check(
+    "anonymous /account routes to /account/login",
+    anonAcct.status() === 307 && (anonAcct.headers().location || "").endsWith("/account/login"),
+    `status=${anonAcct.status()} loc=${anonAcct.headers().location || "none"}`
   );
 
   // ---------- [3] drawer flow & money ----------

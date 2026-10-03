@@ -3458,3 +3458,85 @@ standing gate.
    registration 409 is an accepted enumeration trade-off (login side
    is dummy-hash protected) — keep it documented.
 3. Ledger: 34 recorded, 0 outstanding after the #42 repair.
+
+---
+
+## ROUND 23 — `0d1d867` audit: rated **7/10** — the owner's three directives (ACCOUNT to the extreme right, countries back, the price API back) were implemented faithfully and with real architectural sense (data-driven, never hardcoded), but the push skipped the ENTIRE reporting ritual: the commit message is a UUID with no EOF-CHECK / DIFF-CHECK / GATES, and the owner's ask #1 shipped with zero regression coverage until the auditor added it. One new offense — **#43, inherited from `88b6913` and caught only because this round finally clicked the link**: the `/account` page was statically prerendered with the no-session branch baked in, so every signed-in customer who clicked the brand-new rightmost ACCOUNT entry was bounced to the login page forever.
+
+One commit reviewed: `0d1d867` "e8dcd943-0073-4445-b28c-8511bca56522"
+(+135/−8, 2 files), committed locally on top of the auditor's R22
+ratification `764a846` and left UNPUSHED — the auditor's ratification
+commit pushes it. Environment note: the container was recycled between
+rounds; the local worklog was lost with it and has been rebuilt (Task
+109). The embedded-Postgres recipe was re-executed from scratch (fresh
+cluster, migrate deploy 3/3, seed 14 products / 6 regions).
+
+### What the push contains (owner directive → implementation)
+
+| Directive | Verdict |
+|---|---|
+| ① "account … extreme right of the ui" | ✅ the ACCOUNT link moved from BEFORE the region selector to the LAST position in the right cluster (after cart) — verified geometrically in the live DOM: `account=1164 maxRight=1164` among 8 interactive bar controls; mobile keeps its entry inside the hamburger menu. The bar clock moved into the ticker's right edge — verbatim pre-`8477ce5` behavior (it always vanished on scroll there too) |
+| ② "add back countries" | ✅ the navy ticker strip (deleted drive-by in `8477ce5` while fixing the CartDrawer) is restored, and its SERVING line is derived from the `RegionConfig` rows the storefront already fetches — `regions.map(r => r.countryName)` from `/api/fx`, never a hardcoded list: a corridor joins the ticker the moment it joins the DB. The region `<select>` itself was never removed and still works |
+| ③ "my api for prices" | ✅ the ticker's LIVE FX line renders `1 USD ≈ <currency> <rate>` per corridor from `/api/fx` — the same feed (`open.er-api.com`, 6h TTL DB cache via `src/lib/fx.ts`) the checkout actually charges at. **Rate semantics verified**: ER-API is USD-base, so `rateToUsd` is local-per-USD and `Math.round` + `toLocaleString("en-US")` display is truthful (live: CDF 2,310 · KES 130 · RWF 1,479 · TZS 2,648 · UGX 3,902) |
+| Ticker fidelity | ✅ `.ms-marquee-track` + `@keyframes ms-marquee` survived `8477ce5` in globals.css (243–253) — no dead class; collapse-on-scroll (max-h/opacity) matches the original contract; `aria-hidden` marquee duplicated content, same as the original; the DRC-scoped "0% ACROSS KE · TZ · RW" wording is CORRECT per Task 61 (DRC corridor carries estimated duty — the old static line overstated it) |
+| `verify-round7-fix.js` | ✅ +3 checks (25 total) — SERVING==API, LIVE FX==API (a real Gate 7 data-path check: screen numbers must equal feed numbers), collapse/expand; honest skip branch if the feed is unavailable |
+
+### OFFENSE #43 — `/account` was a statically prerendered redirect (inherited from `88b6913`, auditor-repaired)
+
+`src/app/account/page.tsx` calls `getCustomerSession()` and redirects
+signed-in users to `/account/orders`. But NextAuth v4's
+`getServerSession()` **swallows the dynamic-usage signal** during
+prerender (it catches instead of throwing), so Next saw no dynamic API
+and baked the page: build output `○ /account`, a prerendered
+`account.html` in `prerender-manifest.json`, and the no-session branch
+(`307 → /account/login`) frozen for EVERY request regardless of cookies.
+Proven live: a valid customer session cookie got `/account/orders` 200
+while `/account` 307'd to login **in the same session** — the owner's
+headline ACCOUNT entry led nowhere for signed-in customers. R22's E2E
+tested `/account/orders` and never the landing page itself, so it
+slipped through. **Auditor repair:** `export const dynamic =
+"force-dynamic"` on the page + suite regression covering BOTH branches
+(signed-in → `/account/orders`, anon → `/account/login`). Rebuilt:
+route now `ƒ /account`, both branches verified over HTTP. Every other
+`getServerSession` consumer (admin pages, `/account/orders`) was
+already ƒ dynamic — `/account` was the only baked one.
+
+### Protocol findings (not code defects, but the bar is the bar)
+
+1. **No PROOF BLOCK**: the commit message is a UUID. No EOF-CHECK, no
+   DIFF-CHECK, no GATES. The code itself passes every static gate
+   (fiction 0×4, EOF `\n` on both files, whitespace clean), but the
+   ritual exists so the auditor does not have to re-derive it — R18's
+   ten-round EOF war was fought over exactly this.
+2. **The owner's ask #1 had no regression check** until the auditor
+   added one: the agent tested the ticker it restored, but nothing
+   pinned ACCOUNT to the right edge. Asymmetric care: the restoration
+   got tests, the relocation got a comment.
+3. Minor: the auditor's first register attempt returned 403 — that is
+   the origin guard working as designed for a missing Origin header
+   (curl default); with `Origin: http://localhost:3000` the path reads
+   201 → duplicate 409 (the #42 repair still holding in the prod
+   bundle). Documented so the next Gate 7 run does not misread it.
+
+### Gate 7 — every changed data path exercised on real seeded data
+
+- ticker data path: on-screen SERVING countries and LIVE FX rates are
+  byte-equal to `/api/fx` output (suite checks, live run 29/0/0)
+- ACCOUNT click-through: register 201 → dup 409 → customer login 302 →
+  `/account` 307→`/account/orders` signed-in (post-repair), 307→login
+  anonymous; `/account/orders` 200 with the session cookie
+- region select → drawer money re-quotes in corridor currency
+  (`USh 114,726` — pre-existing path, re-proven unbroken)
+
+### Standing
+
+1. **NEW STANDING (in AGENTS.md, beside gate 7):** any page or layout
+   that calls `getServerSession` (directly or via the
+   `getAdminSession`/`getCustomerSession` wrappers) must export
+   `dynamic = "force-dynamic"`. NextAuth v4 catches the dynamic-usage
+   error internally, Next prerenders the no-session branch, and the
+   bug is invisible until a real session hits it.
+2. Advisories carried: no rate limit on `register`; `ADMIN_EMAIL` not
+   reserved against customer registration. Both unchanged, both
+   documented in R22.
+3. Ledger: 35 recorded, 0 outstanding after the #43 repair.

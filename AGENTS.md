@@ -376,6 +376,16 @@ The build now type-checks for real (`ignoreBuildErrors` was removed in
 Task 90) — but a green build is still just one gate. `tsc` unfiltered is
 the type proof; the suite is the regression proof.
 
+**Standing (binding since Round 23): any page or layout that calls
+`getServerSession` — directly or via the `getAdminSession` /
+`getCustomerSession` wrappers — MUST export `dynamic = "force-dynamic"`.**
+NextAuth v4 catches the dynamic-usage error internally, so Next sees no
+dynamic API and statically prerenders the no-session branch: the session
+check is frozen at build time and every signed-in user hits the
+anonymous branch forever (offense #43 — `/account` shipped `○` with the
+login redirect baked in). Check the build table: a session-dependent
+route must read `ƒ`, never `○`.
+
 Report format (Playbook §V): files changed / verified (with outputs) /
 NOT verified. Every claim maps to a command you ran **this session**.
 
