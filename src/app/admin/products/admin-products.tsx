@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -438,39 +436,15 @@ export function AdminProducts() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="border-b border-line pb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
-            Meridian Supply · Admin
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
             Product catalog
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-hush">
             Add and update the products customers can buy. Hiding a product keeps its record
             and order history intact.
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-            href="/admin/operators"
-          >
-            Operators
-          </Link>
-          <Link
-            className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-            href="/admin/orders"
-          >
-            Orders
-          </Link>
-          <Button
-            onClick={() => void signOut({ callbackUrl: "/admin/login" })}
-            type="button"
-            variant="outline"
-          >
-            Sign out
-          </Button>
         </div>
       </header>
 

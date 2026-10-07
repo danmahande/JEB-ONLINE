@@ -217,7 +217,22 @@ export default function ProductGrid({
             RETRY THE FEED
           </button>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : products.length === 0 ? (
+        /* the catalog is genuinely empty — the owner has not stocked the
+           store yet. Worlds apart from a failed feed (RACK OFFLINE above)
+           and from a search miss (below): nothing is broken, the shelves
+           are waiting for their first receipts. */
+        <div className="rounded-lg border border-line bg-white px-6 py-16 text-center">
+          <p className="ms-display text-2xl md:text-3xl tracking-tight mb-3">
+            THE RACK IS BEING STOCKED
+            <span className="ml-2 inline-block h-2 w-2 bg-brand align-middle" aria-hidden="true" />
+          </p>
+          <p className="mx-auto mb-6 max-w-md text-sm text-hush">
+            No products are published yet — the warehouse team loads the
+            catalog from the operations dashboard. Check back shortly.
+          </p>
+        </div>
+      ) : filtered.length === 0 && q ? (
         <div className="rounded-lg border border-line bg-white px-6 py-16 text-center">
           <p className="font-bold text-lg mb-2">No products match &ldquo;{query.trim()}&rdquo;.</p>
           <p className="text-sm text-hush mb-6">
@@ -225,6 +240,21 @@ export default function ProductGrid({
           </p>
           <button
             onClick={onClearQuery}
+            className="ms-label ms-key px-6 py-3"
+          >
+            SHOW EVERYTHING
+          </button>
+        </div>
+      ) : filtered.length === 0 ? (
+        /* a category rack with nothing on it — not a search miss, so the
+           fix is switching racks, not clearing a query */
+        <div className="rounded-lg border border-line bg-white px-6 py-16 text-center">
+          <p className="font-bold text-lg mb-2">Nothing in {tab} yet.</p>
+          <p className="text-sm text-hush mb-6">
+            The other shelves have stock — browse the full catalog.
+          </p>
+          <button
+            onClick={() => setTab("ALL")}
             className="ms-label ms-key px-6 py-3"
           >
             SHOW EVERYTHING

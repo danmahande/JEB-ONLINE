@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdminNav } from "./admin-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +17,5 @@ export const metadata: Metadata = {
 export default function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="min-h-screen bg-mist text-ink">{children}</div>;
+  return <div className="min-h-screen bg-mist text-ink"><AdminNav />{children}</div>;
 }

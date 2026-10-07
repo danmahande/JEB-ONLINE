@@ -138,26 +138,15 @@ export function AdminOrders() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="border-b border-line pb-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
-              Meridian Supply · Admin
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
-              Orders
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-hush">
-              Every storefront order lands here as NEW. Open an order to advance it
-              through processing and shipping, attach a note the customer can see
-              on tracking, or cancel it before dispatch (items return to stock).
-            </p>
-          </div>
-          <Link
-            className="shrink-0 text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-            href="/admin/products"
-          >
-            Products
-          </Link>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            Orders
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-hush">
+            Every storefront order lands here as NEW. Open an order to advance it
+            through processing and shipping, attach a note the customer can see
+            on tracking, or cancel it before dispatch (items return to stock).
+          </p>
         </div>
       </header>
 

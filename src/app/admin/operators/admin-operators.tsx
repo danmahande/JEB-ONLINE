@@ -45,6 +45,10 @@ export function AdminOperators() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // trade-config fetch state — an empty Corridor picker must SAY WHY: either
+  // /api/fx failed (error) or the RegionConfig table has no rows (unseeded).
+  // The first cut swallowed both silently and the picker just looked broken.
+  const [fxError, setFxError] = useState("");
 
   // create form
   const [createRegion, setCreateRegion] = useState("");
@@ -59,6 +63,7 @@ export function AdminOperators() {
   const load = useCallback(async (signal?: AbortSignal): Promise<boolean> => {
     setLoading(true);
     setError("");
+    setFxError("");
     try {
       const [opsRes, fxRes] = await Promise.all([
         fetch("/api/admin/operators", { cache: "no-store", signal }),
@@ -76,7 +81,13 @@ export function AdminOperators() {
       setOperators(ops.operators as Operator[]);
       if (fxRes.ok) {
         const fx = await fxRes.json();
-        if (fx.success) setRegions(fx.regions as RegionRow[]);
+        if (fx.success) {
+          setRegions(fx.regions as RegionRow[]);
+        } else {
+          setFxError("Trade configuration could not be loaded — the Corridor picker stays empty. Reload the page to retry.");
+        }
+      } else {
+        setFxError("Trade configuration could not be loaded — the Corridor picker stays empty. Reload the page to retry.");
       }
       return true;
     } catch (err) {
@@ -371,12 +382,9 @@ export function AdminOperators() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="border-b border-line pb-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">
-            Meridian Supply · Admin
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
             Bus cargo operators
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-hush">
@@ -386,12 +394,6 @@ export function AdminOperators() {
             it from checkout without deleting it.
           </p>
         </div>
-        <a
-          className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
-          href="/admin/products"
-        >
-          Back to catalog
-        </a>
       </header>
 
       {loading ? (
@@ -410,6 +412,20 @@ export function AdminOperators() {
           )}
 
           {[...byRegion.entries()].map(([code, list]) => regionHeader(code, list))}
+
+          {fxError && (
+            <p role="alert" className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {fxError}
+            </p>
+          )}
+          {!fxError && regions.length === 0 && (
+            <p role="status" className="mt-6 rounded-md border border-line bg-muted px-4 py-3 text-sm text-ink">
+              No corridors are configured in this environment&apos;s database — the
+              region table has no rows. Seed the catalog and regions
+              (&quot;db:seed&quot; against this database) and reload; the
+              storefront&apos;s region selector and ticker read the same table.
+            </p>
+          )}
 
           <section className="mt-10 rounded-lg border border-line bg-white p-5">
             <h2 className="text-lg font-semibold text-ink">Add an operator</h2>

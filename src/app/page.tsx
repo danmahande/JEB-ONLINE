@@ -28,24 +28,40 @@ const REVIEWS: { quote: string; author: string; company: string }[] = [];
 
 // Custom hook for managing view state with URL sync
 function useViewState() {
+  const readView = (): View => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    if (v === "track" || v === "checkout" || v === "confirmation") {
+      return v as View;
+    }
+    return "shop";
+  };
+
   const [view, setView] = useState<View>(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const v = params.get("view");
-      if (v === "track" || v === "checkout" || v === "confirmation") {
-        return v as View;
-      }
+      return readView();
     }
     return "shop";
   });
 
   const updateView = useCallback((newView: View) => {
     setView(newView);
-    
-    // Update URL without page refresh
+
+    // Update URL WITHOUT page refresh. pushState, not replaceState: the
+    // browser Back button must walk the customer back through the store
+    // (checkout -> shop) instead of out of the site entirely.
     const params = new URLSearchParams(window.location.search);
     params.set("view", newView);
-    window.history.replaceState({}, "", `?${params.toString()}`);
+    window.history.pushState({}, "", `?${params.toString()}`);
+  }, []);
+
+  // Back/Forward rewrite the URL behind React's back — re-sync the rendered
+  // view from it. (The search query needs no popstate sync: popstate never
+  // reloads the document, so the in-memory query already matches.)
+  useEffect(() => {
+    const onPopState = () => setView(readView());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   return [view, updateView] as const;
