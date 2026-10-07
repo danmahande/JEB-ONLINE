@@ -566,6 +566,40 @@ const section = (t) => results.push(`\n[${t}]`);
   );
 
   const pipelineProduct = products.find((p) => p?.productId && p.currentStock >= 10);
+
+  // ---------- [8] round-27 bus cargo: public operators API ----------
+  // The checkout operator picker reads this endpoint — the fleet must be
+  // listed with whitelisted fields only, per corridor and fleet-wide.
+  section("round-27 bus cargo (operators, receiver, freight math)");
+
+  const opsRes = await req("/api/shipping/operators?region=UG");
+  const opsData = await opsRes.json().catch(() => ({}));
+  const ugOperators = opsData?.operators || [];
+  check(
+    "public operators API: UG fleet with whitelisted fields only",
+    opsRes.ok() &&
+      ugOperators.length >= 3 &&
+      ugOperators.every(
+        (o) =>
+          o.regionCode === "UG" &&
+          typeof o.cargoRatePerKg === "number" &&
+          typeof o.minCharge === "number" &&
+          typeof o.bookingNote === "string" &&
+          !("updatedAt" in o) &&
+          !("createdAt" in o)
+      ),
+    `HTTP ${opsRes.status()} fleet=${ugOperators.length}`
+  );
+  const allOpsRes = await req("/api/shipping/operators");
+  const allOps = await allOpsRes.json().catch(() => ({}));
+  check(
+    "operators API without region returns the full fleet across corridors",
+    allOpsRes.ok() &&
+      (allOps?.operators || []).length >= 10 &&
+      new Set((allOps?.operators || []).map((o) => o.regionCode)).size >= 4,
+    `fleet=${(allOps?.operators || []).length} corridors=${new Set((allOps?.operators || []).map((o) => o.regionCode)).size}`
+  );
+
   if (!pipelineProduct) {
     skip("round-26 order pipeline", "no active product with stock >= 10");
   } else {
@@ -601,17 +635,30 @@ const section = (t) => results.push(`\n[${t}]`);
     if (!custReg.ok() || custLogin.status() !== 302) {
       skip("round-26 customer-phase checks", `register=${custReg.status()} login=${custLogin.status()}`);
     } else {
-      const placeOrder = async (qty) => {
-        const r = await post("/api/orders", {
-          customerName: "Pipeline Probe",
-          contact: "+256700000001",
-          email: custEmail,
-          address: "1 Suite Lane",
-          city: "Kampala",
-          country: "UG",
-          paymentMethod: "MTN MoMo",
-          cart: [{ productId: pipelineProduct.productId, qty }],
-        });
+      // Round 27: the corridor fleet drives checkout. GM Coach (sortOrder 1)
+      // leads the UG list; a KE operator exists for the cross-corridor probe.
+      const cargoOperator = ugOperators[0];
+      const crossOperator =
+        ((await (await req("/api/shipping/operators?region=KE")).json().catch(() => ({})))
+          ?.operators || [])[0];
+      if (!cargoOperator) {
+        skip("round-27 customer-phase checks", "UG operator fleet missing");
+      } else {
+      const baseOrder = (qty) => ({
+        customerName: "Pipeline Probe",
+        contact: "+256700000001",
+        email: custEmail,
+        address: "1 Suite Lane",
+        city: "Kampala",
+        country: "UG",
+        paymentMethod: "MTN MoMo",
+        receiverName: "Rider Probe",
+        receiverPhone: "+256770000002",
+        operatorId: cargoOperator.id,
+        cart: [{ productId: pipelineProduct.productId, qty }],
+      });
+      const placeOrder = async (qty, overrides = {}) => {
+        const r = await post("/api/orders", { ...baseOrder(qty), ...overrides });
         const d = await r.json().catch(() => ({}));
         return { status: r.status(), body: d };
       };
@@ -621,23 +668,88 @@ const section = (t) => results.push(`\n[${t}]`);
       const custAdmin = await req("/api/admin/orders");
       check("admin orders API closed to customer sessions", custAdmin.status() === 401, String(custAdmin.status()));
 
+      // ---- round-27 checkout guards (server-side, never client-honored) ----
+      const missingOperator = await post("/api/orders", {
+        ...baseOrder(1),
+        operatorId: undefined,
+        receiverName: undefined,
+        receiverPhone: undefined,
+      });
+      const missingOperatorBody = await missingOperator.json().catch(() => ({}));
+      check(
+        "operator-served checkout without an operator 400s",
+        missingOperator.status() === 400 && /operator/i.test(missingOperatorBody?.error || ""),
+        `HTTP ${missingOperator.status()} ${missingOperatorBody?.error || ""}`
+      );
+      const missingReceiver = await post("/api/orders", {
+        ...baseOrder(1),
+        receiverName: undefined,
+        receiverPhone: undefined,
+      });
+      const missingReceiverBody = await missingReceiver.json().catch(() => ({}));
+      check(
+        "checkout without a terminal receiver 400s",
+        missingReceiver.status() === 400 && /receiver/i.test(missingReceiverBody?.error || ""),
+        `HTTP ${missingReceiver.status()} ${missingReceiverBody?.error || ""}`
+      );
+      if (crossOperator) {
+        const crossCorridor = await post("/api/orders", {
+          ...baseOrder(1),
+          operatorId: crossOperator.id,
+        });
+        check(
+          "operator from another corridor rejected with 400",
+          crossCorridor.status() === 400,
+          `HTTP ${crossCorridor.status()}`
+        );
+      } else {
+        skip("cross-corridor operator probe", "KE fleet missing");
+      }
+
       // order 1: placed -> PII-stripped tracking -> cancel -> stock restored
       const o1 = await placeOrder(2);
       check("order placed through the API (customer session)", o1.status === 201 && o1.body?.order?.orderNumber, `HTTP ${o1.status}`);
       const on1 = o1.body?.order?.orderNumber || "";
 
+      // freight must be the operator's tariff — per-kg with a minimum —
+      // computed SERVER-SIDE from the catalog weight (client never sends money)
+      const expectedFreight = Math.max(
+        cargoOperator.minCharge,
+        cargoOperator.cargoRatePerKg * (o1.body?.order?.totalWeightKg || 0)
+      );
+      check(
+        "freight charged at the operator tariff (per-kg with minimum, ETA + receiver echoed)",
+        o1.body?.order?.freightSource === "bus_operator" &&
+          o1.body?.order?.operatorName === cargoOperator.name &&
+          Math.abs((o1.body?.order?.shippingAmount || 0) - Math.round(expectedFreight * 100) / 100) < 0.011 &&
+          o1.body?.order?.etaDays === `${cargoOperator.transitDaysMin}-${cargoOperator.transitDaysMax} DAYS` &&
+          o1.body?.order?.receiverName === "Rider Probe",
+        `operator=${o1.body?.order?.operatorName} freight=${o1.body?.order?.shippingAmount} expected=${Math.round(expectedFreight * 100) / 100} eta=${o1.body?.order?.etaDays}`
+      );
+
       const track1 = await req(`/api/orders?orderNumber=${encodeURIComponent(on1)}`);
       const t1 = await track1.json().catch(() => ({}));
       const orderKeys = Object.keys(t1?.order || {});
-      const piiKeys = ["customerInfo", "customerName", "customerId", "notes", "customerAccountId"];
+      const piiKeys = ["customerInfo", "customerName", "customerId", "notes", "customerAccountId", "receiverName", "receiverPhone"];
       check(
         "public tracking leaks NO customer PII (offense #44 class)",
         track1.ok() &&
           !piiKeys.some((k) => orderKeys.includes(k)) &&
           !JSON.stringify(t1).includes("1 Suite Lane") &&
+          !JSON.stringify(t1).includes("Rider Probe") &&
+          t1?.order?.operatorName === cargoOperator.name &&
           t1?.order?.status === "new_order" &&
           Array.isArray(t1?.lineItems),
         `keys=${orderKeys.join(",")}`
+      );
+
+      // the BUYER's own session sees the receiver + operator on /account/orders
+      const acctRes = await req("/account/orders");
+      const acctHtml = await acctRes.text();
+      check(
+        "signed-in buyer sees the terminal receiver on their orders",
+        acctRes.ok() && acctHtml.includes("Rider Probe") && acctHtml.includes(cargoOperator.name),
+        `HTTP ${acctRes.status()}`
       );
 
       const cancelRes = await post("/api/account/orders/cancel", { orderNumber: on1 });
@@ -769,6 +881,69 @@ const section = (t) => results.push(`\n[${t}]`);
               zero.status() === 400,
             `adjust=${adj.status()} stock ${stockPreAdjust}->${stockPostAdjust} neg=${neg.status()} zero=${zero.status()}`
           );
+
+          // ---- round-27: operator management (retariff, create, hide) ----
+          section("round-27 admin operator management");
+          const adminOpsRes = await req("/api/admin/operators");
+          const adminOps = await adminOpsRes.json().catch(() => ({}));
+          check(
+            "admin operators list: gated + full fleet",
+            adminOpsRes.ok() && (adminOps?.operators || []).length >= 12,
+            `HTTP ${adminOpsRes.status()} fleet=${(adminOps?.operators || []).length}`
+          );
+
+          const tar = (adminOps?.operators || []).find((o) => o.id === cargoOperator.id);
+          const newRate = +(((tar?.cargoRatePerKg ?? 0) + 0.05).toFixed(2));
+          const bump = await page.request.patch(
+            BASE + `/api/admin/operators/${encodeURIComponent(cargoOperator.id)}`,
+            { data: { cargoRatePerKg: newRate }, headers: { Origin: BASE } }
+          );
+          const publicBump = await (await req("/api/shipping/operators?region=UG")).json().catch(() => ({}));
+          const bumped = (publicBump?.operators || []).find((o) => o.id === cargoOperator.id);
+          const restore = await page.request.patch(
+            BASE + `/api/admin/operators/${encodeURIComponent(cargoOperator.id)}`,
+            { data: { cargoRatePerKg: tar.cargoRatePerKg }, headers: { Origin: BASE } }
+          );
+          check(
+            "admin retariffs an operator; public API reflects it; original restored",
+            bump.status() === 200 &&
+              bumped && Math.abs(bumped.cargoRatePerKg - newRate) < 1e-9 &&
+              restore.status() === 200,
+            `bump=${bump.status()} public=${bumped?.cargoRatePerKg} restore=${restore.status()}`
+          );
+
+          // run-unique name: the suite must re-run cleanly against a dirty DB
+          const suiteOperator = {
+            regionCode: "UG", name: `Suite Coach ${Date.now()}`, cargoRatePerKg: 0.9, minCharge: 6,
+            transitDaysMin: 1, transitDaysMax: 1,
+            bookingNote: "Suite-created operator for gate coverage; safe to hide.",
+          };
+          const createOp = await post("/api/admin/operators", suiteOperator);
+          const createOpBody = await createOp.json().catch(() => ({}));
+          const createdId = createOpBody?.operator?.id || "";
+          const dupOp = await post("/api/admin/operators", suiteOperator);
+          const badOp = await post("/api/admin/operators", {
+            regionCode: "UG", name: "Bad Coach", cargoRatePerKg: -1, minCharge: 6,
+            transitDaysMin: 1, transitDaysMax: 1,
+            bookingNote: "Negative rate must be rejected outright.",
+          });
+          const emptyPatch = createdId
+            ? await page.request.patch(BASE + `/api/admin/operators/${encodeURIComponent(createdId)}`, { data: {}, headers: { Origin: BASE } })
+            : null;
+          const hideOp = createdId
+            ? await page.request.patch(BASE + `/api/admin/operators/${encodeURIComponent(createdId)}`, { data: { isActive: false }, headers: { Origin: BASE } })
+            : null;
+          const publicHide = await (await req("/api/shipping/operators?region=UG")).json().catch(() => ({}));
+          check(
+            "operator create 201 / duplicate 409 / bad rate 400 / empty patch 400 / hide removes from checkout",
+            createOp.status() === 201 &&
+              dupOp.status() === 409 &&
+              badOp.status() === 400 &&
+              emptyPatch && emptyPatch.status() === 400 &&
+              hideOp && hideOp.status() === 200 &&
+              !(publicHide?.operators || []).some((o) => o.id === createdId),
+            `create=${createOp.status()} dup=${dupOp.status()} bad=${badOp.status()} empty=${emptyPatch?.status()} hide=${hideOp?.status()}`
+          );
         }
       }
 
@@ -790,6 +965,7 @@ const section = (t) => results.push(`\n[${t}]`);
         saw429 && pre429.every((s) => s === 201 || s === 409),
         `statuses=${throttleStatuses.join(",")}`
       );
+      } // cargoOperator guard
     }
   }
 

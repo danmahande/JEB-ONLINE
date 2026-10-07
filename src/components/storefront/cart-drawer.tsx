@@ -175,6 +175,12 @@ export function CartDrawer({
                         <span>FREIGHT</span>
                         <span>{totalFmt(q.shipping)}</span>
                       </div>
+                      {displayRegion!.isEac && (
+                        <p className="text-xs leading-relaxed text-hush">
+                          Bus cargo operator is chosen at checkout — freight is
+                          finalized with that operator&apos;s tariff.
+                        </p>
+                      )}
                       <div className="flex justify-between border-t border-line pt-3 font-bold">
                         <span>TOTAL</span>
                         <span className="text-brand">{totalFmt(q.total)}</span>

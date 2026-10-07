@@ -15,7 +15,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "admin:hash": "tsx scripts/hash-admin-password.ts",
-    "test:admin": "tsx --test src/lib/admin-auth.test.ts src/lib/login-rate-limit.test.ts src/lib/admin-products-schema.test.ts src/lib/customer-account-schema.test.ts src/lib/prisma-error.test.ts src/lib/order-workflow.test.ts src/lib/register-rate-limit.test.ts"
+    "test:admin": "tsx --test src/lib/admin-auth.test.ts src/lib/login-rate-limit.test.ts src/lib/admin-products-schema.test.ts src/lib/customer-account-schema.test.ts src/lib/prisma-error.test.ts src/lib/order-workflow.test.ts src/lib/register-rate-limit.test.ts src/lib/admin-operators-schema.test.ts"
   },
   "prisma": {
     "seed": "tsx scripts/seed.ts"

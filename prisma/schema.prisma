@@ -108,6 +108,19 @@ model OrderProcessing {
   vatAmount        Float     @default(0)
   shippingAmount   Float     @default(0)
   totalWeightKg    Float     @default(0)
+  /// Person collecting the consignment at the destination bus terminal
+  /// (Round 27 — required at checkout whenever the region is served by a
+  /// bus cargo operator). Null on legacy rows and standard-freight orders.
+  receiverName     String?
+  receiverPhone    String?
+  /// Freight snapshot — bus cargo operator chosen at checkout. The order
+  /// stores the operator's name + tariff AT ORDER TIME so later rate
+  /// edits in /admin/operators never rewrite historical orders.
+  operatorName      String?
+  operatorRatePerKg Float?
+  operatorMinCharge Float?
+  /// bus_operator | standard
+  freightSource    String    @default("standard")
   notes            String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -158,7 +171,7 @@ model OrderLineItem {
 /// Cross-border trade config (storefront extension)
 model RegionConfig {
   id            String @id @default(cuid())
-  /// Region code: UG | KE | TZ | RW | INTL
+  /// Region code: UG | KE | TZ | RW | CD | INTL
   region        String @unique
   countryName   String
   currency      String
@@ -172,7 +185,46 @@ model RegionConfig {
   shippingBase  Float
   shippingPerKg Float
   etaDays       String
+  /// Structured transit window in days (Round 27). Null = fall back to the
+  /// etaDays string above. Bus-operator regions inherit the operator's
+  /// transit window at checkout; these fields cover the standard/forwarder path.
+  etaDaysMin    Int?
+  etaDaysMax    Int?
   isEac         Boolean @default(true)
+
+  operators BusOperator[]
+}
+
+/// Bus cargo operators (storefront extension, Round 27).
+/// Freight on EAC corridors is quoted from REAL operator cargo tariffs —
+/// per-kg rate with a minimum charge — instead of flat per-region math.
+/// Rates are USD (the store's base currency) and are editable in
+/// /admin/operators without a redeploy. INTL has no bus operators and
+/// keeps the standard forwarder math (RegionConfig.shippingBase/PerKg).
+model BusOperator {
+  id             String  @id @default(cuid())
+  /// Region served — RegionConfig.region (UG | KE | TZ | RW | CD)
+  regionCode     String
+  name           String
+  /// Cargo tariff, USD per kg
+  cargoRatePerKg Float
+  /// Minimum charge per consignment, USD
+  minCharge      Float
+  transitDaysMin Int
+  transitDaysMax Int
+  /// Practical booking instructions shown at checkout
+  bookingNote    String
+  isActive       Boolean @default(true)
+  sortOrder      Int     @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  region RegionConfig @relation(fields: [regionCode], references: [region])
+
+  /// Composite key the seed upserts on (operators can repeat across regions
+  /// — e.g. Link Bus serves both KE and UG)
+  @@unique([regionCode, name])
+  @@index([regionCode, isActive])
 }
 
 /// Audit of order status transitions (mirrors ERP workflow-transition API)

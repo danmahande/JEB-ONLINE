@@ -28,6 +28,10 @@ export default async function CustomerOrdersPage() {
       createdAt: true,
       destination: true,
       totalAmount: true,
+      operatorName: true,
+      freightSource: true,
+      receiverName: true,
+      receiverPhone: true,
       lineItems: {
         orderBy: { createdAt: "asc" },
         select: { id: true, productName: true, variant: true, qty: true },
@@ -95,6 +99,22 @@ export default async function CustomerOrdersPage() {
                   </li>
                 ))}
               </ul>
+              {(order.operatorName || order.receiverName) && (
+                <div className="mt-4 rounded-md bg-muted px-4 py-3 text-sm text-ink">
+                  {order.operatorName && (
+                    <p>
+                      <span className="text-hush">Dispatch:</span> via{" "}
+                      <b>{order.operatorName}</b>
+                    </p>
+                  )}
+                  {order.receiverName && (
+                    <p>
+                      <span className="text-hush">Terminal receiver:</span>{" "}
+                      <b>{order.receiverName}</b> · {order.receiverPhone}
+                    </p>
+                  )}
+                </div>
+              )}
               {order.status === "new_order" ? (
                 <CancelOrderButton orderNumber={order.orderNumber} />
               ) : null}

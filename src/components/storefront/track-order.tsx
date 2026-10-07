@@ -147,6 +147,13 @@ export default function TrackOrder() {
                 <p className="ms-label text-hush mb-2">SHIPMENT</p>
                 <p className="text-sm"><b>DESTINATION:</b> {order.destination || "—"}</p>
                 <p className="text-sm"><b>PLACED:</b> {new Date(order.orderDate).toLocaleDateString()}</p>
+                {order.operatorName && (
+                  <p className="text-sm">
+                    <b>DISPATCH:</b> via {order.operatorName.toUpperCase()} — your
+                    receiver collects at the destination bus terminal under the
+                    operator&apos;s waybill
+                  </p>
+                )}
               </div>
               <div className="p-5 space-y-1.5">
                 <p className="ms-label text-hush mb-2">PAYMENT</p>

@@ -84,3 +84,6 @@ prisma/db/
 
 # standalone-server runtime env recovered between rounds (DB URLs, NEXTAUTH_SECRET, admin hash) — NEVER committable
 /.server-env
+
+# standalone-server runtime log (env echoes, request noise) — not committable
+/.server-log

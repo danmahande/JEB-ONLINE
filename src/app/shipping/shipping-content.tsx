@@ -30,8 +30,15 @@ export default function ShippingContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">2. Shipping Methods</h2>
             <p>
-              We use reputable carriers for all shipments. Available shipping options are
-              displayed at checkout based on your destination and order contents.
+              East African Community destinations travel as bus cargo with named
+              operators (Link Bus, Volcano Express, Riverside Shuttle, Virunga
+              Express and others). At checkout you pick the operator that carries
+              your consignment — freight is that operator&apos;s tariff, a per-kilo
+              rate with a per-consignment minimum — and you name the receiver who
+              collects it at the destination bus terminal under the operator&apos;s
+              waybill. International destinations are quoted at standard forwarder
+              rates. The operator list and tariffs are displayed at checkout based
+              on your destination.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">3. Shipping Costs</h2>
             <p>

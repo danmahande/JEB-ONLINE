@@ -45,9 +45,24 @@ export default function Confirmation({
           <div className="p-4 grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm border-b border-line">
             <p><span className="text-hush">DESTINATION:</span> <b>{order.destination}</b></p>
             <p><span className="text-hush">ETA:</span> <b>{order.etaDays}</b></p>
+            <p>
+              <span className="text-hush">DISPATCH:</span>{" "}
+              <b>{order.operatorName ? `VIA ${order.operatorName.toUpperCase()}` : "STANDARD FREIGHT"}</b>
+            </p>
             <p><span className="text-hush">PAYMENT:</span> <b>{order.paymentMethod}</b></p>
             <p><span className="text-hush">TOTAL DUE:</span> <b>{local}</b> <span className="text-hush">(${order.totalAmount.toFixed(2)})</span></p>
           </div>
+
+          {order.receiverName && (
+            <div className="p-4 space-y-1.5 text-sm border-b border-line">
+              <p className="ms-label text-hush mb-2">TERMINAL COLLECTION</p>
+              <p className="leading-relaxed">
+                <b>{order.receiverName}</b> ({order.receiverPhone}) collects the
+                consignment at the destination bus terminal under the operator&apos;s
+                waybill. They may be asked for ID matching this name.
+              </p>
+            </div>
+          )}
 
           <div className="p-4 space-y-1.5 text-sm">
             <p className="ms-label text-hush mb-2">PAYMENT</p>
@@ -72,7 +87,12 @@ export default function Confirmation({
               </div>
             )}
             <div className="flex justify-between"><span className="text-hush">VAT</span><span>${order.vatAmount.toFixed(2)}</span></div>
-            <div className="flex justify-between"><span className="text-hush">FREIGHT</span><span>${order.shippingAmount.toFixed(2)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-hush">
+                {order.operatorName ? `BUS CARGO — ${order.operatorName.toUpperCase()}` : "FREIGHT"}
+              </span>
+              <span>${order.shippingAmount.toFixed(2)}</span>
+            </div>
             <div className="flex justify-between border-t border-line pt-2 items-baseline">
               <span className="ms-label">TOTAL</span>
               <span className="ms-price">${order.totalAmount.toFixed(2)}</span>

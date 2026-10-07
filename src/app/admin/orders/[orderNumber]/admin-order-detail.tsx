@@ -47,6 +47,12 @@ type AdminOrder = {
   totalWeightKg: number;
   notes: string | null;
   createdBy: string;
+  receiverName: string | null;
+  receiverPhone: string | null;
+  operatorName: string | null;
+  operatorRatePerKg: number | null;
+  operatorMinCharge: number | null;
+  freightSource: string;
   lineItems: LineItem[];
   events: OrderEvent[];
 };
@@ -275,6 +281,24 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
             <p className="mt-3 rounded-md border border-line bg-mist px-3 py-2 text-sm text-ink">
               Customer note at checkout: {order.notes}
             </p>
+          ) : null}
+          {order.receiverName || order.operatorName ? (
+            <div className="mt-3 rounded-md border border-line bg-mist px-3 py-2 text-sm text-ink">
+              <p className="text-xs font-semibold uppercase tracking-wide text-hush">
+                Bus cargo dispatch
+              </p>
+              {order.operatorName ? (
+                <p className="mt-1">
+                  Via <b>{order.operatorName}</b> — tariff snapshot ${order.operatorRatePerKg}
+                  /kg · min ${order.operatorMinCharge} at order time
+                </p>
+              ) : null}
+              {order.receiverName ? (
+                <p className="mt-0.5">
+                  Receiver: <b>{order.receiverName}</b> · {order.receiverPhone}
+                </p>
+              ) : null}
+            </div>
           ) : null}
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">

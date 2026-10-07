@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useCart, useRegion } from "@/lib/store";
 import { useToast } from "@/hooks/use-toast";
 import { fmt, quoteCart } from "@/lib/format";
 import { levyTag, pct } from "@/lib/levies";
-import type { RegionConfig, PlacedOrder } from "@/lib/types";
+import type { BusOperatorOption, RegionConfig, PlacedOrder } from "@/lib/types";
 
 /* Same methods the order API persists (prisma `paymentMethod String`) —
    keys copied verbatim from the verified checkout (06ff76e). */
@@ -48,12 +48,40 @@ export default function Checkout({
     postalCode: "",
   });
 
+  /* ---- Round 27: bus cargo operators + terminal receiver ---- */
+  const [operators, setOperators] = useState<BusOperatorOption[]>([]);
+  const [operatorId, setOperatorId] = useState("");
+  const [receiver, setReceiver] = useState({ name: "", phone: "" });
+  const selectedOperator = operators.find((o) => o.id === operatorId) ?? null;
+
+  /* Operators follow the region (corridor fleet). Region switches reset the
+     choice — an operator for one corridor never silently carries another. */
+  useEffect(() => {
+    if (!displayRegion) return;
+    let cancelled = false;
+    const code = displayRegion.region;
+    setOperators([]);
+    setOperatorId("");
+    fetch(`/api/shipping/operators?region=${encodeURIComponent(code)}`)
+      .then((res) => (res.ok ? res.json() : { operators: [] }))
+      .then((data) => {
+        if (!cancelled) setOperators((data.operators as BusOperatorOption[]) ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setOperators([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [displayRegion]);
+
   /* One quote for every display number — identical math to the order API,
      which re-prices server-side from the catalog (client totals are display
-     only). Never hand-roll duty/VAT sums again. */
+     only). The chosen operator drives the freight line. Never hand-roll
+     duty/VAT sums again. */
   const q = useMemo(
-    () => (displayRegion ? quoteCart(lines, displayRegion) : null),
-    [lines, displayRegion]
+    () => (displayRegion ? quoteCart(lines, displayRegion, selectedOperator) : null),
+    [lines, displayRegion, selectedOperator]
   );
 
   async function placeOrder() {
@@ -68,6 +96,13 @@ export default function Checkout({
     if (!customer.address.trim()) newErrors.address = "Required";
     if (!customer.city.trim()) newErrors.city = "Required";
     if (!paymentMethod) newErrors.paymentMethod = "Select a payment method";
+    if (operators.length > 0 && !operatorId) {
+      newErrors.operatorId = "Select the bus operator that carries this consignment";
+    }
+    if (operators.length > 0) {
+      if (!receiver.name.trim()) newErrors.receiverName = "Required";
+      if (!receiver.phone.trim()) newErrors.receiverPhone = "Required";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -77,9 +112,10 @@ export default function Checkout({
 
     try {
       /* Flat body — the exact contract /api/orders destructures:
-         customerName/contact/email/address/city/country/paymentMethod/cart.
-         `country` is the REGION CODE (UG|KE|TZ|RW|CD|INTL), used for the
-         regionConfig lookup. The API re-prices; no money fields are sent. */
+         customerName/contact/email/address/city/country/paymentMethod/cart
+         plus the Round 27 receiver + operatorId. `country` is the REGION
+         CODE (UG|KE|TZ|RW|CD|INTL). The API re-prices and re-resolves the
+         operator server-side; no money fields are sent. */
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,6 +127,9 @@ export default function Checkout({
           city: customer.city,
           country: displayRegion.region,
           paymentMethod,
+          receiverName: operators.length > 0 ? receiver.name : undefined,
+          receiverPhone: operators.length > 0 ? receiver.phone : undefined,
+          operatorId: operators.length > 0 ? operatorId : undefined,
           cart: lines.map((l) => ({
             productId: l.productId,
             variantLabel: l.variantLabel,
@@ -126,6 +165,13 @@ export default function Checkout({
       if (!customer.phone.trim()) newErrors.phone = "Required";
       if (!customer.address.trim()) newErrors.address = "Required";
       if (!customer.city.trim()) newErrors.city = "Required";
+      if (operators.length > 0 && !operatorId) {
+        newErrors.operatorId = "Select the bus operator that carries this consignment";
+      }
+      if (operators.length > 0) {
+        if (!receiver.name.trim()) newErrors.receiverName = "Required";
+        if (!receiver.phone.trim()) newErrors.receiverPhone = "Required";
+      }
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
@@ -324,6 +370,92 @@ export default function Checkout({
                     stored in state (no stale capture) */}
               </div>
             </div>
+
+            {/* ---- Round 27: bus cargo operator + terminal receiver ---- */}
+            {operators.length > 0 && (
+              <div className="mt-8 border-t border-line pt-8">
+                <h3 className="ms-label mb-1 text-ink">BUS CARGO OPERATOR *</h3>
+                <p className="mb-4 text-sm text-hush">
+                  Your consignment travels with the operator you pick. Freight is
+                  the operator&apos;s tariff — per kilo, with a minimum charge —
+                  booked under a waybill in their name.
+                </p>
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2" role="radiogroup" aria-label="Bus cargo operator">
+                  {operators.map((o) => {
+                    const selected = operatorId === o.id;
+                    return (
+                      <button
+                        key={o.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => setOperatorId(o.id)}
+                        className={`border px-4 py-3 text-left transition-colors ${
+                          selected ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink"
+                        }`}
+                      >
+                        <span className="ms-label block">{o.name}</span>
+                        <span className={`mt-1 block text-xs ${selected ? "text-white/80" : "text-hush"}`}>
+                          KAMPALA → {displayRegion.countryName} · {o.transitDaysMin}–{o.transitDaysMax} DAY
+                          {o.transitDaysMax === 1 ? "" : "S"}
+                        </span>
+                        <span className={`mt-0.5 block text-xs ${selected ? "text-white/80" : "text-hush"}`}>
+                          ${o.cargoRatePerKg.toFixed(2)}/KG · MIN ${o.minCharge.toFixed(2)}
+                        </span>
+                        <span className={`mt-1 block text-xs leading-relaxed ${selected ? "text-white/70" : "text-hush"}`}>
+                          {o.bookingNote}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.operatorId && (
+                  <p className="mt-2 text-sm text-red-500" role="alert">{errors.operatorId}</p>
+                )}
+
+                <h3 className="ms-label mb-1 mt-8 text-ink">RECEIVER AT DESTINATION *</h3>
+                <p className="mb-4 text-sm text-hush">
+                  The person collecting the consignment at the {displayRegion.countryName} bus
+                  terminal. They may be asked for ID matching this name.
+                </p>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="receiver-name" className="ms-label mb-2 block text-hush">RECEIVER NAME *</label>
+                    <input
+                      id="receiver-name"
+                      type="text"
+                      value={receiver.name}
+                      onChange={(e) => setReceiver({ ...receiver, name: e.target.value })}
+                      className={`ms-field w-full ${errors.receiverName ? "border-red-500" : ""}`}
+                      placeholder="Who collects at the terminal"
+                    />
+                    {errors.receiverName && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">{errors.receiverName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="receiver-phone" className="ms-label mb-2 block text-hush">RECEIVER PHONE *</label>
+                    <input
+                      id="receiver-phone"
+                      type="tel"
+                      value={receiver.phone}
+                      onChange={(e) => setReceiver({ ...receiver, phone: e.target.value })}
+                      className={`ms-field w-full ${errors.receiverPhone ? "border-red-500" : ""}`}
+                      placeholder="+254..."
+                    />
+                    {errors.receiverPhone && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">{errors.receiverPhone}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {operators.length === 0 && (
+              <p className="mt-8 border-t border-line pt-6 text-sm text-hush">
+                Freight for this destination is quoted at standard forwarder rates —
+                no bus cargo operator runs this corridor.
+              </p>
+            )}
           </div>
         )}
 
@@ -343,6 +475,26 @@ export default function Checkout({
                 <p className="mt-2">{customer.email} · {customer.phone}</p>
               </div>
             </div>
+
+            {selectedOperator && (
+              <div className="mb-8">
+                <h3 className="ms-label mb-4 text-hush">BUS CARGO</h3>
+                <div className="ms-field p-4">
+                  <p className="font-medium">{selectedOperator.name}</p>
+                  <p className="text-sm text-hush">
+                    KAMPALA → {displayRegion.countryName} · {selectedOperator.transitDaysMin}–
+                    {selectedOperator.transitDaysMax} DAY
+                    {selectedOperator.transitDaysMax === 1 ? "" : "S"} · $
+                    {selectedOperator.cargoRatePerKg.toFixed(2)}/KG · MIN $
+                    {selectedOperator.minCharge.toFixed(2)}
+                  </p>
+                  <p className="mt-2 text-sm text-hush">
+                    Receiver: <b className="text-ink">{receiver.name || "—"}</b> ·{" "}
+                    {receiver.phone || "—"} (collects at the destination bus terminal)
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="mb-8">
               <h3 className="ms-label mb-4 text-hush">ORDER ITEMS</h3>
@@ -393,7 +545,11 @@ export default function Checkout({
                   <span>{money(q.vat)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>FREIGHT</span>
+                  <span>
+                    {selectedOperator
+                      ? `BUS CARGO — ${selectedOperator.name.toUpperCase()}`
+                      : "FREIGHT"}
+                  </span>
                   <span>{money(q.shipping)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-3 font-bold">

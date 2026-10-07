@@ -63,6 +63,12 @@ export async function GET(req: NextRequest) {
       fxRate: order.fxRate,
       region: order.region,
       destination: order.destination,
+      // Round 27: the dispatch carrier's NAME is shipment metadata, not
+      // personal data, so it may join the whitelist. receiverName/Phone are
+      // a third party's PII — they stay reachable only through the buyer's
+      // own session (/account/orders) and the admin detail page, never here.
+      operatorName: order.operatorName,
+      freightSource: order.freightSource,
     };
     return NextResponse.json({
       success: true,
@@ -116,6 +122,9 @@ export async function POST(req: NextRequest) {
       country, // region code: UG | KE | TZ | RW | CD | INTL
       paymentMethod,
       notes,
+      receiverName, // Round 27 — person collecting at the destination bus terminal
+      receiverPhone,
+      operatorId, // BusOperator id — required when the region is served by operators
       cart, // CartLine[]
     } = body as {
       customerName?: string;
@@ -126,6 +135,9 @@ export async function POST(req: NextRequest) {
       country?: string;
       paymentMethod?: string;
       notes?: string;
+      receiverName?: string;
+      receiverPhone?: string;
+      operatorId?: string;
       cart?: CartLine[];
     };
 
@@ -163,6 +175,68 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Unsupported destination" },
         { status: 400 }
       );
+    }
+
+    // ---------- bus cargo operator (Round 27) ----------
+    // Regions with an active operator fleet MUST be shipped via one of them —
+    // freight is quoted from the chosen operator's tariff, the consignment is
+    // booked under that operator's waybill, and a receiver must be named for
+    // terminal collection. INTL (and any region whose fleet is deactivated)
+    // keeps the standard forwarder math. The operator is resolved SERVER-SIDE
+    // from the catalog: the client sends an id, never money.
+    const activeOperators = await db.busOperator.findMany({
+      where: { regionCode: country, isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+
+    let selectedOperator: {
+      id: string;
+      name: string;
+      cargoRatePerKg: number;
+      minCharge: number;
+      transitDaysMin: number;
+      transitDaysMax: number;
+    } | null = null;
+
+    if (operatorId !== undefined && operatorId !== null && operatorId !== "") {
+      selectedOperator =
+        activeOperators.find((o) => o.id === operatorId) ?? null;
+      if (!selectedOperator) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `The selected bus operator does not serve ${regionCfg.countryName} — pick one from the list.`,
+          },
+          { status: 400 }
+        );
+      }
+    } else if (activeOperators.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Select a bus cargo operator for this destination.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (selectedOperator) {
+      if (!receiverName?.trim() || !receiverPhone?.trim()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Receiver name and phone at the destination bus terminal are required for bus cargo.",
+          },
+          { status: 400 }
+        );
+      }
+      if (receiverName.trim().length > 80 || receiverPhone.trim().length > 40) {
+        return NextResponse.json(
+          { success: false, error: "Receiver name or phone is too long." },
+          { status: 400 }
+        );
+      }
     }
 
     // ---------- server-side pricing ----------
@@ -250,8 +324,14 @@ export async function POST(req: NextRequest) {
       .reduce((s, l) => s + subtotal * l.rate, 0);
     const dutyAmount = subtotal * regionCfg.dutyRate;
     const vatAmount = (subtotal + dutyAmount + leviesInVatBase) * regionCfg.vatRate;
-    const shippingAmount =
-      regionCfg.shippingBase + totalWeightKg * regionCfg.shippingPerKg;
+    // Freight: bus operator tariff (per-kg with a per-consignment minimum)
+    // when an operator is chosen; the standard region math otherwise.
+    const shippingAmount = selectedOperator
+      ? Math.max(
+          selectedOperator.minCharge,
+          selectedOperator.cargoRatePerKg * totalWeightKg
+        )
+      : regionCfg.shippingBase + totalWeightKg * regionCfg.shippingPerKg;
     const totalAmount = subtotal + dutyAmount + leviesAmount + vatAmount + shippingAmount;
 
     const customerNameValue = customerName.trim();
@@ -340,6 +420,16 @@ export async function POST(req: NextRequest) {
             vatAmount: Math.round(vatAmount * 100) / 100,
             shippingAmount: Math.round(shippingAmount * 100) / 100,
             totalWeightKg: Math.round(totalWeightKg * 100) / 100,
+            receiverName: selectedOperator ? receiverName!.trim() : null,
+            receiverPhone: selectedOperator ? receiverPhone!.trim() : null,
+            operatorName: selectedOperator ? selectedOperator.name : null,
+            operatorRatePerKg: selectedOperator
+              ? selectedOperator.cargoRatePerKg
+              : null,
+            operatorMinCharge: selectedOperator
+              ? selectedOperator.minCharge
+              : null,
+            freightSource: selectedOperator ? "bus_operator" : "standard",
             notes: notes?.trim() || null,
             customerAccountId: customerSession?.user.id ?? null,
             lineItems: {
@@ -455,7 +545,16 @@ export async function POST(req: NextRequest) {
           shippingAmount: created.shippingAmount,
           totalWeightKg: created.totalWeightKg,
           paymentMethod: created.paymentMethod,
-          etaDays: regionCfg.etaDays,
+          // Effective transit window: the operator's own tariff window when a
+          // bus operator carries the consignment, the region's structured
+          // window next, the seeded string last.
+          etaDays: selectedOperator
+            ? `${selectedOperator.transitDaysMin}-${selectedOperator.transitDaysMax} DAYS`
+            : regionCfg.etaDays,
+          operatorName: created.operatorName,
+          freightSource: created.freightSource,
+          receiverName: created.receiverName,
+          receiverPhone: created.receiverPhone,
         },
       },
       { status: 201 }

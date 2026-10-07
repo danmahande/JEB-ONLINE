@@ -454,6 +454,12 @@ export function AdminProducts() {
         <div className="flex items-center gap-3">
           <Link
             className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+            href="/admin/operators"
+          >
+            Operators
+          </Link>
+          <Link
+            className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
             href="/admin/orders"
           >
             Orders

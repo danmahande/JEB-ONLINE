@@ -1,10 +1,14 @@
 // Pricing + formatting helpers (client-side quote preview).
 // The server re-computes authoritative totals on checkout.
 
-import type { CartLine, RegionConfig, Quote } from "./types";
+import type { BusOperatorOption, CartLine, RegionConfig, Quote } from "./types";
 import { leviesFor } from "./levies";
 
-export function quoteCart(lines: CartLine[], region: RegionConfig): Quote {
+export function quoteCart(
+  lines: CartLine[],
+  region: RegionConfig,
+  operator?: BusOperatorOption | null
+): Quote {
   const subtotal = lines.reduce((s, l) => s + l.unitPriceUsd * l.qty, 0);
   const totalWeightKg = lines.reduce((s, l) => s + l.weightKg * l.qty, 0);
   const duty = subtotal * region.dutyRate;
@@ -20,7 +24,13 @@ export function quoteCart(lines: CartLine[], region: RegionConfig): Quote {
     .filter((l) => l.inVatBase)
     .reduce((s, l) => s + subtotal * l.rate, 0);
   const vat = (subtotal + duty + leviesInVatBase) * region.vatRate;
-  const shipping = region.shippingBase + totalWeightKg * region.shippingPerKg;
+  // Round 27: freight comes from the chosen bus cargo operator's tariff —
+  // the per-kg rate with a per-consignment minimum — whenever one is
+  // selected. Regions without operators (INTL) keep the standard math.
+  // Identical formula to the order API, which re-prices server-side.
+  const shipping = operator
+    ? Math.max(operator.minCharge, operator.cargoRatePerKg * totalWeightKg)
+    : region.shippingBase + totalWeightKg * region.shippingPerKg;
   const round2 = (n: number) => Math.round(n * 100) / 100;
   return {
     subtotal: round2(subtotal),
@@ -31,6 +41,7 @@ export function quoteCart(lines: CartLine[], region: RegionConfig): Quote {
     shipping: round2(shipping),
     total: round2(subtotal + duty + leviesTotal + vat + shipping),
     totalWeightKg: round2(totalWeightKg),
+    operatorName: operator ? operator.name : null,
   };
 }
 

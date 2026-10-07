@@ -41,7 +41,22 @@ export interface RegionConfig {
   shippingBase: number;
   shippingPerKg: number;
   etaDays: string;
+  /** structured transit window (days); null = rely on the etaDays string */
+  etaDaysMin: number | null;
+  etaDaysMax: number | null;
   isEac: boolean;
+}
+
+/** A bus cargo operator serving a region (public checkout shape). */
+export interface BusOperatorOption {
+  id: string;
+  regionCode: string;
+  name: string;
+  cargoRatePerKg: number;
+  minCharge: number;
+  transitDaysMin: number;
+  transitDaysMax: number;
+  bookingNote: string;
 }
 
 export interface CartLine {
@@ -73,6 +88,8 @@ export interface Quote {
   shipping: number;
   total: number;
   totalWeightKg: number;
+  /** set when a bus cargo operator drives the freight line */
+  operatorName: string | null;
 }
 
 export interface PlacedOrder {
@@ -95,6 +112,11 @@ export interface PlacedOrder {
   totalWeightKg: number;
   paymentMethod: string;
   etaDays: string;
+  /** Round 27 — bus cargo snapshot + terminal receiver (echo of the order) */
+  operatorName: string | null;
+  freightSource: string;
+  receiverName: string | null;
+  receiverPhone: string | null;
 }
 
 export interface TrackedOrder {
@@ -109,6 +131,9 @@ export interface TrackedOrder {
   fxRate?: number;
   region?: string;
   destination: string | null;
+  /** Round 27 — dispatch carrier shown on the tracking rail (name only, no tariff detail) */
+  operatorName?: string | null;
+  freightSource?: string;
 }
 
 export interface OrderLine {

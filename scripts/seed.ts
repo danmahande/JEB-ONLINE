@@ -274,6 +274,8 @@ const regions = [
     shippingBase: 5,
     shippingPerKg: 0.05,
     etaDays: "1-2 DAYS",
+    etaDaysMin: 1,
+    etaDaysMax: 2,
     isEac: true,
   },
   {
@@ -287,6 +289,8 @@ const regions = [
     shippingBase: 12,
     shippingPerKg: 0.08,
     etaDays: "2-4 DAYS",
+    etaDaysMin: 1,
+    etaDaysMax: 3,
     isEac: true,
   },
   {
@@ -300,6 +304,8 @@ const regions = [
     shippingBase: 15,
     shippingPerKg: 0.09,
     etaDays: "3-5 DAYS",
+    etaDaysMin: 3,
+    etaDaysMax: 5,
     isEac: true,
   },
   {
@@ -313,6 +319,8 @@ const regions = [
     shippingBase: 13,
     shippingPerKg: 0.08,
     etaDays: "2-4 DAYS",
+    etaDaysMin: 1,
+    etaDaysMax: 2,
     isEac: true,
   },
   {
@@ -329,6 +337,8 @@ const regions = [
     shippingBase: 28,
     shippingPerKg: 0.12,
     etaDays: "4-7 DAYS",
+    etaDaysMin: 4,
+    etaDaysMax: 7,
     isEac: true,
   },
   {
@@ -342,8 +352,46 @@ const regions = [
     shippingBase: 45,
     shippingPerKg: 0.35,
     etaDays: "10-21 DAYS",
+    etaDaysMin: 10,
+    etaDaysMax: 21,
     isEac: false,
   },
+];
+
+// Real bus cargo operators on Kampala's regional corridors (Round 27).
+// Tariffs are market-typical USD-per-kg defaults with a minimum charge per
+// consignment — they are SEED DEFAULTS, editable in /admin/operators at any
+// time without a redeploy; orders snapshot the tariff at checkout so later
+// edits never rewrite historical money.
+type OperatorSeed = {
+  regionCode: string;
+  name: string;
+  cargoRatePerKg: number;
+  minCharge: number;
+  transitDaysMin: number;
+  transitDaysMax: number;
+  bookingNote: string;
+  sortOrder: number;
+};
+
+const busOperators: OperatorSeed[] = [
+  // Kampala → Kenya (Nairobi): the busiest parcel corridor
+  { regionCode: "KE", name: "Link Bus", cargoRatePerKg: 1.0, minCharge: 10, transitDaysMin: 1, transitDaysMax: 2, sortOrder: 1, bookingNote: "Book cargo at the Link Bus park cargo office (Nakawa) before 9AM; share the waybill number with dispatch." },
+  { regionCode: "KE", name: "Global Link", cargoRatePerKg: 0.95, minCharge: 10, transitDaysMin: 1, transitDaysMax: 2, sortOrder: 2, bookingNote: "Register the parcel at the Global Link cargo desk; keep the receipt for collection in Nairobi." },
+  { regionCode: "KE", name: "Scandinavian Express", cargoRatePerKg: 1.1, minCharge: 12, transitDaysMin: 2, transitDaysMax: 3, sortOrder: 3, bookingNote: "Scandinavian accepts parcels up to 50KG per consignment; book at the city office a day ahead." },
+  // Kampala → Tanzania (Dar es Salaam)
+  { regionCode: "TZ", name: "Riverside Shuttle", cargoRatePerKg: 1.5, minCharge: 15, transitDaysMin: 3, transitDaysMax: 4, sortOrder: 1, bookingNote: "Riverside runs the Kampala–Dar es Salaam route weekly; confirm the departure day at booking." },
+  { regionCode: "TZ", name: "Axa Coasters", cargoRatePerKg: 1.4, minCharge: 14, transitDaysMin: 3, transitDaysMax: 5, sortOrder: 2, bookingNote: "Axa parcels travel via the Mwanza–Dar handoff; label each bag with the receiver's phone." },
+  // Kampala → Rwanda (Kigali)
+  { regionCode: "RW", name: "Volcano Express", cargoRatePerKg: 0.8, minCharge: 8, transitDaysMin: 1, transitDaysMax: 2, sortOrder: 1, bookingNote: "Drop parcels at the Volcano Express cargo yard (Kisenyi) before the 7PM departure." },
+  { regionCode: "RW", name: "Trinity", cargoRatePerKg: 0.85, minCharge: 8, transitDaysMin: 1, transitDaysMax: 2, sortOrder: 2, bookingNote: "Trinity buses load cargo at the Kampala office; collection is at the Kigali Nyabugogo terminal." },
+  // Kampala → DR Congo (Goma/Bukavu)
+  { regionCode: "CD", name: "Virunga Express", cargoRatePerKg: 1.8, minCharge: 20, transitDaysMin: 4, transitDaysMax: 7, sortOrder: 1, bookingNote: "Virunga consolidates Goma/Bukavu cargo; expect the border transfer at Bunia and pack accordingly." },
+  { regionCode: "CD", name: "Sofeca", cargoRatePerKg: 1.7, minCharge: 20, transitDaysMin: 4, transitDaysMax: 7, sortOrder: 2, bookingNote: "Sofeca requires the receiver's full name as it appears on their ID for the Goma cargo manifest." },
+  // Domestic Uganda
+  { regionCode: "UG", name: "GM Coach", cargoRatePerKg: 0.6, minCharge: 4, transitDaysMin: 1, transitDaysMax: 1, sortOrder: 1, bookingNote: "GM Coach moves parcels on all upcountry routes; same-day on most runs before the 10AM loading." },
+  { regionCode: "UG", name: "Nyabugo Coach", cargoRatePerKg: 0.55, minCharge: 4, transitDaysMin: 1, transitDaysMax: 1, sortOrder: 2, bookingNote: "Nyabugo parcels are collected at the destination bus park same day; carry the booking receipt." },
+  { regionCode: "UG", name: "Link Bus", cargoRatePerKg: 0.7, minCharge: 5, transitDaysMin: 1, transitDaysMax: 2, sortOrder: 3, bookingNote: "Link Bus domestic cargo travels on daily departures; waybill required at both parks." },
 ];
 
 async function main() {
@@ -366,6 +414,19 @@ async function main() {
     });
   }
   console.log(`  regions: ${regions.length}`);
+
+  // Bus cargo operators — upserted on (regionCode, name). Same semantics as
+  // products/regions above: a seed run refreshes seed-defined values; the
+  // owner's live edits in /admin/operators persist until the next seed run.
+  for (const o of busOperators) {
+    const { regionCode, ...fields } = o;
+    await db.busOperator.upsert({
+      where: { regionCode_name: { regionCode, name: o.name } },
+      update: fields,
+      create: { regionCode, ...fields },
+    });
+  }
+  console.log(`  bus operators: ${busOperators.length}`);
 
   // Refresh merchant identity on existing rows
   await db.product.updateMany({
