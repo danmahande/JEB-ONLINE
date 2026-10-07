@@ -72,6 +72,10 @@ server.log
 !/scripts/copy-standalone-assets.js
 !/scripts/start-prod.js
 !/scripts/hash-admin-password.ts
+# CI-referenced gates. Without these negations /scripts/* silently drops them
+# from the commit, and the workflow then runs a file that is not in the repo.
+!/scripts/ci-checks.mjs
+!/scripts/check-story.mjs
 # purged from tracking (Task 44) — old ERP source + design source photos
 /kwanza-erp-src/
 /examples/
