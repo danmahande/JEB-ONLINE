@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
+import {
+  newOrderAlertEmail,
+  orderConfirmationEmail,
+  ownerAlertAddress,
+  sendAll,
+} from "@/lib/mail";
 import { leviesFor } from "@/lib/levies";
 import { getCustomerSession } from "@/lib/admin-auth";
 import { prismaErrorCode } from "@/lib/prisma-error";
@@ -12,6 +18,13 @@ class StockConflictError extends Error {}
 /**
  * GET /api/orders?orderNumber=DS100001
  * Order tracking lookup — returns order + line items + status events.
+ *
+ * Round 26 PII repair: this endpoint is PUBLIC and order numbers are
+ * sequential (trivially enumerable), so the response is reduced to a
+ * strict whitelist of shipment fields. customerInfo (name | phone | email
+ * | address), customerName, customerId, notes and account linkage are no
+ * longer readable by anonymous callers. The tracking UI never displayed
+ * these — the leak was response-only.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -38,12 +51,39 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { lineItems, events, ...o } = order;
+    const publicOrder = {
+      orderId: order.orderId,
+      orderNumber: order.orderNumber,
+      trackingNumber: order.trackingNumber,
+      orderDate: order.orderDate,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      currency: order.currency,
+      fxRate: order.fxRate,
+      region: order.region,
+      destination: order.destination,
+    };
     return NextResponse.json({
       success: true,
-      order: o,
-      lineItems,
-      events,
+      order: publicOrder,
+      lineItems: order.lineItems.map((li) => ({
+        productId: li.productId,
+        productName: li.productName,
+        brand: li.brand,
+        variant: li.variant,
+        qty: li.qty,
+        unitSellingPrice: li.unitSellingPrice,
+        lineTotal: li.lineTotal,
+      })),
+      events: order.events.map((ev) => ({
+        id: ev.id,
+        orderNumber: ev.orderNumber,
+        fromStatus: ev.fromStatus,
+        toStatus: ev.toStatus,
+        note: ev.note,
+        createdAt: ev.createdAt,
+      })),
     });
   } catch (error) {
     console.error("GET /api/orders error:", error);
@@ -364,6 +404,32 @@ export async function POST(req: NextRequest) {
         if (!isSequenceConflict || attempt >= 2) throw error;
       }
     }
+
+    // ---------- emails (Round 26) ----------
+    // Awaited but individually failure-isolated: a dead mail provider adds
+    // at most ~1s and never fails a placed order. Without RESEND_API_KEY
+    // both sends are logged to the server console instead (log-only mode).
+    const emailPayload = {
+      orderNumber: created.orderNumber,
+      trackingNumber: created.trackingNumber,
+      customerName: customerNameValue,
+      totalAmount: created.totalAmount,
+      paymentMethod: created.paymentMethod,
+      destination: created.destination,
+      items: resolved.map((l) => ({
+        productName: l.productName,
+        variant: l.variant,
+        qty: l.qty,
+        lineTotal: Math.round(l.lineTotal * 100) / 100,
+      })),
+    };
+    const ownerAddress = ownerAlertAddress();
+    await sendAll(
+      ...(email
+        ? [{ to: email.trim(), template: orderConfirmationEmail(emailPayload, regionCfg) }]
+        : []),
+      ...(ownerAddress ? [{ to: ownerAddress, template: newOrderAlertEmail(emailPayload) }] : [])
+    );
 
     return NextResponse.json(
       {

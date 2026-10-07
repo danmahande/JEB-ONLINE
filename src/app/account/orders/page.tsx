@@ -3,7 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getCustomerSession } from "@/lib/admin-auth";
+import { statusLabel } from "@/lib/order-workflow";
 import { CustomerSignOutButton } from "./sign-out-button";
+import { CancelOrderButton } from "./cancel-order-button";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ export default async function CustomerOrdersPage() {
       status: true,
       createdAt: true,
       destination: true,
+      totalAmount: true,
       lineItems: {
         orderBy: { createdAt: "asc" },
         select: { id: true, productName: true, variant: true, qty: true },
@@ -77,10 +80,11 @@ export default async function CustomerOrdersPage() {
                       dateStyle: "medium",
                     }).format(order.createdAt)}
                     {order.destination ? ` · ${order.destination}` : ""}
+                    {` · $${order.totalAmount.toFixed(2)}`}
                   </p>
                 </div>
                 <span className="rounded-full border border-line px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink">
-                  {order.status.replaceAll("_", " ")}
+                  {statusLabel(order.status)}
                 </span>
               </div>
               <ul className="mt-4 divide-y divide-line border-y border-line">
@@ -91,6 +95,9 @@ export default async function CustomerOrdersPage() {
                   </li>
                 ))}
               </ul>
+              {order.status === "new_order" ? (
+                <CancelOrderButton orderNumber={order.orderNumber} />
+              ) : null}
             </li>
           ))}
         </ul>

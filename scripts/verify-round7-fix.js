@@ -1,6 +1,7 @@
 /**
- * Round 7+ standing regression suite — 36 checks (session checks skip
- * without a customer-capable backend).
+ * Round 7+ standing regression suite — 45 checks (session/admin checks
+ * skip without customer/admin-capable backends; SUITE_ADMIN_EMAIL +
+ * SUITE_ADMIN_PASSWORD enable the round-26 admin-phase checks).
  *
  * REBUILT 2026-09-30 (Task 90): the original script was lost with the
  * container (it was gitignored under /scripts/*). This rebuild covers the
@@ -10,6 +11,12 @@
  * correct empty-cart behavior otherwise, current label sizing, keyboard
  * focus, the 404 keeper, and served metadata/assets.
  *
+ * Round 23-26 additions: ticker data path, header account contract
+ * (Amazon pattern + caret), /account dynamic branches, and the full
+ * round-26 order pipeline — PII-stripped tracking, customer/admin cancel
+ * with stock restore, admin orders list/advance/note/cancel, the stock
+ * movement ledger, register throttling, and the contact page.
+ *
  * Systemic fix in the same task: this file is now tracked in git
  * (.gitignore exception !/scripts/verify-round7-fix.js) so gate scripts
  * survive container recycling.
@@ -17,6 +24,9 @@
  * Usage: production build and server on :3000, then
  * `node scripts/verify-round7-fix.js`. Catalog-dependent checks are
  * explicitly skipped when the API contains no matching active products.
+ * NOTE: the register-throttle check burns the local IP's sign-up window
+ * (5/15min) — rerunning the suite within 15 minutes will skip the
+ * customer-phase checks unless the register_attempt row is cleared.
  */
 const { chromium } = require("playwright");
 
@@ -538,6 +548,250 @@ const section = (t) => results.push(`\n[${t}]`);
   const robotsOk = (await req("/robots.txt")).ok();
   const sitemapOk = (await req("/sitemap.xml")).ok();
   check("robots.txt + sitemap.xml reachable", robotsOk && sitemapOk, `robots=${robotsOk} sitemap=${sitemapOk}`);
+
+  // ---------- [7] round-26 order pipeline ----------
+  // Gate 7 for every new/changed data path: PII-stripped tracking, customer
+  // cancel with stock restore, admin orders (list/advance/note/cancel),
+  // stock ledger, admin-gate role separation, register throttle, contact.
+  section("round-26 order pipeline (PII, cancel, admin orders, stock)");
+
+  const contactRes = await req("/contact");
+  const contactHtml = await contactRes.text();
+  check(
+    "contact page live with real channels only",
+    contactRes.ok() &&
+      contactHtml.includes("CONTACT SALES") &&
+      contactHtml.toLowerCase().includes("sales@meridiansupply.co"),
+    `HTTP ${contactRes.status()}`
+  );
+
+  const pipelineProduct = products.find((p) => p?.productId && p.currentStock >= 10);
+  if (!pipelineProduct) {
+    skip("round-26 order pipeline", "no active product with stock >= 10");
+  } else {
+    const stockOf = async () => {
+      const r = await req("/api/products");
+      const d = await r.json();
+      const p = (d.products || []).find((x) => x.productId === pipelineProduct.productId);
+      return p ? p.currentStock : null;
+    };
+    const post = (u, data, extra = {}) =>
+      page.request.post(BASE + u, {
+        data,
+        headers: { Origin: BASE, ...(extra.headers || {}) },
+        ...extra,
+      });
+
+    // --- admin/stock gate is closed BEFORE any session exists (jar cleared
+    // at the end of [2c]) ---
+    const anonAdmin = await req("/api/admin/orders");
+    check("admin orders API closed to anonymous callers", anonAdmin.status() === 401, String(anonAdmin.status()));
+
+    // --- customer phase ---
+    const custEmail = `pipe-${Date.now()}@test.example`;
+    const custReg = await post("/api/account/register", {
+      email: custEmail, password: "Pipeline26!x", name: "Pipeline Probe",
+    });
+    const csrf2 = (await (await req("/api/auth/csrf")).json())?.csrfToken;
+    const custLogin = await page.request.post(`${BASE}/api/auth/callback/customer`, {
+      form: { csrfToken: csrf2, email: custEmail, password: "Pipeline26!x" },
+      headers: { Origin: BASE },
+      maxRedirects: 0,
+    });
+    if (!custReg.ok() || custLogin.status() !== 302) {
+      skip("round-26 customer-phase checks", `register=${custReg.status()} login=${custLogin.status()}`);
+    } else {
+      const placeOrder = async (qty) => {
+        const r = await post("/api/orders", {
+          customerName: "Pipeline Probe",
+          contact: "+256700000001",
+          email: custEmail,
+          address: "1 Suite Lane",
+          city: "Kampala",
+          country: "UG",
+          paymentMethod: "MTN MoMo",
+          cart: [{ productId: pipelineProduct.productId, qty }],
+        });
+        const d = await r.json().catch(() => ({}));
+        return { status: r.status(), body: d };
+      };
+      const stockBefore = await stockOf();
+
+      // role separation: a customer session must NOT read the admin list
+      const custAdmin = await req("/api/admin/orders");
+      check("admin orders API closed to customer sessions", custAdmin.status() === 401, String(custAdmin.status()));
+
+      // order 1: placed -> PII-stripped tracking -> cancel -> stock restored
+      const o1 = await placeOrder(2);
+      check("order placed through the API (customer session)", o1.status === 201 && o1.body?.order?.orderNumber, `HTTP ${o1.status}`);
+      const on1 = o1.body?.order?.orderNumber || "";
+
+      const track1 = await req(`/api/orders?orderNumber=${encodeURIComponent(on1)}`);
+      const t1 = await track1.json().catch(() => ({}));
+      const orderKeys = Object.keys(t1?.order || {});
+      const piiKeys = ["customerInfo", "customerName", "customerId", "notes", "customerAccountId"];
+      check(
+        "public tracking leaks NO customer PII (offense #44 class)",
+        track1.ok() &&
+          !piiKeys.some((k) => orderKeys.includes(k)) &&
+          !JSON.stringify(t1).includes("1 Suite Lane") &&
+          t1?.order?.status === "new_order" &&
+          Array.isArray(t1?.lineItems),
+        `keys=${orderKeys.join(",")}`
+      );
+
+      const cancelRes = await post("/api/account/orders/cancel", { orderNumber: on1 });
+      const cancelBody = await cancelRes.json().catch(() => ({}));
+      const stockAfterCancel = await stockOf();
+      const track1b = await (await req(`/api/orders?orderNumber=${encodeURIComponent(on1)}`)).json().catch(() => ({}));
+      check(
+        "customer cancel: 200, status cancelled, stock restored",
+        cancelRes.status() === 200 &&
+          cancelBody?.order?.status === "cancelled" &&
+          track1b?.order?.status === "cancelled" &&
+          stockAfterCancel === stockBefore,
+        `HTTP ${cancelRes.status()} stock ${stockBefore}->${stockAfterCancel}`
+      );
+      const cancelAgain = await post("/api/account/orders/cancel", { orderNumber: on1 });
+      check("second cancel rejected with 409", cancelAgain.status() === 409, String(cancelAgain.status()));
+
+      // orders 2 & 3 for the admin phase (placed while still the customer)
+      const o2 = await placeOrder(2);
+      const o3 = await placeOrder(1);
+      check("orders 2+3 placed for admin phase", o2.status === 201 && o3.status === 201, `HTTP ${o2.status}/${o3.status}`);
+      const on2 = o2.body?.order?.orderNumber || "";
+      const on3 = o3.body?.order?.orderNumber || "";
+      const stockAfterOrders = await stockOf();
+
+      // --- admin phase ---
+      const adminEmail = process.env.SUITE_ADMIN_EMAIL;
+      const adminPassword = process.env.SUITE_ADMIN_PASSWORD;
+      if (!adminEmail || !adminPassword) {
+        skip("round-26 admin-phase checks", "SUITE_ADMIN_EMAIL/SUITE_ADMIN_PASSWORD not set");
+      } else {
+        await page.context().clearCookies();
+        const csrf3 = (await (await req("/api/auth/csrf")).json())?.csrfToken;
+        const adminLogin = await page.request.post(`${BASE}/api/auth/callback/credentials`, {
+          form: { csrfToken: csrf3, email: adminEmail, password: adminPassword, callbackUrl: "/admin/products" },
+          headers: { Origin: BASE },
+          maxRedirects: 0,
+        });
+        if (adminLogin.status() !== 302) {
+          skip("round-26 admin-phase checks", `admin login=${adminLogin.status()}`);
+        } else {
+          const listRes = await req("/api/admin/orders");
+          const list = await listRes.json().catch(() => ({}));
+          check(
+            "admin orders list: gated, populated, with counts",
+            listRes.ok() &&
+              Array.isArray(list?.orders) &&
+              list.orders.length > 0 &&
+              typeof list?.counts === "object" &&
+              list.orders.some((o) => o.orderNumber === on2),
+            `HTTP ${listRes.status()} orders=${(list.orders || []).length}`
+          );
+          const pageRes = await req("/api/admin/orders?page=1&pageSize=5");
+          const pageData = await pageRes.json().catch(() => ({}));
+          check(
+            "admin orders pagination slices and counts",
+            pageRes.ok() &&
+              (pageData?.orders || []).length === Math.min(5, pageData?.total ?? 0) &&
+              pageData?.totalPages === Math.ceil((pageData?.total ?? 0) / 5) &&
+              pageData?.total >= 3,
+            `total=${pageData?.total} totalPages=${pageData?.totalPages}`
+          );
+
+          const patch = async (on, action, note) => {
+            const r = await page.request.patch(
+              BASE + `/api/admin/orders/${encodeURIComponent(on)}`,
+              { data: { action, note }, headers: { Origin: BASE } }
+            );
+            return { status: r.status(), body: await r.json().catch(() => ({})) };
+          };
+
+          // order 2: advance -> note -> cancel (processing) -> stock restored
+          const adv1 = await patch(on2, "advance");
+          const track2 = await (await req(`/api/orders?orderNumber=${encodeURIComponent(on2)}`)).json().catch(() => ({}));
+          const noteRes = await patch(on2, "note", "Suite note: dispatch run scheduled.");
+          const track2b = await (await req(`/api/orders?orderNumber=${encodeURIComponent(on2)}`)).json().catch(() => ({}));
+          const adminCancel = await patch(on2, "cancel");
+          const stockAfterAdminCancel = await stockOf();
+          const track2c = await (await req(`/api/orders?orderNumber=${encodeURIComponent(on2)}`)).json().catch(() => ({}));
+          check(
+            "admin advance + customer-visible note + cancel with stock restore",
+            adv1.status === 200 && adv1.body?.order?.status === "processing" &&
+              track2?.order?.status === "processing" &&
+              noteRes.status === 200 &&
+              (track2b?.events || []).some((e) => (e.note || "").includes("Suite note")) &&
+              adminCancel.status === 200 && adminCancel.body?.order?.status === "cancelled" &&
+              track2c?.order?.status === "cancelled" &&
+              stockAfterAdminCancel === stockAfterOrders + 2, // o2's qty returns to the shelf
+            `advance=${adv1.status} note=${noteRes.status} cancel=${adminCancel.status} stock ${stockAfterOrders}->${stockAfterAdminCancel}`
+          );
+          const advCancelled = await patch(on2, "advance");
+          check("advance on cancelled order rejected with 409", advCancelled.status === 409, String(advCancelled.status));
+
+          // order 3: full walk to delivered, then 409
+          const a1 = await patch(on3, "advance");
+          const a2 = await patch(on3, "advance");
+          const a3 = await patch(on3, "advance");
+          const a4 = await patch(on3, "advance");
+          check(
+            "admin walks order to delivered; extra advance 409s",
+            a1.status === 200 && a2.status === 200 && a3.status === 200 &&
+              a3.body?.order?.status === "delivered" && a4.status === 409,
+            `${a1.status}/${a2.status}/${a3.status}/${a4.status}`
+          );
+
+          // stock ledger: receipt moves stock, movement recorded, guards hold
+          const stockPreAdjust = await stockOf();
+          const adj = await post("/api/admin/stock", {
+            productId: pipelineProduct.productId, delta: 4, reason: "receipt", note: "Suite receipt GRN-001",
+          });
+          const adjBody = await adj.json().catch(() => ({}));
+          const stockPostAdjust = await stockOf();
+          const mvRes = await req(`/api/admin/stock?productId=${encodeURIComponent(pipelineProduct.productId)}&take=8`);
+          const mv = await mvRes.json().catch(() => ({}));
+          const neg = await post("/api/admin/stock", {
+            productId: pipelineProduct.productId, delta: -99999, reason: "damage",
+          });
+          const zero = await post("/api/admin/stock", {
+            productId: pipelineProduct.productId, delta: 0, reason: "adjustment",
+          });
+          check(
+            "stock ledger: adjust applies, records, and guards negatives/zeros",
+            adj.status() === 201 &&
+              adjBody?.movement?.delta === 4 &&
+              stockPostAdjust === stockPreAdjust + 4 &&
+              mvRes.ok() &&
+              (mv?.movements || []).some((m) => m.delta === 4 && m.reason === "receipt") &&
+              neg.status() === 409 &&
+              zero.status() === 400,
+            `adjust=${adj.status()} stock ${stockPreAdjust}->${stockPostAdjust} neg=${neg.status()} zero=${zero.status()}`
+          );
+        }
+      }
+
+      // throttle is checked LAST: it burns the register window for this IP
+      const throttleStatuses = [];
+      let saw429 = false;
+      for (let i = 0; i < 8 && !saw429; i++) {
+        const r = await post("/api/account/register", {
+          email: `throttle-${Date.now()}-${i}@test.example`,
+          password: "Throttle26!x",
+          name: "Throttle Probe",
+        });
+        throttleStatuses.push(r.status());
+        if (r.status() === 429) saw429 = true;
+      }
+      const pre429 = throttleStatuses.slice(0, throttleStatuses.indexOf(429));
+      check(
+        "register throttle: 429 after burst (5/15min per IP)",
+        saw429 && pre429.every((s) => s === 201 || s === 409),
+        `statuses=${throttleStatuses.join(",")}`
+      );
+    }
+  }
 
   await browser.close();
   results.forEach((l) => console.log(l));

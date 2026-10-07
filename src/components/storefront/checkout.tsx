@@ -186,7 +186,7 @@ export default function Checkout({
                   {s}
                 </div>
                 <span className="ms-label text-xs">
-                  {s === 1 ? "CUSTOMER" : s === 2 ? "REVIEW" : "PAY"}
+                  {s === 1 ? "CUSTOMER" : s === 2 ? "REVIEW" : "CONFIRM"}
                 </span>
               </div>
             ))}
@@ -405,10 +405,13 @@ export default function Checkout({
           </div>
         )}
 
-        {/* Step 3: Pay */}
+        {/* Step 3: Confirm — payment is arranged AFTER the order is placed
+            (the site never charges anything itself). The copy states that
+            plainly; the old "partner gateway" line was removed in round 26
+            because no gateway exists — an unshipped claim is a liability. */}
         {step === 3 && (
           <div className="ms-tile p-6 md:p-8">
-            <h2 className="ms-display mb-6 text-2xl">COMPLETE PAYMENT</h2>
+            <h2 className="ms-display mb-6 text-2xl">CONFIRM &amp; PLACE ORDER</h2>
 
             <div className="ms-field p-6">
               <div className="mb-6 flex items-center gap-4">
@@ -416,15 +419,17 @@ export default function Checkout({
                   {displayRegion.currency}
                 </div>
                 <div>
-                  <h3 className="mb-1 font-bold">Amount to pay</h3>
+                  <h3 className="mb-1 font-bold">Order total</h3>
                   <p className="text-brand font-bold">{money(q.total)}</p>
                   <p className="text-sm text-hush">
-                    Processed securely through our partner gateway.
+                    Nothing is charged on this site. After you place the order,
+                    our team confirms stock and dispatch, then sends payment
+                    instructions for the method you pick below.
                   </p>
                 </div>
               </div>
 
-              <h3 className="ms-label mb-3 text-hush">PAYMENT METHOD *</h3>
+              <h3 className="ms-label mb-3 text-hush">HOW YOU'LL PAY *</h3>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {PAYMENT_METHODS.map((m) => (
                   <button
@@ -465,10 +470,10 @@ export default function Checkout({
                   {placing ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      PROCESSING...
+                      PLACING ORDER...
                     </>
                   ) : (
-                    `PAY ${money(q.total)}`
+                    "PLACE ORDER"
                   )}
                 </button>
               </div>
@@ -491,7 +496,7 @@ export default function Checkout({
               className="ms-label ms-key px-6 py-3"
               disabled={placing}
             >
-              {step === 2 ? "CONTINUE TO PAY →" : "CONTINUE →"}
+              {step === 2 ? "CONTINUE TO CONFIRM →" : "CONTINUE →"}
             </button>
           )}
         </div>

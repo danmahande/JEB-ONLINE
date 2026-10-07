@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
@@ -34,6 +35,17 @@ type VariantDraft = {
   label: string;
   priceDelta: string;
   weightKg: string;
+};
+
+type StockMovementRow = {
+  id: string;
+  productId: string;
+  delta: number;
+  resultingStock: number;
+  reason: string;
+  note: string | null;
+  createdBy: string;
+  createdAt: string;
 };
 
 type ProductDraft = {
@@ -137,6 +149,15 @@ export function AdminProducts() {
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  // ---- stock adjustment (Round 26) ----
+  const [adjustingId, setAdjustingId] = useState<string | null>(null);
+  const [adjustDelta, setAdjustDelta] = useState("");
+  const [adjustReason, setAdjustReason] = useState("receipt");
+  const [adjustNote, setAdjustNote] = useState("");
+  const [adjustBusy, setAdjustBusy] = useState(false);
+  const [adjustError, setAdjustError] = useState("");
+  const [movements, setMovements] = useState<StockMovementRow[]>([]);
 
   const loadProducts = useCallback(async (signal?: AbortSignal): Promise<boolean> => {
     setLoading(true);
@@ -353,6 +374,68 @@ export function AdminProducts() {
     }
   }
 
+  /* ---- stock adjustment (Round 26) ------------------------------------
+     Stock used to be display-only here BY DESIGN — there was no audited
+     place for corrections to land. The StockMovement ledger is that place:
+     every change is a signed delta with a reason, so warehouse stock and
+     DB stock can be reconciled without touching order history. */
+  function openAdjust(product: ManagedProduct) {
+    setAdjustingId(product.id);
+    setAdjustDelta("");
+    setAdjustReason("receipt");
+    setAdjustNote("");
+    setAdjustError("");
+    setMovements([]);
+    void fetch(`/api/admin/stock?productId=${encodeURIComponent(product.productId)}&take=8`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : { success: false }))
+      .then((d: { success: boolean; movements?: StockMovementRow[] }) => {
+        if (d.success && Array.isArray(d.movements)) setMovements(d.movements);
+      })
+      .catch(() => undefined);
+  }
+
+  async function submitAdjustment(product: ManagedProduct) {
+    const delta = Number(adjustDelta);
+    if (!Number.isInteger(delta) || delta === 0) {
+      setAdjustError("Enter a non-zero whole number (+ receipts, − shrinkage).");
+      return;
+    }
+    setAdjustBusy(true);
+    setAdjustError("");
+    try {
+      const response = await fetch("/api/admin/stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.productId,
+          delta,
+          reason: adjustReason,
+          note: adjustNote.trim() || undefined,
+        }),
+      });
+      const result = (await response.json()) as { success: boolean; error?: string };
+      if (response.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      if (!response.ok || !result.success) {
+        setAdjustError(result.error ?? "The adjustment failed. Try again.");
+        return;
+      }
+      setNotice(
+        `Stock adjusted for ${product.productLabel} (${delta > 0 ? "+" : ""}${delta}).`
+      );
+      setAdjustingId(null);
+      await loadProducts();
+    } catch {
+      setAdjustError("The adjustment failed. Check your connection and retry.");
+    } finally {
+      setAdjustBusy(false);
+    }
+  }
+
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -368,13 +451,21 @@ export function AdminProducts() {
             and order history intact.
           </p>
         </div>
-        <Button
-          onClick={() => void signOut({ callbackUrl: "/admin/login" })}
-          type="button"
-          variant="outline"
-        >
-          Sign out
-        </Button>
+        <div className="flex items-center gap-3">
+          <Link
+            className="text-sm font-semibold text-ink underline decoration-line underline-offset-4 hover:decoration-ink"
+            href="/admin/orders"
+          >
+            Orders
+          </Link>
+          <Button
+            onClick={() => void signOut({ callbackUrl: "/admin/login" })}
+            type="button"
+            variant="outline"
+          >
+            Sign out
+          </Button>
+        </div>
       </header>
 
       <section
@@ -833,6 +924,15 @@ export function AdminProducts() {
                         >
                           {product.isActive ? "LIVE" : "HIDDEN"}
                         </span>
+                        {product.isActive && product.currentStock === 0 ? (
+                          <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-semibold text-red-800">
+                            SOLD OUT
+                          </span>
+                        ) : product.isActive && lowStock ? (
+                          <span className="rounded-sm bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-800">
+                            LOW STOCK
+                          </span>
+                        ) : null}
                       </div>
                       <p className="mt-1 text-xs font-medium tracking-wide text-hush">
                         {product.productId} · {product.category} · {product.unit}
@@ -846,6 +946,15 @@ export function AdminProducts() {
                         variant="secondary"
                       >
                         Edit
+                      </Button>
+                      <Button
+                        onClick={() =>
+                          adjustingId === product.id ? setAdjustingId(null) : openAdjust(product)
+                        }
+                        type="button"
+                        variant="secondary"
+                      >
+                        {adjustingId === product.id ? "Close stock" : "Stock"}
                       </Button>
                       <Button
                         onClick={() => void toggleActive(product)}
@@ -895,6 +1004,105 @@ export function AdminProducts() {
                         .map((variant) => `${variant.label} (${variant.weightKg} kg)`)
                         .join(", ")}
                     </p>
+                  ) : null}
+
+                  {adjustingId === product.id ? (
+                    <div className="mt-5 rounded-md border border-line bg-mist p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-hush">
+                        Adjust stock — current {product.currentStock} {product.unit}, threshold{" "}
+                        {product.minStock}
+                      </p>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div className="space-y-1.5">
+                          <label
+                            className="block text-sm font-medium text-ink"
+                            htmlFor={`adjust-delta-${product.id}`}
+                          >
+                            Change (+ receipt / − shrink)
+                          </label>
+                          <Input
+                            autoComplete="off"
+                            id={`adjust-delta-${product.id}`}
+                            inputMode="numeric"
+                            onChange={(event) => setAdjustDelta(event.target.value)}
+                            placeholder="e.g. 40 or -2"
+                            value={adjustDelta}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label
+                            className="block text-sm font-medium text-ink"
+                            htmlFor={`adjust-reason-${product.id}`}
+                          >
+                            Reason
+                          </label>
+                          <select
+                            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand focus-visible:outline-none"
+                            id={`adjust-reason-${product.id}`}
+                            onChange={(event) => setAdjustReason(event.target.value)}
+                            value={adjustReason}
+                          >
+                            <option value="receipt">Stock received</option>
+                            <option value="count_correction">Count correction</option>
+                            <option value="damage">Damage / loss</option>
+                            <option value="adjustment">Other adjustment</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <label
+                            className="block text-sm font-medium text-ink"
+                            htmlFor={`adjust-note-${product.id}`}
+                          >
+                            Note (optional)
+                          </label>
+                          <Input
+                            autoComplete="off"
+                            id={`adjust-note-${product.id}`}
+                            maxLength={500}
+                            onChange={(event) => setAdjustNote(event.target.value)}
+                            placeholder="e.g. GRN #2241 from Kasese mill"
+                            value={adjustNote}
+                          />
+                        </div>
+                      </div>
+                      {adjustError ? (
+                        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800" role="alert">
+                          {adjustError}
+                        </p>
+                      ) : null}
+                      <div className="mt-3">
+                        <Button
+                          disabled={adjustBusy}
+                          onClick={() => void submitAdjustment(product)}
+                          type="button"
+                        >
+                          {adjustBusy ? "Applying..." : "Apply adjustment"}
+                        </Button>
+                      </div>
+                      {movements.length ? (
+                        <ul className="mt-4 divide-y divide-line border-t border-line pt-2">
+                          {movements.map((m) => (
+                            <li key={m.id} className="flex flex-wrap justify-between gap-2 py-1.5 text-xs text-hush">
+                              <span className="text-ink">
+                                {m.delta > 0 ? `+${m.delta}` : m.delta} · {m.reason.replaceAll("_", " ")} →{" "}
+                                {m.resultingStock} on shelf
+                                {m.note ? ` · ${m.note}` : ""}
+                              </span>
+                              <span>
+                                {new Date(m.createdAt).toLocaleString("en", {
+                                  dateStyle: "short",
+                                  timeStyle: "short",
+                                })}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-3 text-xs text-hush">
+                          No movements recorded for this product yet.
+                        </p>
+                      )}
+                    </div>
                   ) : null}
                 </li>
               );

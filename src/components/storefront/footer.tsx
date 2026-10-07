@@ -213,6 +213,15 @@ export default function Footer({
                     <span className="text-white/75">{v}</span>
                   </li>
                 ))}
+                <li className="ms-label flex gap-3 leading-[1.7]">
+                  <span className="w-[110px] shrink-0 text-white/35">MORE</span>
+                  <Link
+                    className="text-white/75 underline decoration-white/20 underline-offset-4 transition-colors hover:text-brand"
+                    href="/contact"
+                  >
+                    CONTACT PAGE
+                  </Link>
+                </li>
               </ul>
               <button
                 onClick={() => onNavigate("track")}

@@ -50,6 +50,16 @@ export default function Confirmation({
           </div>
 
           <div className="p-4 space-y-1.5 text-sm">
+            <p className="ms-label text-hush mb-2">PAYMENT</p>
+            <p className="leading-relaxed">
+              Nothing was charged online. Our team will contact you with payment
+              instructions for <b>{order.paymentMethod}</b>. Quote your order
+              number <b className="whitespace-nowrap">{order.orderNumber}</b> as
+              the payment reference on every transfer.
+            </p>
+          </div>
+
+          <div className="p-4 space-y-1.5 text-sm border-t border-line">
             <p className="ms-label text-hush mb-2">COST BREAKDOWN (USD)</p>
             <div className="flex justify-between"><span className="text-hush">SUBTOTAL</span><span>${order.subtotal.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="text-hush">IMPORT DUTY</span><span>${order.dutyAmount.toFixed(2)}</span></div>

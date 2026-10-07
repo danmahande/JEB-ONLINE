@@ -92,7 +92,7 @@ model OrderProcessing {
   totalAmount      Float
   /// Cash, MTN MoMo, M-Pesa, Airtel Money, Bank Transfer
   paymentMethod    String
-  /// new_order | processing | shipped | delivered | returned
+  /// new_order | processing | shipped | delivered | returned | cancelled
   status           String    @default("new_order")
   trackingNumber   String?
   invoiceGenerated Boolean   @default(false)
@@ -211,6 +211,37 @@ model NewsletterSubscriber {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
+}
+
+/// Stock ledger for every stock change OUTSIDE a live sale — receipts,
+/// corrections, damages, and cancellations returning units to the shelf.
+/// Sales decrement stock through OrderProcessing; this model covers the
+/// rest of the truth so warehouse stock and DB stock can be reconciled.
+model StockMovement {
+  id             String   @id @default(cuid())
+  productId      String
+  /// signed delta applied to Product.currentStock (+ receipt, − shrinkage)
+  delta          Int
+  /// stock after applying the delta (snapshot for quick audits)
+  resultingStock Int
+  /// receipt | adjustment | damage | count_correction | cancellation
+  reason         String
+  note           String?
+  /// CUSTOMER (cancel restock) or ADMIN
+  createdBy      String   @default("ADMIN")
+  createdAt      DateTime @default(now())
+
+  @@index([productId, createdAt])
+  @@index([createdAt])
+}
+
+/// Fixed-window throttle for storefront account sign-ups. The key is an
+/// HMAC of the client IP — the raw IP is never stored (same pattern as
+/// AdminLoginAttempt / CustomerLoginAttempt).
+model RegisterAttempt {
+  id              String   @id
+  attempts        Int      @default(0)
+  windowStartedAt DateTime @default(now())
 }
 
 /// Counter model for generating atomic sequences

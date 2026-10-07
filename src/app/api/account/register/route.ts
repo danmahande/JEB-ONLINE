@@ -4,6 +4,13 @@ import { isCustomerAccountsConfigured } from "@/lib/admin-auth";
 import { createCustomerPasswordHash } from "@/lib/admin-password";
 import { db } from "@/lib/db";
 import { isPrismaUniqueConstraintError } from "@/lib/prisma-error";
+import {
+  clientIpFromHeaders,
+  getRegisterWindowCutoff,
+  isRegisterRateLimited,
+  isRegisterWindowExpired,
+  registerAttemptId,
+} from "@/lib/register-rate-limit";
 import { isSameOriginRequest } from "@/lib/request-origin";
 
 export async function POST(request: NextRequest) {
@@ -17,6 +24,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { success: false, error: "Account sign-up is not configured yet." },
       { status: 503 }
+    );
+  }
+
+  // ---------- sign-up throttle (Round 26, anti DB-fill spam) ----------
+  // Counted before validation on purpose: the point is to cap request
+  // volume per IP, not per valid payload.
+  const now = new Date();
+  const attemptId = registerAttemptId(clientIpFromHeaders(request.headers));
+  const existing = await db.registerAttempt.findUnique({ where: { id: attemptId } });
+  if (existing && isRegisterWindowExpired(existing.windowStartedAt, now)) {
+    await db.registerAttempt.updateMany({
+      where: { id: attemptId, windowStartedAt: { lte: getRegisterWindowCutoff(now) } },
+      data: { attempts: 0, windowStartedAt: now },
+    });
+  }
+  const attempt = await db.registerAttempt.upsert({
+    where: { id: attemptId },
+    create: { id: attemptId, attempts: 1, windowStartedAt: now },
+    update: { attempts: { increment: 1 } },
+  });
+  if (isRegisterRateLimited(attempt.attempts)) {
+    return NextResponse.json(
+      { success: false, error: "Too many sign-up attempts. Try again later." },
+      { status: 429, headers: { "Retry-After": "900" } }
     );
   }
 

@@ -34,7 +34,8 @@ export default function TrackOrder() {
 
   const stageIdx = (() => {
     if (!order) return -1;
-    if (order.status === "returned") return 0;
+    // closed states (returned / cancelled) render outside the advance rail
+    if (order.status === "returned" || order.status === "cancelled") return 0;
     const i = ORDER_STAGES.findIndex((s) => s.key === order.status);
     return i >= 0 ? i : 0;
   })();
@@ -100,13 +101,17 @@ export default function TrackOrder() {
                 <span
                   className="absolute top-[7px] left-0 h-0.5 bg-brand"
                   style={{
-                    width: order.status === "returned" ? "0%" : `${(stageIdx / (ORDER_STAGES.length - 1)) * 100}%`,
+                    width:
+                      order.status === "returned" || order.status === "cancelled"
+                        ? "0%"
+                        : `${(stageIdx / (ORDER_STAGES.length - 1)) * 100}%`,
                   }}
                   aria-hidden="true"
                 />
                 <div className="relative flex justify-between">
                   {ORDER_STAGES.map((s, i) => {
-                    const reached = i <= stageIdx && order.status !== "returned";
+                    const closed = order.status === "returned" || order.status === "cancelled";
+                    const reached = i <= stageIdx && !closed;
                     return (
                       <div
                         key={s.key}
@@ -129,6 +134,11 @@ export default function TrackOrder() {
               {order.status === "returned" && (
                 <p className="ms-label mt-6 text-center text-red-500">ORDER RETURNED</p>
               )}
+              {order.status === "cancelled" && (
+                <p className="ms-label mt-6 text-center text-red-500">
+                  ORDER CANCELLED — CONTACT SALES IF THIS WASN’T YOU
+                </p>
+              )}
             </div>
 
             {/* meta */}
@@ -137,7 +147,6 @@ export default function TrackOrder() {
                 <p className="ms-label text-hush mb-2">SHIPMENT</p>
                 <p className="text-sm"><b>DESTINATION:</b> {order.destination || "—"}</p>
                 <p className="text-sm"><b>PLACED:</b> {new Date(order.orderDate).toLocaleDateString()}</p>
-                <p className="text-sm"><b>ETA:</b> {order.etaDays || "—"}</p>
               </div>
               <div className="p-5 space-y-1.5">
                 <p className="ms-label text-hush mb-2">PAYMENT</p>

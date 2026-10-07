@@ -102,14 +102,13 @@ export interface TrackedOrder {
   orderNumber: string;
   trackingNumber: string | null;
   orderDate: string;
-  customerName: string;
   totalAmount: number;
   paymentMethod: string;
   status: string;
   currency: string;
   fxRate?: number;
+  region?: string;
   destination: string | null;
-  etaDays?: string;
 }
 
 export interface OrderLine {
