@@ -12,6 +12,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Standing rule (round 23): any page that reads a session must opt out of
+// static prerendering. Without this the `getCustomerSession()` redirect below
+// is evaluated at BUILD time, so the branch is frozen and every signed-in
+// customer still gets the anonymous signup form. /account and /account/orders
+// declare this; signup was missed.
+export const dynamic = "force-dynamic";
+
 export default async function CustomerSignupPage() {
   if (await getCustomerSession()) redirect("/account/orders");
 

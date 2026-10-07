@@ -113,6 +113,21 @@ export default function Storefront() {
     useRegion.setState({ hasHydrated: true });
   }, []);
 
+  // `?cart=1` opens the drawer on arrival. The pages that are not the
+  // storefront (privacy, terms, shipping, contact) render the same header, so
+  // their cart button deep-links here instead of doing nothing.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cart") !== "1") return;
+    setCartOpen(true);
+    params.delete("cart");
+    window.history.replaceState(
+      {},
+      "",
+      params.toString() ? `?${params.toString()}` : window.location.pathname
+    );
+  }, []);
+
   // Scroll to top utility function
   const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });

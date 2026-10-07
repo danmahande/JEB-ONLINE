@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { adminProductCreateSchema } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import { parseProductVariants } from "@/lib/variants";
 import { isPrismaUniqueConstraintError } from "@/lib/prisma-error";
 import { isSameOriginRequest } from "@/lib/request-origin";
 
@@ -44,7 +45,7 @@ export async function GET() {
 
     const serialized = products.map((product) => ({
       ...product,
-      variants: JSON.parse(product.variants || "[]"),
+      variants: parseProductVariants(product.variants),
     }));
 
     return NextResponse.json(

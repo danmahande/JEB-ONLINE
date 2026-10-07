@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
@@ -140,6 +141,9 @@ export function AdminProducts() {
   const [products, setProducts] = useState<ManagedProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
+  // the form starts COLLAPSED — the inventory list is the daily surface;
+  // a ~700px always-open form pushed it below the fold
+  const [formOpen, setFormOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
@@ -227,22 +231,29 @@ export function AdminProducts() {
     if (imageUploading) return;
     setEditingId(product.id);
     setDraft(draftFromProduct(product));
+    setFormOpen(true);
     setError("");
     setNotice("");
-    document.getElementById("product-form-heading")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-    document.getElementById("product-form-heading")?.focus();
   }
 
   function cancelEdit() {
     if (imageUploading) return;
     setEditingId(null);
     setDraft(emptyDraft);
+    setFormOpen(false);
     setError("");
     setNotice("");
   }
+
+  /* scroll/focus moved here from beginEdit: the heading only exists once the
+     collapsed form has rendered, so the imperative same-tick DOM lookup would
+     miss. The effect fires after render on every open or edit-target change. */
+  useEffect(() => {
+    if (!formOpen) return;
+    const heading = document.getElementById("product-form-heading");
+    heading?.scrollIntoView({ behavior: "smooth", block: "start" });
+    heading?.focus();
+  }, [formOpen, editingId]);
 
   function updateVariant(index: number, field: keyof VariantDraft, value: string) {
     setDraft((current) => ({
@@ -327,6 +338,7 @@ export function AdminProducts() {
       const refreshed = await loadProducts();
       setEditingId(null);
       setDraft(emptyDraft);
+      setFormOpen(false);
       setNotice(
         refreshed
           ? editingId
@@ -467,9 +479,10 @@ export function AdminProducts() {
       </section>
 
       <section
-        aria-labelledby="product-form-heading"
+        aria-label="Product form"
         className="mt-8 rounded-md border border-line bg-white p-5 sm:p-7"
       >
+        {formOpen ? (
         <div className="flex flex-col gap-2 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-hush">
@@ -487,9 +500,35 @@ export function AdminProducts() {
             <Button disabled={imageUploading} onClick={cancelEdit} type="button" variant="secondary">
               Cancel edit
             </Button>
-          ) : null}
+          ) : (
+            <Button disabled={imageUploading} onClick={() => setFormOpen(false)} type="button" variant="outline">
+              Close
+            </Button>
+          )}
         </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-hush">
+                Catalog details
+              </p>
+              <p className="mt-1 text-sm text-hush">
+                Add a product when the range grows — the form stays out of the way
+                until then.
+              </p>
+            </div>
+            <Button
+              aria-expanded={formOpen}
+              onClick={() => setFormOpen(true)}
+              type="button"
+              className="sm:shrink-0"
+            >
+              + Add a product
+            </Button>
+          </div>
+        )}
 
+        {formOpen && (
         <form className="mt-6 space-y-7" onSubmit={handleSubmit}>
           <fieldset className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <legend className="sr-only">Product details</legend>
@@ -820,6 +859,7 @@ export function AdminProducts() {
             </Button>
           </div>
         </form>
+        )}
       </section>
 
       <section aria-labelledby="product-list-heading" className="mt-9">
@@ -890,33 +930,53 @@ export function AdminProducts() {
                   key={product.id}
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-semibold text-ink">
-                          {product.productLabel}
-                        </h3>
-                        <span
-                          className={`rounded-sm px-2 py-1 text-xs font-semibold ${
-                            product.isActive
-                              ? "bg-green-50 text-green-800"
-                              : "bg-secondary text-hush"
-                          }`}
-                        >
-                          {product.isActive ? "LIVE" : "HIDDEN"}
-                        </span>
-                        {product.isActive && product.currentStock === 0 ? (
-                          <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-semibold text-red-800">
-                            SOLD OUT
+                    <div className="flex min-w-0 items-start gap-4">
+                      {/* catalog thumbnail — the same image the storefront tile
+                          shows (local /products path or a Vercel Blob URL; the
+                          blob host is allowlisted in next.config remotePatterns) */}
+                      <div className="relative size-12 shrink-0 overflow-hidden rounded-md border border-line bg-mist">
+                        {product.image ? (
+                          <Image
+                            src={product.image}
+                            alt=""
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="flex size-full items-center justify-center text-[9px] font-semibold uppercase tracking-wide text-hush">
+                            No image
                           </span>
-                        ) : product.isActive && lowStock ? (
-                          <span className="rounded-sm bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-800">
-                            LOW STOCK
-                          </span>
-                        ) : null}
+                        )}
                       </div>
-                      <p className="mt-1 text-xs font-medium tracking-wide text-hush">
-                        {product.productId} · {product.category} · {product.unit}
-                      </p>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-ink">
+                            {product.productLabel}
+                          </h3>
+                          <span
+                            className={`rounded-sm px-2 py-1 text-xs font-semibold ${
+                              product.isActive
+                                ? "bg-green-50 text-green-800"
+                                : "bg-secondary text-hush"
+                            }`}
+                          >
+                            {product.isActive ? "LIVE" : "HIDDEN"}
+                          </span>
+                          {product.isActive && product.currentStock === 0 ? (
+                            <span className="rounded-sm bg-red-50 px-2 py-1 text-xs font-semibold text-red-800">
+                              SOLD OUT
+                            </span>
+                          ) : product.isActive && lowStock ? (
+                            <span className="rounded-sm bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-800">
+                              LOW STOCK
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-1 text-xs font-medium tracking-wide text-hush">
+                          {product.productId} · {product.category} · {product.unit}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button

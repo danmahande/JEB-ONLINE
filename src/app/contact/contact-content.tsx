@@ -2,6 +2,7 @@
 
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
+import { useStoreChrome } from "@/hooks/use-store-chrome";
 
 /* Round 26: a real contact page. Honesty rule (owner decision, round 5)
    applies here too — only contact channels that actually exist are shown.
@@ -11,15 +12,16 @@ import Footer from "@/components/storefront/footer";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/[^\d]/g, "");
 
 export default function ContactContent() {
+  const chrome = useStoreChrome();
   return (
     <>
       <Header
-        regions={[]}
-        onNavigate={() => {}}
-        onOpenCart={() => {}}
-        query=""
-        onQuery={() => {}}
-        onSearchSubmit={() => {}}
+        regions={chrome.regions}
+        onNavigate={chrome.navigate}
+        onOpenCart={chrome.openCart}
+        query={chrome.query}
+        onQuery={chrome.setQuery}
+        onSearchSubmit={chrome.submitSearch}
       />
       <main className="min-h-[calc(100vh-140px)] flex flex-col">
         <div className="px-4 md:px-8 py-12 md:py-16">
@@ -107,7 +109,7 @@ export default function ContactContent() {
           </div>
         </div>
       </main>
-      <Footer onNavigate={() => {}} />
+      <Footer onNavigate={chrome.footerNavigate} />
     </>
   );
 }

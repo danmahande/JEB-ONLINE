@@ -472,8 +472,7 @@ body {
   .ms-tile,
   .ms-tile img,
   .ms-base,
-  .ms-plaque,
-  .ms-reveal {
+  .ms-plaque {
     transition: none;
   }
   .ms-root :where(button):active {
@@ -493,10 +492,6 @@ body {
   }
   html {
     scroll-behavior: auto;
-  }
-  .ms-reveal {
-    opacity: 1;
-    transform: none;
   }
   .ms-cloud-a,
   .ms-cloud-b,

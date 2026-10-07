@@ -8,6 +8,7 @@ import {
   sendAll,
 } from "@/lib/mail";
 import { leviesFor } from "@/lib/levies";
+import { parseProductVariants } from "@/lib/variants";
 import { getCustomerSession } from "@/lib/admin-auth";
 import { prismaErrorCode } from "@/lib/prisma-error";
 
@@ -264,10 +265,9 @@ export async function POST(req: NextRequest) {
         insufficient.push(line.productId + " (unavailable)");
         continue;
       }
-      let variants: { label: string; priceDelta: number; weightKg: number }[] = [];
-      try {
-        variants = JSON.parse(p.variants || "[]");
-      } catch {}
+      // Guarded shared reader: a damaged row degrades to "no variants" here
+      // instead of throwing mid-pricing and failing the whole order.
+      const variants = parseProductVariants(p.variants);
       const v =
         variants.find((x) => x.label === line.variantLabel) ?? variants[0] ?? {
           label: p.variant || p.unit,

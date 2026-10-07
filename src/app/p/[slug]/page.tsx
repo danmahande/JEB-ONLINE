@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { refreshFxRatesIfStale } from "@/lib/fx";
 import { SITE_URL } from "@/lib/site";
+import { parseProductVariants } from "@/lib/variants";
 import type { Product, ProductVariant, RegionConfig } from "@/lib/types";
 import ProductView from "./product-view";
 
@@ -11,12 +12,7 @@ import ProductView from "./product-view";
 export const dynamic = "force-dynamic";
 
 function parseVariants(raw: string): ProductVariant[] {
-  try {
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return parseProductVariants(raw);
 }
 
 async function getProduct(slug: string): Promise<Product | null> {

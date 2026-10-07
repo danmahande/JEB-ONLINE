@@ -2,17 +2,19 @@
 
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
+import { useStoreChrome } from "@/hooks/use-store-chrome";
 
 export default function ShippingContent() {
+  const chrome = useStoreChrome();
   return (
     <>
       <Header
-        regions={[]}
-        onNavigate={() => {}}
-        onOpenCart={() => {}}
-        query=""
-        onQuery={() => {}}
-        onSearchSubmit={() => {}}
+        regions={chrome.regions}
+        onNavigate={chrome.navigate}
+        onOpenCart={chrome.openCart}
+        query={chrome.query}
+        onQuery={chrome.setQuery}
+        onSearchSubmit={chrome.submitSearch}
       />
       <main className="min-h-[calc(100vh-140px)] flex flex-col">
         <div className="px-4 md:px-8 py-12 md:py-16">
@@ -21,12 +23,15 @@ export default function ShippingContent() {
           </h1>
           <div className="max-w-2xl">
             <p>
-              Last updated: September 30, 2026
+              Last updated: October 7, 2026
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">1. Order Processing</h2>
             <p>
-              Orders are processed within 1-2 business days after payment confirmation.
-              You will receive an order confirmation email with your order number and details.
+              Orders are processed within 1-2 business days. Nothing is charged on this
+              website: we review the order, confirm stock and freight with you, and agree
+              payment before anything is dispatched. Your order number is shown on screen as
+              soon as the order is placed — keep it, it is how you track the order. Where order
+              email is enabled we also send a confirmation to the address you provided.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">2. Shipping Methods</h2>
             <p>
@@ -42,9 +47,9 @@ export default function ShippingContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">3. Shipping Costs</h2>
             <p>
-              Shipping costs are calculated based on package weight, dimensions, destination,
-              and selected shipping speed. These costs are displayed during checkout before
-              final payment. Free shipping promotions, when offered, will be clearly stated.
+              Shipping cost is calculated from the weight of your consignment, your destination
+              and — for EAC corridors — the bus cargo operator you choose. The full breakdown of
+              the tariff is displayed during checkout before you submit the order.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">4. Delivery Estimates</h2>
             <p>
@@ -52,11 +57,14 @@ export default function ShippingContent() {
               to factors beyond our control (weather, customs delays, carrier performance).
               Typical delivery windows:
               <ul className="list-disc list-inside mt-2">
-                <li>Uganda: 2-4 business days</li>
-                <li>Kenya, Tanzania, Rwanda: 4-7 business days</li>
-                <li>DR Congo: 7-14 business days</li>
+                <li>Uganda: 1-2 business days</li>
+                <li>Kenya, Rwanda: 2-4 business days</li>
+                <li>Tanzania: 3-5 business days</li>
+                <li>DR Congo: 4-7 business days</li>
                 <li>International: 10-21 business days</li>
               </ul>
+              Where your corridor is served by a bus cargo operator, that operator&apos;s own
+              transit window is quoted at checkout instead.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">5. Cross-Border Considerations</h2>
             <p>
@@ -68,14 +76,17 @@ export default function ShippingContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">6. Tracking Information</h2>
             <p>
-              Once your order ships, you will receive a shipping confirmation email with
-              tracking information. Use the tracking number on the carrier's website to
-              monitor your shipment's progress.
+              You can follow your consignment at any time from the TRACK ORDER page using your
+              order number or tracking number — the status is read live from our order record.
+              Where order email is enabled we also send a shipping confirmation with the tracking
+              number once the consignment is on the way; with a named bus operator you can also
+              quote that number at the operator&apos;s desk.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">7. Delivery Issues</h2>
             <p>
-              If your shipment is marked as delivered but you have not received it, please
-              contact the carrier first. If the issue persists, contact us at
+              If your consignment is marked as delivered but you have not received it, check the
+              TRACK ORDER page first, then contact the operator or carrier named on your order.
+              If the issue persists, contact us at
               <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
                 sales@meridiansupply.co
               </a> with your order number and tracking information.
@@ -104,21 +115,7 @@ export default function ShippingContent() {
           </div>
         </div>
       </main>
-      <Footer
-        onNavigate={(v, q) => {
-          if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            if (v === 'shop') {
-              if (q) params.set('q', q);
-              else params.delete('q');
-              window.history.replaceState({}, '', `?${params.toString()}`);
-            }
-            if (v === 'track') {
-              window.history.replaceState({}, '', `?view=track`);
-            }
-          }
-        }}
-      />
+      <Footer onNavigate={chrome.footerNavigate} />
     </>
   );
 }

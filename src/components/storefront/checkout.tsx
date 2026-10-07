@@ -456,6 +456,41 @@ export default function Checkout({
                 no bus cargo operator runs this corridor.
               </p>
             )}
+
+            {/* live freight + running total — the same quote step 2 confirms,
+                visible WHILE the operator choice is made: the tariff
+                difference between operators is the decision, and it was
+                invisible until the review step. Display-only; the API
+                re-prices server-side as always. */}
+            <div className="mt-8 border-t border-line pt-6">
+              <div className="ms-field p-4 md:p-5">
+                <div className="space-y-2 text-sm">
+                  <div className="flex flex-wrap justify-between gap-x-4">
+                    <span>
+                      Subtotal · {lines.length} {lines.length === 1 ? "line" : "lines"} ·{" "}
+                      {q.totalWeightKg} kg
+                    </span>
+                    <span>{money(q.subtotal)}</span>
+                  </div>
+                  <div className="flex flex-wrap justify-between gap-x-4">
+                    <span>
+                      {selectedOperator
+                        ? `Bus cargo — ${selectedOperator.name} ($${selectedOperator.cargoRatePerKg.toFixed(2)}/kg, min $${selectedOperator.minCharge.toFixed(2)})`
+                        : "Freight — standard forwarder"}
+                    </span>
+                    <span>{money(q.shipping)}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-line pt-2 font-bold">
+                    <span>Estimated total</span>
+                    <span className="text-brand">{money(q.total)}</span>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-hush">
+                  Duty, levies and VAT for {displayRegion.countryName} are already in
+                  the estimate — the full line-by-line breakdown is on the next step.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

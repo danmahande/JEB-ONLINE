@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Same standing rule as the sibling account pages: a session-reading page must
+// opt out of static prerendering. This one already rendered dynamically by
+// awaiting searchParams, but stating it explicitly keeps the rule uniform and
+// machine-checkable (see scripts/ci-checks.mjs).
+export const dynamic = "force-dynamic";
+
 export default async function CustomerLoginPage({
   searchParams,
 }: {

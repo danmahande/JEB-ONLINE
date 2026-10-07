@@ -65,41 +65,41 @@ The catalog tiles read as painted-steel cabinet faces: every tile carries weight
 
 ## Getting started
 
-**Prerequisites:** Node.js 20+ (or Bun 1.1+). Bun is used for the scripts below, but `npm`/`pnpm` work the same.
+**Prerequisites:** Node.js 20+ with npm — that is what the deployment uses (`vercel.json` runs `npm run build`). `pnpm` works the same.
 
 ```bash
 # 1. install dependencies
-bun install
+npm install
 
 # 2. configure PostgreSQL in the project-root .env
 # DATABASE_URL is the pooled/runtime URL; DATABASE_URL_UNPOOLED is for Prisma migrations.
 
 # 3. apply committed migrations and seed the initial catalog/regions
-bun run db:deploy
-bun run db:seed
+npm run db:deploy
+npm run db:seed
 
 # 4. start the dev server
-bun run dev
+npm run dev
 ```
 
 Open http://localhost:3000. The seed script inserts the 14 catalog products and 6 destination regions. It does not create customers or orders. Run it once for an empty database; it resets seeded product stock to the seed values when re-run.
 
-> **Windows:** everything above works the same in PowerShell — with `npm` instead of Bun (`npm install`, `npm run db:deploy`, `npm run db:seed`, `npm run dev`).
+> **Windows:** everything above runs the same in PowerShell.
 
 ### Scripts
 
 | Command | What it does |
 |---|---|
-| `bun run dev` | Dev server on port 3000 |
-| `bun run build` | Production build (standalone output) |
-| `bun run start` | Serve the standalone production build |
-| `bun run lint` | ESLint |
-| `bun run db:push` | Push the Prisma schema directly (development only; prefer migrations) |
-| `bun run db:deploy` | Apply committed PostgreSQL migrations |
-| `bun run db:generate` | Regenerate the Prisma client |
-| `bun run db:seed` | Seed catalog and region configuration into an empty database |
-| `bun run db:migrate` | Create/apply a dev migration |
-| `bun run db:reset` | Reset the database |
+| `npm run dev` | Dev server on port 3000 |
+| `npm run build` | Production build (standalone output) |
+| `npm run start` | Serve the standalone production build |
+| `npm run lint` | ESLint |
+| `npm run db:push` | Push the Prisma schema directly (development only; prefer migrations) |
+| `npm run db:deploy` | Apply committed PostgreSQL migrations |
+| `npm run db:generate` | Regenerate the Prisma client |
+| `npm run db:seed` | Seed catalog and region configuration into an empty database |
+| `npm run db:migrate` | Create/apply a dev migration |
+| `npm run db:reset` | Reset the database |
 | `npm run admin:hash` | Generate a hidden-input scrypt hash for the single admin password |
 | `npm run test:admin` | Test admin authentication and product input validation |
 
@@ -226,9 +226,9 @@ The previous SQLite schema and initial migration are retained under `prisma/migr
 ## Contributing
 
 1. Fork and create a feature branch (`feat/your-change`).
-2. `bun install && bun run db:deploy && bun run db:seed && bun run dev`.
+2. `npm install && npm run db:deploy && npm run db:seed && npm run dev`.
 3. Keep visual work consistent with the design system (see above): navy ink / brand orange, uppercase letterspaced labels, and the hardware interaction contract — all depth is drawn with inset shadows, nothing floats, and motion must respect `prefers-reduced-motion`.
-4. Run `bun run lint` before opening your PR and keep commits small and descriptive.
+4. Run `npm run lint` before opening your PR and keep commits small and descriptive.
 
 ## Notes
 

@@ -4,9 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * Scroll-in reveal — children fade-rise once when the block enters the viewport.
- * Initial state is deliberately identical on server and client (always hidden)
- * so hydration can never mismatch — visibility is only decided after mount.
- * Reduced motion is neutralized in CSS.
+ *
+ * Uses the shared `.ms-view-in` primitive (globals.css), which is already
+ * withdrawn under `prefers-reduced-motion: reduce`. This component previously
+ * emitted two class names that had no base CSS rule outside the reduced-motion
+ * block, so the reveal silently did nothing.
+ *
+ * Content is visible in every state: the animation only ever runs when the
+ * block is already in view, so no block can be left invisible if the observer
+ * never fires (which is also why there is no hidden initial state to hydrate).
  */
 export default function Reveal({
   children,
@@ -43,8 +49,8 @@ export default function Reveal({
   return (
     <div
       ref={ref}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
-      className={["ms-reveal", inView ? "ms-reveal-in" : "", className]
+      style={delay ? { animationDelay: `${delay}ms` } : undefined}
+      className={[inView ? "ms-view-in" : "", className]
         .filter(Boolean)
         .join(" ")}
     >

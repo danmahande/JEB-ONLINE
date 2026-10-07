@@ -1,0 +1,47 @@
+name: CI
+
+# The whole point of this workflow: every recurring failure class in this repo
+# (stripped trailing newlines, class names that render nothing, session pages
+# silently prerendered, an empty production catalog) is a manual check someone
+# forgot. No CI existed before this. Now the rules are enforced, not trusted.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Generates the Prisma client; no database is contacted.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Type-check (unfiltered)
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm run test:admin
+
+      # EOF newlines, undefined ms-* classes, session-route prerendering.
+      - name: Mechanical gates
+        run: node scripts/ci-checks.mjs
+
+      - name: Production build
+        run: npx next build
+        env:
+          # Build-time only. The build must not require a live database.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci

@@ -2,17 +2,19 @@
 
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
+import { useStoreChrome } from "@/hooks/use-store-chrome";
 
 export default function PrivacyContent() {
+  const chrome = useStoreChrome();
   return (
     <>
       <Header
-        regions={[]}
-        onNavigate={() => {}}
-        onOpenCart={() => {}}
-        query=""
-        onQuery={() => {}}
-        onSearchSubmit={() => {}}
+        regions={chrome.regions}
+        onNavigate={chrome.navigate}
+        onOpenCart={chrome.openCart}
+        query={chrome.query}
+        onQuery={chrome.setQuery}
+        onSearchSubmit={chrome.submitSearch}
       />
       <main className="min-h-[calc(100vh-140px)] flex flex-col">
         <div className="px-4 md:px-8 py-12 md:py-16">
@@ -21,7 +23,7 @@ export default function PrivacyContent() {
           </h1>
           <div className="max-w-2xl">
             <p>
-              Last updated: September 30, 2026
+              Last updated: October 7, 2026
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Introduction</h2>
             <p>
@@ -36,12 +38,30 @@ export default function PrivacyContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Information We Collect</h2>
             <p>
-              We collect information you provide directly to us (e.g., name, email, phone, shipping
-              and billing addresses, payment details) when you place an order, create an account,
-              subscribe to our newsletter, or otherwise communicate with us. We also automatically
-              collect certain information about your device and browsing behavior (e.g., IP address,
-              browser type, operating system, referral URL, and actions on our site) through cookies
-              and similar technologies.
+              <strong>Information you give us.</strong> When you place an order we collect your
+              name, email address, phone number and delivery address, together with the name and
+              phone number of the person collecting the consignment at the destination terminal
+              where a bus cargo operator is used. If you create an account we additionally store
+              your email address and a hashed password. If you subscribe to our newsletter or ask
+              to be notified when a product is back in stock, we store the email address you give us.
+            </p>
+            <p>
+              <strong>Information we do not collect.</strong> This website does not take payment
+              and never receives your card or mobile-money credentials — no payment details are
+              collected or stored here. We run no analytics, advertising or third-party tracking
+              scripts.
+            </p>
+            <p>
+              <strong>Information stored in your own browser.</strong> Your cart contents and your
+              selected delivery region are kept in your browser&apos;s local storage under the keys
+              <code>meridian-cart</code> and <code>meridian-region</code>, so your cart survives a
+              page reload. This data stays on your device; clearing your browser storage removes it.
+            </p>
+            <p>
+              <strong>Security and rate-limiting data.</strong> To prevent abuse, sign-in and
+              sign-up attempts are counted per network address in a short-lived window. The address
+              is not stored in readable form: it is hashed with a server-side secret before it is
+              written, and only the counter is used to throttle repeated attempts.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">How We Use Your Information</h2>
             <p>
@@ -52,10 +72,10 @@ export default function PrivacyContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Sharing Your Information</h2>
             <p>
-              We may share your information with service providers who assist us in operating our
-              website and conducting our business (e.g., payment processors, shipping carriers,
-              email service providers), as required by law (e.g., in response to subpoenas or court
-              orders), or to protect our rights, privacy, safety, or property.
+              We share what is necessary to deliver your order — the carrier or bus cargo operator
+              and, where applicable, customs brokers — and with the email provider that sends order
+              confirmations, where that service is enabled. We may also disclose information where
+              the law requires it, or to protect our rights, privacy, safety or property.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Your Rights</h2>
             <p>
@@ -66,11 +86,14 @@ export default function PrivacyContent() {
                 sales@meridiansupply.co
               </a>.
             </p>
-            <h2 className="ms-label mt-6 mb-3 text-ink">Cookies and Tracking Technologies</h2>
+            <h2 className="ms-label mt-6 mb-3 text-ink">Cookies and Local Storage</h2>
             <p>
-              Our website uses cookies and similar technologies to enhance your experience, analyze
-              site traffic, and serve targeted advertisements. You can control cookie preferences
-              through your browser settings.
+              We do not run advertising or analytics cookies, and we do not sell or share your
+              information with advertising networks. If you sign in, a single strictly-necessary
+              session cookie is set so the site knows you are signed in; it is required for the
+              account area to work. Cart and region preferences use browser local storage rather
+              than cookies. You can clear either through your browser settings, though clearing
+              the session cookie will sign you out.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Data Security</h2>
             <p>
@@ -103,21 +126,7 @@ export default function PrivacyContent() {
           </div>
         </div>
       </main>
-      <Footer
-        onNavigate={(v, q) => {
-          if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            if (v === 'shop') {
-              if (q) params.set('q', q);
-              else params.delete('q');
-              window.history.replaceState({}, '', `?${params.toString()}`);
-            }
-            if (v === 'track') {
-              window.history.replaceState({}, '', `?view=track`);
-            }
-          }
-        }}
-      />
+      <Footer onNavigate={chrome.footerNavigate} />
     </>
   );
 }

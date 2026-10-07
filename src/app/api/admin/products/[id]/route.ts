@@ -5,6 +5,7 @@ import {
   adminProductSnapshotSchema,
 } from "@/lib/admin-products-schema";
 import { db } from "@/lib/db";
+import { readStoredVariants } from "@/lib/variants";
 import {
   isPrismaRecordNotFoundError,
   isPrismaUniqueConstraintError,
@@ -69,7 +70,18 @@ export async function PATCH(
       );
     }
 
-    const currentVariants: unknown = JSON.parse(existing.variants || "[]");
+    const stored = readStoredVariants(existing.variants);
+    if (stored.malformed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "This product's stored variants are damaged. Correct the variants before saving.",
+        },
+        { status: 409 }
+      );
+    }
+    const currentVariants: unknown = stored.variants;
     const snapshot = adminProductSnapshotSchema.safeParse({
       productId: existing.productId,
       productLabel: existing.productLabel,

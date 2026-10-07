@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { parseProductVariants } from "@/lib/variants";
 
 /**
  * GET /api/products
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
       image: p.image,
       hsCode: p.hsCode,
       originCountry: p.originCountry,
-      variants: JSON.parse(p.variants || "[]"),
+      variants: parseProductVariants(p.variants),
     }));
 
     return NextResponse.json(

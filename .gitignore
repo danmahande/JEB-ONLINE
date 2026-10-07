@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but the documented template IS committable — without this exception the
+# file that lists every required variable (NEXT_PUBLIC_SITE_URL included) is
+# invisible to git and the deployment can silently lose it.
+!.env.example
 
 # vercel
 .vercel
@@ -87,3 +91,10 @@ prisma/db/
 
 # standalone-server runtime log (env echoes, request noise) — not committable
 /.server-log
+
+# audit screenshots � regenerable evidence, never part of the store (31 MB)
+/.shots/
+
+# agent sandbox / run state
+/.kilo/
+/.zwork/

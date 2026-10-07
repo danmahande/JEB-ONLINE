@@ -2,17 +2,19 @@
 
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
+import { useStoreChrome } from "@/hooks/use-store-chrome";
 
 export default function TermsContent() {
+  const chrome = useStoreChrome();
   return (
     <>
       <Header
-        regions={[]}
-        onNavigate={() => {}}
-        onOpenCart={() => {}}
-        query=""
-        onQuery={() => {}}
-        onSearchSubmit={() => {}}
+        regions={chrome.regions}
+        onNavigate={chrome.navigate}
+        onOpenCart={chrome.openCart}
+        query={chrome.query}
+        onQuery={chrome.setQuery}
+        onSearchSubmit={chrome.submitSearch}
       />
       <main className="min-h-[calc(100vh-140px)] flex flex-col">
         <div className="px-4 md:px-8 py-12 md:py-16">
@@ -21,7 +23,7 @@ export default function TermsContent() {
           </h1>
           <div className="max-w-2xl">
             <p>
-              Last updated: September 30, 2026
+              Last updated: October 7, 2026
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">1. Acceptance of Terms</h2>
             <p>
@@ -39,10 +41,12 @@ export default function TermsContent() {
             <h2 className="ms-label mt-6 mb-3 text-ink">3. Ordering and Payment</h2>
             <p>
               When you place an order, you represent and warrant that all information you provide
-              is true, accurate, and current. Payment is due at the time of purchase. We accept
-              MTN MOMO, M-PESA, AIRTEL MONEY, bank transfers, and cash on delivery (EAC region
-              only). Shipping costs, duties, VAT, and other fees are calculated at checkout and
-              displayed before final payment.
+              is true, accurate, and current. Placing an order reserves it and sends it to our
+              team — <strong>no payment is taken on this website</strong>. After you submit an
+              order we contact you to confirm stock, freight and the final total, and to arrange
+              payment directly. We accept MTN MOMO, M-PESA, Airtel Money, bank transfer / TT, and
+              cash on delivery (EAC region only). Shipping, duty, VAT and other fees are calculated
+              at checkout and shown in full before you submit the order.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">4. Shipping and Delivery</h2>
             <p>
@@ -50,11 +54,14 @@ export default function TermsContent() {
               are provided at checkout but are not guaranteed due to factors beyond our control (weather,
               customs delays, carrier performance). Typical delivery windows:
               <ul className="list-disc list-inside mt-2">
-                <li>Uganda: 2-4 business days</li>
-                <li>Kenya, Tanzania, Rwanda: 4-7 business days</li>
-                <li>DR Congo: 7-14 business days</li>
+                <li>Uganda: 1-2 business days</li>
+                <li>Kenya, Rwanda: 2-4 business days</li>
+                <li>Tanzania: 3-5 business days</li>
+                <li>DR Congo: 4-7 business days</li>
                 <li>International: 10-21 business days</li>
               </ul>
+              Where your corridor is served by a bus cargo operator, the operator&apos;s own
+              transit window is quoted at checkout instead.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">5. Delivery Area</h2>
             <p>
@@ -63,8 +70,11 @@ export default function TermsContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">6. Returns and Refunds</h2>
             <p>
-              Please review our Return Policy separately. Items may be returned subject to the
-              conditions set forth in that policy.
+              If there is a problem with an order, contact us at sales@meridiansupply.co with your
+              order number and we will resolve it directly. Cross-border consignments are handled
+              case by case, so we do not publish a fixed return window here — tell us what went
+              wrong and we will confirm the options for your corridor in writing before anything
+              is returned.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">7. Account Responsibility</h2>
             <p>
@@ -109,21 +119,7 @@ export default function TermsContent() {
           </div>
         </div>
       </main>
-      <Footer
-        onNavigate={(v, q) => {
-          if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            if (v === 'shop') {
-              if (q) params.set('q', q);
-              else params.delete('q');
-              window.history.replaceState({}, '', `?${params.toString()}`);
-            }
-            if (v === 'track') {
-              window.history.replaceState({}, '', `?view=track`);
-            }
-          }
-        }}
-      />
+      <Footer onNavigate={chrome.footerNavigate} />
     </>
   );
 }
