@@ -185,6 +185,64 @@ function stripComments(source) {
 }
 
 // ---------------------------------------------------------------------------
+// Gate 5 — no brand domain hardcoded in source.
+// The storefront once shipped `meridiansupply.co` in its footer, contact page
+// and all three legal pages — a domain it does not own — while its own
+// canonicals pointed at localhost. Identity belongs in src/lib/site-config.ts,
+// fed by NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_CONTACT_EMAIL.
+// ---------------------------------------------------------------------------
+{
+  // Full hostname literals. Group 1 alone is wrong here: with a repeated
+  // capture only the last iteration is returned, which is how an earlier
+  // version of this gate reported "er-api." instead of "er-api.com".
+  // The TLD list must include a PLAIN `co` — an earlier version only had
+  // `co\.[a-z]{2}` (for co.uk), which meant `.co` domains slipped through and
+  // the gate passed while a deliberate probe was still in the tree. `.info`
+  // was then dropped again: `console.info` is not a domain, and a gate that
+  // cries wolf is a gate people learn to bypass.
+  const DOMAIN_LITERAL =
+    /\b(?:[a-z0-9-]+\.)+(?:com|net|org|io|co|app|dev|store|shop|africa|uk|us|ug|ke|tz|rw|cd)\b/gi;
+  // Domains that are legitimately literals in source. Extend this list only
+  // when the domain is an external service or a documented placeholder — never
+  // to silence the store's own identity, which belongs in site-config.ts.
+  const ALLOW = [
+    "example.com", // form placeholder (john@example.com)
+    "company.com", // form placeholder (you@company.com)
+    "email.com", // form placeholder (YOUR@EMAIL.COM)
+    "w3.org", // sitemap/structured-data vocabulary
+    "schema.org", // JSON-LD vocabulary
+    "er-api.com", // live FX rate source (src/lib/fx.ts)
+    "resend.com", // order email provider (src/lib/mail.ts)
+    "blob.vercel-storage.com", // product image host (next.config.ts)
+    "localhost",
+  ];
+  const files = walk(join(ROOT, "src"))
+    .filter((f) => /\.(ts|tsx)$/.test(f))
+    .filter((f) => !/\.(test|spec)\./.test(f));
+
+  let hits = 0;
+  for (const file of files) {
+    const rel = relative(ROOT, file).split(sep).join("/");
+    if (rel === "src/lib/site-config.ts") continue; // owns the fallback logic
+    const src = stripComments(readFileSync(file, "utf8"));
+    for (const m of src.matchAll(DOMAIN_LITERAL)) {
+      const domain = m[0].toLowerCase();
+      if (ALLOW.some((allowed) => domain === allowed || domain.endsWith(`.${allowed}`))) {
+        continue;
+      }
+      hits += 1;
+      fail(
+        "domain",
+        `${rel} hardcodes the domain \`${domain}\` — read brand identity from @/lib/site-config`
+      );
+    }
+  }
+  notes.push(
+    `domain: ${files.length} source files checked, ${hits} hardcoded domains outside the allow-list`
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Report
 // ---------------------------------------------------------------------------
 console.log("JEB-ONLINE mechanical gates\n");

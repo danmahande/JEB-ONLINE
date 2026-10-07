@@ -3,6 +3,7 @@
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
 import { useStoreChrome } from "@/hooks/use-store-chrome";
+import { contactMailto, CONTACT_EMAIL, SITE_DISPLAY_DOMAIN } from "@/lib/site-config";
 
 export default function PrivacyContent() {
   const chrome = useStoreChrome();
@@ -31,7 +32,7 @@ export default function PrivacyContent() {
               Privacy Policy explains how we collect, use, disclose, and safeguard your information
               when you visit our website
               <a href="/" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                meridiansupply.co
+                {SITE_DISPLAY_DOMAIN}
               </a>, place an order, or otherwise interact with us (collectively, the
               <strong>Services</strong>). By accessing or using the Services, you agree to have
               read, understood, and consent to our Privacy Policy.
@@ -82,8 +83,8 @@ export default function PrivacyContent() {
               Depending on your jurisdiction, you may have the right to access, correct, delete, or
               restrict the processing of your personal data. To exercise these rights, please contact
               us at
-              <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                sales@meridiansupply.co
+              <a href={contactMailto} className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
+                {CONTACT_EMAIL}
               </a>.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">Cookies and Local Storage</h2>
@@ -119,8 +120,8 @@ export default function PrivacyContent() {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <p>
-              <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                sales@meridiansupply.co
+              <a href={contactMailto} className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </div>

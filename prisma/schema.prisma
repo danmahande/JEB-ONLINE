@@ -315,3 +315,12 @@ model CustomerLoginAttempt {
   attempts        Int      @default(0)
   windowStartedAt DateTime @default(now())
 }
+
+/// Fixed-window throttle for the public write endpoints (newsletter signup and
+/// restock alerts). Stores no email or IP — the id is an HMAC of the caller's
+/// address under an endpoint-specific namespace.
+model PublicWriteAttempt {
+  id              String   @id
+  attempts        Int      @default(0)
+  windowStartedAt DateTime @default(now())
+}

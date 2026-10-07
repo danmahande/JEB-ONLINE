@@ -114,6 +114,11 @@ DATABASE_URL_UNPOOLED="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
 `DATABASE_URL` is the pooled connection for application queries. `DATABASE_URL_UNPOOLED` is the direct connection used by Prisma Migrate; keep both out of source control.
 
+`.env.example` lists every variable the code reads, with a note on each. The two that are easy to miss and break something visible:
+
+- `NEXT_PUBLIC_SITE_URL` — the canonical origin. Unset, it falls back to `http://localhost:3000`, so the sitemap, `robots.txt` and every canonical/OG URL advertise localhost. Set it to the deployed origin.
+- `NEXT_PUBLIC_CONTACT_EMAIL` — the address shown on the contact page, footer and legal pages. Defaults to `sales@<host of NEXT_PUBLIC_SITE_URL>`, so it can never point at a domain the deployment does not control. Set it once a real domain with working mail exists.
+
 ### Owner admin login
 
 The private product manager is at `/admin`. It uses the existing NextAuth dependency with one configured owner account; no separate backend repository or admin-user table is needed. Five failed sign-in attempts are allowed in a 15-minute window; the attempt counter is a single database row and stores no email or IP address.

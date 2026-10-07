@@ -3,6 +3,7 @@
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
 import { useStoreChrome } from "@/hooks/use-store-chrome";
+import { contactMailto, CONTACT_EMAIL } from "@/lib/site-config";
 
 export default function ShippingContent() {
   const chrome = useStoreChrome();
@@ -87,8 +88,8 @@ export default function ShippingContent() {
               If your consignment is marked as delivered but you have not received it, check the
               TRACK ORDER page first, then contact the operator or carrier named on your order.
               If the issue persists, contact us at
-              <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                sales@meridiansupply.co
+              <a href={contactMailto} className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
+                {CONTACT_EMAIL}
               </a> with your order number and tracking information.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">8. Address Accuracy</h2>
@@ -108,8 +109,8 @@ export default function ShippingContent() {
               For shipping-related inquiries, please contact:
             </p>
             <p>
-              <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                sales@meridiansupply.co
+              <a href={contactMailto} className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Reveal from "@/components/storefront/reveal";
+import { CONTACT_EMAIL } from "@/lib/site-config";
 
 /* Task 58 — the footer joins the design system for real.
    Material: a machined steel head rail (same paint as the shopfront
@@ -188,7 +189,7 @@ export default function Footer({
                       "PAYMENT",
                       "MTN MOMO · M-PESA · AIRTEL MONEY · BANK TRANSFER",
                     ],
-                    ["SUPPORT", "SALES@MERIDIANSUPPLY.CO"],
+                    ["SUPPORT", CONTACT_EMAIL.toUpperCase()],
                   ] as const
                 ).map(([k, v]) => (
                   <li key={k} className="ms-label flex gap-3 leading-[1.7]">
@@ -204,7 +205,7 @@ export default function Footer({
               <ul className="space-y-3">
                 {(
                   [
-                    ["EMAIL", "SALES@MERIDIANSUPPLY.CO"],
+                    ["EMAIL", CONTACT_EMAIL.toUpperCase()],
                     ["ORDERS", "PLACED AND TRACKED ON THIS SITE"],
                   ] as const
                 ).map(([k, v]) => (

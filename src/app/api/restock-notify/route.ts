@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { isSameOriginRequest } from "@/lib/request-origin";
+import { clientIpFromHeaders } from "@/lib/client-ip";
+import { restockNotifySchema } from "@/lib/public-write-schema";
+import {
+  consumePublicWriteBudget,
+  PUBLIC_WRITE_RETRY_AFTER_SECONDS,
+} from "@/lib/public-write-rate-limit";
 
 /**
  * POST /api/restock-notify
@@ -7,27 +14,54 @@ import { db } from "@/lib/db";
  * Deduplicated per product + email (unique index) — a repeat signup is a
  * no-op that still resolves success, so the tile UI can flip to the
  * confirmed state either way.
+ *
+ * This endpoint previously accepted unlimited anonymous writes. It now checks
+ * same-origin, validates through a schema, and is throttled per caller.
  */
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { productId, email } = body as { productId?: string; email?: string };
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json(
+      { success: false, error: "Request origin could not be verified." },
+      { status: 403 }
+    );
+  }
 
-    if (!productId?.trim()) {
-      return NextResponse.json(
-        { success: false, error: "productId is required" },
-        { status: 400 }
-      );
-    }
-    const emailValue = email?.trim().toLowerCase();
-    // Same shape the browser enforces via type="email" — this is the only
-    // gate for non-browser clients.
-    if (!emailValue || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailValue)) {
-      return NextResponse.json(
-        { success: false, error: "A valid email address is required" },
-        { status: 400 }
-      );
-    }
+  const throttle = await consumePublicWriteBudget(
+    db,
+    "restock-notify",
+    clientIpFromHeaders(req.headers),
+    new Date()
+  );
+  if (throttle.limited) {
+    return NextResponse.json(
+      { success: false, error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(PUBLIC_WRITE_RETRY_AFTER_SECONDS) },
+      }
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Request body must be valid JSON." },
+      { status: 400 }
+    );
+  }
+
+  const parsed = restockNotifySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { success: false, error: "A valid product and email address are required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { productId, email } = parsed.data;
 
     const product = await db.product.findUnique({ where: { productId } });
     if (!product || !product.isActive) {
@@ -38,7 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     const existing = await db.restockNotify.findUnique({
-      where: { productId_email: { productId, email: emailValue } },
+      where: { productId_email: { productId, email } },
     });
 
     if (existing) {
@@ -47,9 +81,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, already: true });
     }
 
-    await db.restockNotify.create({
-      data: { productId, email: emailValue },
-    });
+    await db.restockNotify.create({ data: { productId, email } });
 
     return NextResponse.json({ success: true, already: false }, { status: 201 });
   } catch (error) {

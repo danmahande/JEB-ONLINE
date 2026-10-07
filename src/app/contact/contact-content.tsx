@@ -3,6 +3,7 @@
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
 import { useStoreChrome } from "@/hooks/use-store-chrome";
+import { contactMailto, CONTACT_EMAIL } from "@/lib/site-config";
 
 /* Round 26: a real contact page. Honesty rule (owner decision, round 5)
    applies here too — only contact channels that actually exist are shown.
@@ -37,9 +38,9 @@ export default function ContactContent() {
               <p className="ms-label mb-2 text-hush">EMAIL</p>
               <a
                 className="ms-price text-lg underline decoration-line underline-offset-4 hover:decoration-brand transition-colors"
-                href="mailto:sales@meridiansupply.co"
+                href={contactMailto}
               >
-                sales@meridiansupply.co
+                {CONTACT_EMAIL}
               </a>
               <p className="mt-2 text-sm text-hush">
                 Trade quotes, invoices and customs documentation.

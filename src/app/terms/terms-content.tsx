@@ -3,6 +3,7 @@
 import Header from "@/components/storefront/header";
 import Footer from "@/components/storefront/footer";
 import { useStoreChrome } from "@/hooks/use-store-chrome";
+import { contactMailto, CONTACT_EMAIL, SITE_DISPLAY_DOMAIN } from "@/lib/site-config";
 
 export default function TermsContent() {
   const chrome = useStoreChrome();
@@ -28,7 +29,7 @@ export default function TermsContent() {
             <h2 className="ms-label mt-6 mb-3 text-ink">1. Acceptance of Terms</h2>
             <p>
               These Terms of Service ("Terms") govern your access to and use of
-              meridiansupply.co and any related services provided by MERIDIAN SUPPLY.
+              {SITE_DISPLAY_DOMAIN} and any related services provided by MERIDIAN SUPPLY.
               By accessing or using our Services, you agree to be bound by these Terms.
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">2. Products and Services</h2>
@@ -70,7 +71,7 @@ export default function TermsContent() {
             </p>
             <h2 className="ms-label mt-6 mb-3 text-ink">6. Returns and Refunds</h2>
             <p>
-              If there is a problem with an order, contact us at sales@meridiansupply.co with your
+              If there is a problem with an order, contact us at {CONTACT_EMAIL} with your
               order number and we will resolve it directly. Cross-border consignments are handled
               case by case, so we do not publish a fixed return window here — tell us what went
               wrong and we will confirm the options for your corridor in writing before anything
@@ -112,8 +113,8 @@ export default function TermsContent() {
               For questions regarding these Terms, please contact:
             </p>
             <p>
-              <a href="mailto:sales@meridiansupply.co" className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
-                sales@meridiansupply.co
+              <a href={contactMailto} className="underline underline-offset-4 decoration-line hover:decoration-brand transition-colors">
+                {CONTACT_EMAIL}
               </a>
             </p>
           </div>
