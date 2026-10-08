@@ -26,6 +26,23 @@ Status tags: `[ ]` outstanding · `[x]` done and verified · `[~]` done but unve
 
 **A2 + A1 together clear 3 of the 4 live failures.** A3–A4 are the domain switch completed.
 
+### The two URLs in the Vercel dashboard, and which to use
+
+The project shows a **Deployment** URL and a **Domains** entry. They are not interchangeable:
+
+| Dashboard field | Example | Use it for `NEXT_PUBLIC_SITE_URL`? |
+|---|---|---|
+| Deployment | `jeb-online-921q9ay7f-core-ent.vercel.app` | **No.** It is behind Vercel Deployment Protection, so it serves Vercel's login page (`Login – Vercel`) — not the store — and the suffix changes on every deploy, so any canonical or sitemap using it goes stale within days |
+| Domains | `jeb-online.vercel.app` | **Yes**, until a custom domain exists. It is the project's stable production alias and serves the storefront |
+
+So for A2, paste exactly `https://jeb-online.vercel.app` (no trailing slash), and replace it with the custom domain at A3.
+
+**Verified 8 Oct:** the Domains URL returns HTTP 200 serving the storefront; the Deployment URL returns HTTP 200 serving `<title>Login – Vercel</title>`. A customer following the Deployment URL would be asked to log in to Vercel.
+
+**While in the dashboard, check Deployment Protection** (`Settings → Deployment Protection`): it must apply to **preview** deployments only. If it is ever applied to production, every buyer gets that login page instead of the shop.
+
+**Note on ownership:** the team slug is `core-ent`, so the project lives in a Vercel **team**, not a personal account. Confirm whoever administers that team also controls billing and domain assignment for this shop.
+
 ---
 
 ## B. Before the doors open — verification nobody has run yet
