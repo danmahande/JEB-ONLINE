@@ -1,6 +1,6 @@
 # Go-Live Requirements — Meridian Supply Co. / JEB-ONLINE
 
-**As at:** Thursday, 8 October 2026 · **Code:** `main` @ `27e5919`, tree clean, CI green
+**As at:** Thursday, 8 October 2026 (evening) · **Code:** `main` @ `aff9d8c`, tree clean, CI green
 **Live:** https://jeb-online.vercel.app — **4 story-check failures; not sellable**
 
 This is the checklist. `docs/launch-plan.md` explains the reasoning; this is what to tick off.
@@ -8,6 +8,29 @@ This is the checklist. `docs/launch-plan.md` explains the reasoning; this is wha
 in code this session. `BOTH` = you supply access, I do the work.
 
 Status tags: `[ ]` outstanding · `[x]` done and verified · `[~]` done but unverified.
+
+---
+
+## What rounds 29–31 closed (code side — do not re-plan these)
+
+Everything a marketplace of this shape was missing is now built and behind tests:
+
+| Delivered | Round |
+|---|---|
+| Guarded variant parsing (one bad row no longer 500s the whole catalogue) | 29 |
+| `/account/signup` no longer statically prerendered | 29 |
+| Content-page headers/footers wired to real navigation | 29 |
+| Legal copy made true (no payment-details, no ads cookies, no phantom Return Policy) | 29 |
+| **CI enforcing** typecheck, tests, build, EOF, undefined classes, session routes | 29 |
+| `scripts/check-story.mjs` — the "is this actually a shop" gate | 29 |
+| Brand identity out of source (no third-party domain in the code) | 30 |
+| Throttled `/api/subscribe` + `/api/restock-notify` (were unthrottled) | 30 |
+| **Payment recording** — paid / part paid / unpaid, with a private ledger | 31 |
+| **Dispatch** — a real waybill replacing the checkout placeholder | 31 |
+| **`/admin` dashboard** — orders needing action, money owed, stock risk | 31 |
+| Admin UI fixes: dirty-draft confirm, per-row pending, focus rings, Enter key, debounced search | 31 |
+
+The suite is now **72 tests** (29 when this review began). None of it reaches a buyer until A1–A2 are done.
 
 ---
 
@@ -49,9 +72,10 @@ So for A2, paste exactly `https://jeb-online.vercel.app` (no trailing slash), an
 
 | # | Requirement | Owner | Notes | Status |
 |---|---|---|---|---|
-| B1 | **Apply the pending migration** `20261007160000_public_write_throttle` | BOTH | Written, parses, **never applied**. First `migrate deploy` exercises it | `[ ]` |
-| B2 | **Verify the 429 throttle on live data** | BOTH | Proven in 10 unit tests only, never against a real DB | `[ ]` |
+| B1 | **Apply the pending migrations** `20261007160000_public_write_throttle` + `20261008120000_payments_and_dispatch` | BOTH | Written and `prisma validate` clean, **never applied anywhere**. The first `migrate deploy` exercises them | `[ ]` |
+| B2 | **Verify the 429 throttle on live data** | BOTH | Proven in 12 unit tests only, never against a real DB | `[ ]` |
 | B3 | **Gate 7 — place one real order end to end** | BOTH | Order in `/admin/orders`, total correct, stock decremented, both emails, tracking by order no. AND tracking no., customer can cancel, a *different* customer cannot | `[ ]` |
+| B3b | **Exercise the new money + dispatch flows once with a session** | BOTH | Record a payment on a seeded order → chip becomes part paid / paid. Enter a real waybill → customer tracking shows it and the placeholder badge clears. **Never run signed-in or against data.** | `[ ]` |
 | B4 | **Run the storefront suite** (`scripts/verify-round7-fix.js`, 22 checks) | BOTH | Never run — needs a seeded Postgres. **Note: its contact assertion still hardcodes the old domain and will fail until fixed** | `[ ]` |
 | B5 | **Fix that suite assertion** | ME | Blocked by the write guard (credential-shaped test fixture in the file) — needs your say-so | `[ ]` |
 
@@ -61,7 +85,7 @@ So for A2, paste exactly `https://jeb-online.vercel.app` (no trailing slash), an
 
 | # | Requirement | Owner | Why it is a launch blocker | Status |
 |---|---|---|---|---|
-| C1 | **Payment & fulfilment runbook** | YOU | No gateway by choice, so the manual path IS the transaction: where money lands per method (MoMo/M-Pesa/Airtel/bank/TT), deposit vs balance, who confirms, reply time, what "dispatched" means. Someone other than you must process a paid order from it alone | `[ ]` |
+| C1 | **Payment & fulfilment runbook** | YOU | No gateway by choice, so the manual path IS the transaction: where money lands per method (MoMo/M-Pesa/Airtel/bank/TT), deposit vs balance, who confirms, reply time, what "dispatched" means. Someone other than you must process a paid order from it alone. **The dashboard now records payments; the runbook says what to do when one arrives.** | `[ ]` |
 | C2 | **Stock-hold policy** | YOU | Orders don't reserve stock — two buyers can be told yes for the last bag. Decide: reserve with a timeout, or accept oversell and handle it in C1 | `[ ]` |
 | C3 | **Confirm or overrule the two open pricing facts** | YOU | No FX markup on `rateToUsd`, and no handling fee beyond `shippingBase` + per-kg + duty + VAT. If you intend a margin, it must be in the price *before* launch — the quote is what the buyer sees and agrees to | `[ ]` |
 | C4 | **Manual shipping base/duty overrides** | YOU | Admin currently can't override the computed shipping base, duty or VAT on a single order. If a corridor quote is wrong, your only remedy is to edit the region globally — which changes every future order. Acceptable for launch if C1 says so | `[ ]` |
@@ -108,8 +132,11 @@ So for A2, paste exactly `https://jeb-online.vercel.app` (no trailing slash), an
 ## G. Deferred on purpose (not launch blockers)
 
 - **Live payment gateway** — a build, not a config change (e.g. Flutterwave/Paystack for UGX + mobile money).
-- **Order status / dispatch emails** beyond confirmations.
-- **Public returns flow** — terms currently handle it case by case via email.
+- **Order status / dispatch emails** beyond confirmations — dispatch already emails the customer.
+- **Public returns flow** — terms handle it case by case via email. (`returned` remains unreachable; the admin now says so instead of showing a chip that can never fill.)
+- **Editing an order after placement** — still impossible; a public note is the only annotation.
+- **Pack slip / picking list / print view** — real pain for manual dispatch, not a blocker at launch volume.
+- **CSV export** for reconciling bank / MoMo statements.
 - **Splitting `src/app/page.tsx`** (359-line client component holding shop, checkout, confirmation and track).
 - **Retiring unused code** — 43 of 48 `src/ui/` primitives are imported by nothing.
 - **Shrinking `AGENT-FIXLIST.md`** (230 KB) now that CI enforces the mechanical rules.
