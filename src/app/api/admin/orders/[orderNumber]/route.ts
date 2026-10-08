@@ -11,12 +11,15 @@ import {
   sendEmail,
 } from "@/lib/mail";
 import { isSameOriginRequest } from "@/lib/request-origin";
+import { dispatchSchema } from "@/lib/admin-order-payment-schema";
+import { paymentStatusLabel, shouldWarnBeforeDispatch } from "@/lib/order-payment";
 
 export const dynamic = "force-dynamic";
 
 type ActionBody = {
-  action?: "advance" | "cancel" | "note";
+  action?: "advance" | "cancel" | "note" | "dispatch";
   note?: unknown;
+  trackingNumber?: unknown;
 };
 
 function parseEmail(customerInfo: string): string | null {
@@ -47,6 +50,9 @@ export async function GET(
       include: {
         lineItems: { orderBy: { createdAt: "asc" } },
         events: { orderBy: { createdAt: "asc" } },
+        // The owner's private payment ledger. This handler is admin-only; the
+        // PUBLIC tracking handler is a separate route and must never include it.
+        payments: { orderBy: { receivedAt: "desc" } },
       },
     });
     if (!order) {
@@ -118,7 +124,12 @@ export async function PATCH(
       );
     }
     const action = body.action;
-    if (action !== "advance" && action !== "cancel" && action !== "note") {
+    if (
+      action !== "advance" &&
+      action !== "cancel" &&
+      action !== "note" &&
+      action !== "dispatch"
+    ) {
       return NextResponse.json(
         { success: false, error: "Unknown action." },
         { status: 400 }
@@ -138,6 +149,88 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, error: "Order not found." },
         { status: 404 }
+      );
+    }
+
+    // action === "dispatch" — record the REAL waybill and mark shipped.
+    // Before this existed, the tracking number the customer saw was the
+    // placeholder generated at checkout (TRK-<order>-<region>) and there was no
+    // surface anywhere in the admin that could replace it.
+    if (action === "dispatch") {
+      const parsed = dispatchSchema.safeParse({
+        trackingNumber: body.trackingNumber,
+        note,
+      });
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Enter the operator's waybill or tracking number.",
+            fieldErrors: parsed.error.flatten().fieldErrors,
+          },
+          { status: 400 }
+        );
+      }
+      if (order.status === "cancelled" || order.status === "returned") {
+        return NextResponse.json(
+          { success: false, error: "This order is closed and cannot be dispatched." },
+          { status: 409 }
+        );
+      }
+      if (order.status === "delivered") {
+        return NextResponse.json(
+          { success: false, error: "This order is already delivered." },
+          { status: 409 }
+        );
+      }
+
+      const { trackingNumber, note: dispatchNote } = parsed.data;
+      const target = order.status === "shipped" ? "shipped" : "shipped";
+
+      await db.$transaction(async (tx) => {
+        await tx.orderProcessing.update({
+          where: { orderNumber },
+          data: {
+            trackingNumber,
+            trackingIsPlaceholder: false,
+            dispatchedAt: order.dispatchedAt ?? new Date(),
+            status: target,
+          },
+        });
+        await tx.orderEvent.create({
+          data: {
+            orderNumber,
+            fromStatus: order.status,
+            toStatus: target,
+            note:
+              dispatchNote ??
+              `Dispatched — tracking number ${trackingNumber}.`,
+          },
+        });
+      });
+
+      const customerEmail = parseEmail(order.customerInfo);
+      if (customerEmail) {
+        await sendEmail(
+          customerEmail,
+          orderStatusUpdateEmail(
+            orderNumber,
+            target,
+            dispatchNote ?? `Dispatched — tracking number ${trackingNumber}.`
+          )
+        );
+      }
+
+      return NextResponse.json(
+        {
+          success: true,
+          order: { orderNumber, status: target, trackingNumber },
+          // Recorded for the owner, never shown to the customer.
+          paymentWarning: shouldWarnBeforeDispatch(order.paymentStatus)
+            ? `This order is ${paymentStatusLabel(order.paymentStatus).toLowerCase()} — confirm payment was received.`
+            : undefined,
+        },
+        { headers: { "Cache-Control": "private, no-store" } }
       );
     }
 
@@ -177,7 +270,16 @@ export async function PATCH(
       }
 
       return NextResponse.json(
-        { success: true, order: { orderNumber, status: target } },
+        {
+          success: true,
+          order: { orderNumber, status: target },
+          // Not a block: dispatch decisions belong to the owner (a trusted
+          // repeat buyer, or COD which pays on arrival). Surfaced so the UI can
+          // say it, and so the honest state of the order travels with the reply.
+          paymentWarning: shouldWarnBeforeDispatch(order.paymentStatus)
+            ? `This order is ${paymentStatusLabel(order.paymentStatus).toLowerCase()} — confirm payment was received.`
+            : undefined,
+        },
         { headers: { "Cache-Control": "private, no-store" } }
       );
     }

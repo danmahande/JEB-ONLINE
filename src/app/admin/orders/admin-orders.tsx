@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { statusLabel } from "@/lib/order-workflow";
+import { statusLabel, isUnreachableStatus } from "@/lib/order-workflow";
+import { paymentStatusLabel } from "@/lib/order-payment";
 
 type AdminOrderRow = {
   id: string;
@@ -23,6 +24,8 @@ type AdminOrderRow = {
   status: string;
   trackingNumber: string | null;
   totalWeightKg: number;
+  paymentStatus: string;
+  trackingIsPlaceholder: boolean;
   _count: { lineItems: number; events: number };
 };
 
@@ -52,6 +55,14 @@ const FILTERS = [
   { key: "returned", label: "RETURNED" },
 ];
 
+/** Payment rail — the owner's daily question, filterable in one click. */
+const PAYMENT_FILTERS = [
+  { key: "ALL", label: "ANY PAYMENT" },
+  { key: "unpaid", label: "UNPAID" },
+  { key: "partial", label: "PART PAID" },
+  { key: "paid", label: "PAID" },
+];
+
 function statusTone(status: string): string {
   switch (status) {
     case "new_order":
@@ -76,12 +87,22 @@ export function AdminOrders() {
   const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [paymentFilter, setPaymentFilter] = useState("ALL");
   const [query, setQuery] = useState("");
+  // The search box used to fire one server query per keystroke (a 12-character
+  // order number meant 12 searches). The request is now debounced; the AbortController
+  // below still guards against stale responses landing out of order.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(query), 300);
+    return () => window.clearTimeout(timer);
+  }, [query]);
 
   const load = useCallback(
     async (signal?: AbortSignal): Promise<boolean> => {
@@ -90,10 +111,11 @@ export function AdminOrders() {
       try {
         const params = new URLSearchParams({
           status: statusFilter,
+          payment: paymentFilter,
           page: String(page),
           pageSize: "25",
         });
-        if (query.trim()) params.set("q", query.trim());
+        if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
         const response = await fetch(`/api/admin/orders?${params.toString()}`, {
           cache: "no-store",
           signal,
@@ -121,7 +143,7 @@ export function AdminOrders() {
         setLoading(false);
       }
     },
-    [statusFilter, page, query, router]
+    [statusFilter, paymentFilter, page, debouncedQuery, router]
   );
 
   useEffect(() => {
@@ -167,6 +189,34 @@ export function AdminOrders() {
             }`}
           >
             {f.label} ({countFor(f.key)})
+            {isUnreachableStatus(f.key) && (
+              <span className="ml-1 font-normal normal-case tracking-normal text-hush">
+                — not reachable from the dashboard
+              </span>
+            )}
+          </button>
+        ))}
+      </section>
+
+      {/* Payment is the question this store cannot answer anywhere else: no money
+          moves on the site, so "who has paid" has to live here. */}
+      <section aria-label="Payment filters" className="mt-3 flex flex-wrap gap-2">
+        {PAYMENT_FILTERS.map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => {
+              setPaymentFilter(f.key);
+              setPage(1);
+            }}
+            aria-pressed={paymentFilter === f.key}
+            className={`rounded-md border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${
+              paymentFilter === f.key
+                ? "border-brand bg-brand text-white"
+                : "border-line bg-white text-hush hover:border-brand hover:text-ink"
+            }`}
+          >
+            {f.label}
           </button>
         ))}
       </section>

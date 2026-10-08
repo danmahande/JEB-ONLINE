@@ -16,6 +16,19 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+/**
+ * Statuses no code path can move an order into. `returned` is a legitimate
+ * terminal state, but nothing sets it — no transition in NEXT_STATUS and no API
+ * action — so the admin's RETURNED filter reads (0) unless someone edits the
+ * database directly. Exported so the UI can say that plainly instead of showing
+ * a chip that implies a capability the product does not have.
+ */
+export const UNREACHABLE_STATUSES: readonly OrderStatus[] = ["returned"];
+
+export function isUnreachableStatus(status: string): boolean {
+  return UNREACHABLE_STATUSES.includes(status as OrderStatus);
+}
+
 /** One-step advancement map — the owner walks an order forward; no jumping. */
 export const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   new_order: "processing",

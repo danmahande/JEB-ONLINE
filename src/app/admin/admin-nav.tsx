@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 const LINKS = [
+  { href: "/admin", label: "Overview" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/operators", label: "Operators" },
@@ -20,8 +21,13 @@ export function AdminNav() {
   const pathname = usePathname();
   if (pathname === "/admin/login") return null;
 
+  // Exact match for /admin itself, prefix match for its subsections — otherwise
+  // an Overview entry at /admin reads as "current" on every dashboard page,
+  // because /admin/products startsWith /admin.
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <div className="border-b border-line bg-white">

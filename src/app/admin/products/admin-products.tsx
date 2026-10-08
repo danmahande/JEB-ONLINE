@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProductVariant } from "@/lib/types";
@@ -140,6 +140,13 @@ export function AdminProducts() {
   const router = useRouter();
   const [products, setProducts] = useState<ManagedProduct[]>([]);
   const [draft, setDraft] = useState<ProductDraft>(emptyDraft);
+  // Snapshot of what the form was opened with, so the dirty check can tell
+  // "untouched" from "the owner typed something" without recomputing the
+  // product-to-draft mapping on every render.
+  const draftBaselineRef = useRef<string>(JSON.stringify(emptyDraft));
+  /// Products with an isActive PATCH in flight, so that row's button can be
+  /// disabled without freezing the rest of the list.
+  const [togglingIds, setTogglingIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   // the form starts COLLAPSED — the inventory list is the daily surface;
   // a ~700px always-open form pushed it below the fold
@@ -227,10 +234,24 @@ export function AdminProducts() {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  /**
+   * True when the form holds anything the owner typed. Compared against the
+   * baseline this form was opened with (an existing product, or empty for a new
+   * one), so an untouched edit form is not treated as dirty.
+   *
+   * draftBaselineRef rather than a computed default because draftFromProduct is
+   * not pure-on-call: recomputing it here would fight the controlled inputs.
+   */
+  function isDraftDirty(): boolean {
+    return JSON.stringify(draft) !== draftBaselineRef.current;
+  }
+
   function beginEdit(product: ManagedProduct) {
     if (imageUploading) return;
+    const next = draftFromProduct(product);
     setEditingId(product.id);
-    setDraft(draftFromProduct(product));
+    setDraft(next);
+    draftBaselineRef.current = JSON.stringify(next);
     setFormOpen(true);
     setError("");
     setNotice("");
@@ -238,8 +259,15 @@ export function AdminProducts() {
 
   function cancelEdit() {
     if (imageUploading) return;
+    // A 15-field draft used to be discarded by a button sitting directly under
+    // the header the owner just clicked. Ask only when there is something to
+    // lose, so the common open-then-close path stays one click.
+    if (isDraftDirty() && !window.confirm("Discard the unsaved product details?")) {
+      return;
+    }
     setEditingId(null);
     setDraft(emptyDraft);
+    draftBaselineRef.current = JSON.stringify(emptyDraft);
     setFormOpen(false);
     setError("");
     setNotice("");
@@ -356,6 +384,11 @@ export function AdminProducts() {
   async function toggleActive(product: ManagedProduct) {
     setError("");
     setNotice("");
+    // A double-click during the PATCH + full list reload (~1-2s) used to fire a
+    // second toggle and could land the product in the opposite state from the
+    // label the owner read. Per-item flag, not a global one, so other rows stay
+    // usable while this one settles.
+    setTogglingIds((current) => [...current, product.id]);
 
     try {
       const response = await fetch(
@@ -381,6 +414,8 @@ export function AdminProducts() {
       setNotice(product.isActive ? "Product hidden from the storefront." : "Product is live again.");
     } catch {
       setError("Product status could not be changed. Check your connection and retry.");
+    } finally {
+      setTogglingIds((current) => current.filter((id) => id !== product.id));
     }
   }
 
@@ -565,7 +600,7 @@ export function AdminProducts() {
                 Category
               </label>
               <select
-                className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand focus-visible:outline-none"
+                className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand"
                 id="product-category"
                 onChange={(event) =>
                   updateDraft(
@@ -835,7 +870,7 @@ export function AdminProducts() {
                 Product description
               </label>
               <textarea
-                className="min-h-24 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus-visible:border-brand focus-visible:outline-none"
+                className="min-h-24 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus-visible:border-brand"
                 id="product-description"
                 maxLength={4000}
                 onChange={(event) => updateDraft("description", event.target.value)}
@@ -890,7 +925,7 @@ export function AdminProducts() {
               Filter by category
             </label>
             <select
-              className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand focus-visible:outline-none"
+              className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand"
               id="category-filter"
               onChange={(event) => setCategoryFilter(event.target.value)}
               value={categoryFilter}
@@ -997,11 +1032,16 @@ export function AdminProducts() {
                         {adjustingId === product.id ? "Close stock" : "Stock"}
                       </Button>
                       <Button
+                        disabled={togglingIds.includes(product.id)}
                         onClick={() => void toggleActive(product)}
                         type="button"
                         variant="outline"
                       >
-                        {product.isActive ? "Hide" : "Publish"}
+                        {togglingIds.includes(product.id)
+                          ? "Working…"
+                          : product.isActive
+                            ? "Hide"
+                            : "Publish"}
                       </Button>
                     </div>
                   </div>
@@ -1077,7 +1117,7 @@ export function AdminProducts() {
                             Reason
                           </label>
                           <select
-                            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand focus-visible:outline-none"
+                            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm text-ink focus-visible:border-brand"
                             id={`adjust-reason-${product.id}`}
                             onChange={(event) => setAdjustReason(event.target.value)}
                             value={adjustReason}

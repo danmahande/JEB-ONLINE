@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 type Operator = {
@@ -59,6 +59,11 @@ export function AdminOperators() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Draft>(emptyDraft);
   const [editBusy, setEditBusy] = useState(false);
+  /// Single notice timer, cleared before reuse so overlapping actions cannot
+  /// cancel each other's dismissal.
+  const noticeTimerRef = useRef<number | null>(null);
+  /// Operator ids with an isActive PATCH in flight (per-row, not global).
+  const [togglingIds, setTogglingIds] = useState<string[]>([]);
 
   const load = useCallback(async (signal?: AbortSignal): Promise<boolean> => {
     setLoading(true);
@@ -109,7 +114,10 @@ export function AdminOperators() {
   const flash = (message: string) => {
     setNotice(message);
     setError("");
-    window.setTimeout(() => setNotice(""), 4000);
+    // A single shared timer meant an overlapping action cancelled the previous
+    // notice's timer, so a second message could vanish early. Clear first.
+    if (noticeTimerRef.current) window.clearTimeout(noticeTimerRef.current);
+    noticeTimerRef.current = window.setTimeout(() => setNotice(""), 4000);
   };
 
   const byRegion = useMemo(() => {
@@ -244,11 +252,19 @@ export function AdminOperators() {
   }
 
   async function toggleActive(o: Operator) {
-    await patchOperator(
-      o.id,
-      { isActive: !o.isActive },
-      `${o.name} ${o.isActive ? "hidden from checkout" : "re-activated"}.`
-    );
+    // Per-row flag: the hide/activate PATCH triggers a full reload, and the
+    // button used to stay live through it (~1-2s), so a double-click could land
+    // the operator in the state opposite to the label the owner just read.
+    setTogglingIds((current) => [...current, o.id]);
+    try {
+      await patchOperator(
+        o.id,
+        { isActive: !o.isActive },
+        `${o.name} ${o.isActive ? "hidden from checkout" : "re-activated"}.`
+      );
+    } finally {
+      setTogglingIds((current) => current.filter((id) => id !== o.id));
+    }
   }
 
   const regionHeader = (code: string, list: Operator[]) => (
@@ -265,7 +281,13 @@ export function AdminOperators() {
         {list.map((o) => (
           <li key={o.id} className="py-4">
             {editingId === o.id ? (
-              <div className="rounded-lg border border-brand/40 bg-white p-4">
+              <form
+                className="rounded-lg border border-brand/40 bg-white p-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void saveEdit();
+                }}
+              >
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="text-sm">
                     <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-hush">Name</span>
@@ -324,7 +346,7 @@ export function AdminOperators() {
                   </label>
                 </div>
                 <div className="mt-4 flex items-center gap-3">
-                  <Button size="sm" onClick={saveEdit} disabled={editBusy}>
+                  <Button size="sm" type="submit" disabled={editBusy}>
                     {editBusy ? "Saving…" : "Save"}
                   </Button>
                   <Button
@@ -339,7 +361,7 @@ export function AdminOperators() {
                     Cancel
                   </Button>
                 </div>
-              </div>
+              </form>
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -368,8 +390,17 @@ export function AdminOperators() {
                   >
                     Edit
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => void toggleActive(o)}>
-                    {o.isActive ? "Hide" : "Activate"}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={togglingIds.includes(o.id)}
+                    onClick={() => void toggleActive(o)}
+                  >
+                    {togglingIds.includes(o.id)
+                      ? "Working…"
+                      : o.isActive
+                        ? "Hide"
+                        : "Activate"}
                   </Button>
                 </div>
               </div>
@@ -427,7 +458,13 @@ export function AdminOperators() {
             </p>
           )}
 
-          <section className="mt-10 rounded-lg border border-line bg-white p-5">
+          <form
+            className="mt-10 rounded-lg border border-line bg-white p-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createOperator();
+            }}
+          >
             <h2 className="text-lg font-semibold text-ink">Add an operator</h2>
             <p className="mt-1 text-sm text-hush">
               New corridor or operator. The (corridor, name) pair must be unique.
@@ -510,10 +547,10 @@ export function AdminOperators() {
                 />
               </label>
             </div>
-            <Button className="mt-4" onClick={() => void createOperator()} disabled={createBusy}>
+            <Button className="mt-4" type="submit" disabled={createBusy}>
               {createBusy ? "Creating…" : "Create operator"}
             </Button>
-          </section>
+          </form>
         </>
       )}
     </main>

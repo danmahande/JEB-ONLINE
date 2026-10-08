@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { ORDER_STATUSES } from "@/lib/order-workflow";
+import { PAYMENT_STATUSES } from "@/lib/order-payment";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,10 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status")?.trim();
+    // Payment filter (round 31): the store takes no money on the site, so
+    // "who has paid" is the owner's central daily question and was previously
+    // unanswerable from any list view.
+    const payment = searchParams.get("payment")?.trim();
     const q = searchParams.get("q")?.trim();
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(
@@ -37,6 +42,15 @@ export async function GET(req: NextRequest) {
         );
       }
       where.status = status;
+    }
+    if (payment && payment !== "ALL") {
+      if (!(PAYMENT_STATUSES as readonly string[]).includes(payment)) {
+        return NextResponse.json(
+          { success: false, error: "Unknown payment filter." },
+          { status: 400 }
+        );
+      }
+      where.paymentStatus = payment;
     }
     if (q) {
       where.OR = [
@@ -68,8 +82,11 @@ export async function GET(req: NextRequest) {
           region: true,
           destination: true,
           paymentMethod: true,
+          paymentStatus: true,
+          paidAmountUsd: true,
           status: true,
           trackingNumber: true,
+          trackingIsPlaceholder: true,
           totalWeightKg: true,
           _count: { select: { lineItems: true, events: true } },
         },
@@ -83,11 +100,19 @@ export async function GET(req: NextRequest) {
     const counts: Record<string, number> = {};
     for (const row of statusCounts) counts[row.status] = row._count._all;
 
+    const paymentCounts = await db.orderProcessing.groupBy({
+      by: ["paymentStatus"],
+      _count: { _all: true },
+    });
+    const payCounts: Record<string, number> = {};
+    for (const row of paymentCounts) payCounts[row.paymentStatus] = row._count._all;
+
     return NextResponse.json(
       {
         success: true,
         orders,
         counts,
+        paymentCounts: payCounts,
         page,
         pageSize,
         total,

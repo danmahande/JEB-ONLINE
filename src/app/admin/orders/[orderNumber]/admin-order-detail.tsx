@@ -4,6 +4,16 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { statusLabel } from "@/lib/order-workflow";
+import {
+  PAYMENT_METHODS,
+  balanceDueUsd,
+  paymentStatusLabel,
+  shouldWarnBeforeDispatch,
+} from "@/lib/order-payment";
+import {
+  buildOrderActionBody,
+  dispatchBlockReason,
+} from "@/lib/admin-order-action";
 
 type LineItem = {
   id: string;
@@ -24,6 +34,15 @@ type OrderEvent = {
   createdAt: string;
 };
 
+type PaymentRecord = {
+  id: string;
+  method: string;
+  reference: string | null;
+  amountUsd: number;
+  note: string | null;
+  receivedAt: string;
+};
+
 type AdminOrder = {
   id: string;
   orderId: string;
@@ -37,6 +56,13 @@ type AdminOrder = {
   paymentMethod: string;
   status: string;
   trackingNumber: string | null;
+  /// True while the customer is still looking at the checkout placeholder
+  /// (TRK-<order>-<region>) rather than a real operator waybill.
+  trackingIsPlaceholder: boolean;
+  dispatchedAt: string | null;
+  paymentStatus: string;
+  paidAt: string | null;
+  paidAmountUsd: number;
   currency: string;
   fxRate: number;
   region: string;
@@ -55,6 +81,8 @@ type AdminOrder = {
   freightSource: string;
   lineItems: LineItem[];
   events: OrderEvent[];
+  /// The owner's private payment ledger (admin-only route; never public).
+  payments: PaymentRecord[];
 };
 
 type Movement = {
@@ -90,6 +118,14 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
+  // Dispatch: the real waybill, replacing the checkout placeholder the customer
+  // is currently looking at.
+  const [dispatchTracking, setDispatchTracking] = useState("");
+  const [dispatchNote, setDispatchNote] = useState("");
+  // Payment recording (owner-only ledger).
+  const [paymentMethod, setPaymentMethod] = useState<string>(PAYMENT_METHODS[0]);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
 
   const load = useCallback(
     async (signal?: AbortSignal): Promise<boolean> => {
@@ -130,11 +166,44 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
     return () => controller.abort();
   }, [load]);
 
-  async function act(action: "advance" | "cancel" | "note") {
+  async function act(action: "advance" | "cancel" | "note" | "dispatch") {
     if (!order) return;
-    if (action === "cancel" && !window.confirm(`Cancel ${order.orderNumber}? Items return to stock.`)) {
+    if (
+      action === "cancel" &&
+      !window.confirm(
+        `Cancel ${order.orderNumber}? Items return to stock and the customer is emailed.`
+      )
+    ) {
       return;
     }
+
+    // Warn, never block: dispatch is the owner's call (a trusted repeat buyer,
+    // or cash on delivery, legitimately ships before money moves). The warning
+    // exists because "who has paid" used to be invisible here.
+    if (
+      (action === "advance" || action === "dispatch") &&
+      shouldWarnBeforeDispatch(order.paymentStatus) &&
+      !window.confirm(
+        `${order.orderNumber} is ${paymentStatusLabel(order.paymentStatus).toLowerCase()} ` +
+          `(${order.paidAmountUsd.toFixed(2)} of ${order.totalAmount.toFixed(2)} received).\n\n` +
+          `Continue anyway?`
+      )
+    ) {
+      return;
+    }
+
+    if (action === "dispatch") {
+      const reason = dispatchBlockReason(
+        dispatchTracking,
+        order.trackingNumber,
+        order.trackingIsPlaceholder
+      );
+      if (reason) {
+        setActionError(reason);
+        return;
+      }
+    }
+
     setBusy(true);
     setActionError("");
     setNotice("");
@@ -144,10 +213,26 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, note: noteDraft.trim() || undefined }),
+          // The body is built by a tested helper (src/lib/admin-order-action.ts)
+          // that never lets the standalone note travel with an action that does
+          // not publish it. It used to ride along with every action, so a
+          // half-typed note became the public tracking event (and the customer's
+          // email) the moment the owner clicked "Mark shipped". Order events are
+          // append-only, so there was no undo.
+          body: JSON.stringify(
+            buildOrderActionBody(action, {
+              note: noteDraft,
+              trackingNumber: dispatchTracking,
+              dispatchNote,
+            })
+          ),
         }
       );
-      const result = (await response.json()) as { success: boolean; error?: string };
+      const result = (await response.json()) as {
+        success: boolean;
+        error?: string;
+        paymentWarning?: string;
+      };
       if (response.status === 401) {
         router.replace("/admin/login");
         return;
@@ -156,13 +241,76 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
         setActionError(result.error ?? "The action failed. Try again.");
         return;
       }
-      setNoteDraft("");
+      if (action === "note") setNoteDraft("");
+      if (action === "dispatch") {
+        setDispatchTracking("");
+        setDispatchNote("");
+      }
       if (action === "advance") setNotice("Status advanced — the customer was notified if their email is on the order.");
       if (action === "cancel") setNotice("Order cancelled — items were returned to stock.");
       if (action === "note") setNotice("Note attached — it is now visible on public tracking.");
+      if (action === "dispatch") setNotice("Dispatched — the real tracking number is now on the customer's order.");
       await load();
     } catch {
       setActionError("The action failed. Check your connection and retry.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function recordPayment(event: React.FormEvent) {
+    event.preventDefault();
+    if (!order) return;
+
+    const amount = Number(paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setActionError("Enter the amount actually received.");
+      return;
+    }
+
+    // Recording money is a bookkeeping act, not a shipment: no payment warning here.
+    // A confirm keeps a mistyped zero out of the ledger, which is append-only in
+    // practice (nothing in the UI removes a payment row).
+    if (
+      !window.confirm(
+        `Record ${amount.toFixed(2)} USD received by ${paymentMethod}` +
+          `${paymentReference.trim() ? ` (ref ${paymentReference.trim()})` : ""}?`
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    setActionError("");
+    setNotice("");
+    try {
+      const response = await fetch(
+        `/api/admin/orders/${encodeURIComponent(orderNumber)}/payments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: paymentMethod,
+            amountUsd: amount,
+            reference: paymentReference.trim() || undefined,
+          }),
+        }
+      );
+      const result = (await response.json()) as { success: boolean; error?: string };
+      if (response.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      if (!response.ok || !result.success) {
+        setActionError(result.error ?? "The payment could not be recorded.");
+        return;
+      }
+      setPaymentAmount("");
+      setPaymentReference("");
+      setNotice("Payment recorded.");
+      await load();
+    } catch {
+      setActionError("The payment could not be recorded. Check your connection.");
     } finally {
       setBusy(false);
     }
@@ -202,15 +350,32 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
             {order.orderNumber}
           </h1>
           <p className="mt-1 text-sm text-hush">
-            {order.trackingNumber ?? "—"} · placed{" "}
+            {order.trackingNumber ?? "—"}
+            {order.trackingIsPlaceholder && (
+              <span className="ml-2 rounded border border-line px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-hush">
+                checkout placeholder
+              </span>
+            )}
+            {" · "}placed{" "}
             {new Date(order.createdAt).toLocaleString("en", {
               dateStyle: "medium",
               timeStyle: "short",
             })}
           </p>
+          {order.dispatchedAt && (
+            <p className="mt-1 text-sm text-hush">
+              Dispatched{" "}
+              {new Date(order.dispatchedAt).toLocaleString("en", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </p>
+          )}
         </div>
         <span className="w-fit rounded-md border border-line bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink">
           {statusLabel(order.status)}
+          {" · "}
+          {paymentStatusLabel(order.paymentStatus)}
         </span>
       </header>
 
@@ -267,6 +432,171 @@ export function AdminOrderDetail({ orderNumber }: { orderNumber: string }) {
             </Button>
           </div>
         </div>
+      </section>
+
+      {/* dispatch — the real waybill replaces the checkout placeholder */}
+      {(order.status === "new_order" ||
+        order.status === "processing" ||
+        order.status === "shipped") &&
+      !(order.status === "shipped" && !order.trackingIsPlaceholder) ? (
+        <section
+          aria-label="Dispatch"
+          className="mt-5 rounded-md border border-line bg-white p-5"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-hush">
+            Dispatch
+          </p>
+          <p className="mt-2 text-sm text-hush">
+            The number above was generated at checkout — it is not the operator&apos;s.
+            Enter the real waybill here: it becomes the number the customer sees and
+            can quote at the terminal.
+          </p>
+          <form className="mt-3" onSubmit={(event) => { event.preventDefault(); void act("dispatch"); }}>
+            <label className="block text-sm font-medium text-ink" htmlFor="dispatch-tracking">
+              Operator waybill / tracking number
+            </label>
+            <input
+              className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus-visible:border-brand"
+              id="dispatch-tracking"
+              maxLength={80}
+              onChange={(event) => setDispatchTracking(event.target.value)}
+              placeholder="e.g. Link Bus waybill LB-4471"
+              required
+              value={dispatchTracking}
+            />
+            <label className="mt-3 block text-sm font-medium text-ink" htmlFor="dispatch-note">
+              Note for the customer <span className="font-normal text-hush">(optional, public)</span>
+            </label>
+            <input
+              className="mt-2 w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-ink focus-visible:border-brand"
+              id="dispatch-note"
+              maxLength={500}
+              onChange={(event) => setDispatchNote(event.target.value)}
+              placeholder="e.g. On the Tuesday run — driver Amos."
+              value={dispatchNote}
+            />
+            <div className="mt-3">
+              <Button disabled={busy || !dispatchTracking.trim()} type="submit">
+                {busy ? "Working…" : "Mark shipped with this number"}
+              </Button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      {/* payment — the owner's private ledger; nothing here reaches the customer */}
+      <section
+        aria-label="Payment"
+        className="mt-5 rounded-md border border-line bg-white p-5"
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-hush">
+            Payment
+          </p>
+          <p className="text-sm text-ink">
+            <span className="font-semibold">{paymentStatusLabel(order.paymentStatus)}</span>
+            {" · "}
+            {order.paidAmountUsd.toFixed(2)} of {order.totalAmount.toFixed(2)} USD received
+            {balanceDueUsd(order.totalAmount, order.paidAmountUsd) > 0 && (
+              <> · balance {balanceDueUsd(order.totalAmount, order.paidAmountUsd).toFixed(2)}</>
+            )}
+          </p>
+        </div>
+        <p className="mt-2 text-xs text-hush">
+          This record is internal — the customer never sees it. Their checkout said they
+          intend to pay by {order.paymentMethod}.
+        </p>
+
+        {order.payments.length > 0 && (
+          <ul className="mt-3 divide-y divide-line border-t border-line">
+            {order.payments.map((payment) => (
+              <li
+                key={payment.id}
+                className="flex flex-wrap items-baseline justify-between gap-x-4 py-2 text-sm"
+              >
+                <span className="text-ink">
+                  {payment.amountUsd.toFixed(2)} USD · {payment.method}
+                  {payment.reference ? ` · ref ${payment.reference}` : ""}
+                </span>
+                <span className="text-xs text-hush">
+                  {new Date(payment.receivedAt).toLocaleString("en", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <form className="mt-4" onSubmit={recordPayment}>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-hush" htmlFor="payment-method">
+                Method
+              </label>
+              <select
+                className="mt-1 w-full rounded-md border border-line bg-white px-2 py-2 text-sm text-ink focus-visible:border-brand"
+                id="payment-method"
+                onChange={(event) => setPaymentMethod(event.target.value)}
+                value={paymentMethod}
+              >
+                {PAYMENT_METHODS.map((method) => (
+                  <option key={method} value={method}>
+                    {method}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-hush" htmlFor="payment-amount">
+                Amount received (USD)
+              </label>
+              <input
+                className="mt-1 w-full rounded-md border border-line bg-white px-2 py-2 text-sm text-ink focus-visible:border-brand"
+                id="payment-amount"
+                inputMode="decimal"
+                min="0.01"
+                onChange={(event) => setPaymentAmount(event.target.value)}
+                placeholder={balanceDueUsd(order.totalAmount, order.paidAmountUsd).toFixed(2)}
+                step="0.01"
+                type="number"
+                value={paymentAmount}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-hush" htmlFor="payment-reference">
+                Reference
+              </label>
+              <input
+                className="mt-1 w-full rounded-md border border-line bg-white px-2 py-2 text-sm text-ink focus-visible:border-brand"
+                id="payment-reference"
+                maxLength={120}
+                onChange={(event) => setPaymentReference(event.target.value)}
+                placeholder="MoMo / bank ref"
+                value={paymentReference}
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button disabled={busy || !paymentAmount} type="submit" variant="secondary">
+              {busy ? "Working…" : "Record payment"}
+            </Button>
+            {balanceDueUsd(order.totalAmount, order.paidAmountUsd) > 0 && (
+              <button
+                className="ms-label text-hush underline decoration-line underline-offset-4 hover:text-ink"
+                onClick={() =>
+                  setPaymentAmount(
+                    balanceDueUsd(order.totalAmount, order.paidAmountUsd).toFixed(2)
+                  )
+                }
+                type="button"
+              >
+                USE FULL BALANCE
+              </button>
+            )}
+          </div>
+        </form>
       </section>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
